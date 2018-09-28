@@ -1,9 +1,16 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class IssueRecurrenceTest < ActiveSupport::TestCase
+  fixtures :issues
 
-  # Replace this with your real tests.
-  def test_truth
-    assert true
+  def setup
+    @issue1 = issues(:issue_01)
+
+  end
+
+  def test_new
+    ir = IssueRecurrence.new(issue: @issue1)
+    assert ir
+    ir.save!
   end
 end

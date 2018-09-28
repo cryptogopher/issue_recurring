@@ -1,0 +1,5 @@
+bug:
+  name: Bug
+  is_in_chlog: true
+  default_status: new
+  position: 1

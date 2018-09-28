@@ -1,0 +1,21 @@
+DEFAULTS: &DEFAULTS
+  project: project_01
+  tracker: bug
+  priority: normal
+  lft: 1
+  rgt: 2
+
+issue_01:
+  subject: Issue
+  assigned_to: alice
+  author: bob
+  status: new
+  <<: *DEFAULTS
+
+issue_02:
+  subject: 2nd issue
+  assigned_to: charlie
+  author: dave
+  status: new
+  <<: *DEFAULTS
+

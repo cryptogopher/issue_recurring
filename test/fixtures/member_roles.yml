@@ -1,0 +1,20 @@
+member_role_01:
+  role: developer
+  member: member_01
+
+member_role_02:
+  role: developer
+  member: member_02
+
+member_role_03:
+  role: developer
+  member: member_03
+
+member_role_04:
+  role: developer
+  member: member_04
+
+member_role_05:
+  role: developer
+  member: member_05
+

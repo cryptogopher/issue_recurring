@@ -1,0 +1,221 @@
+DEFAULTS: &DEFAULTS
+  role: developer
+  tracker: bug
+  type: WorkflowTransition
+
+WorkflowTransitions_01:
+  old_status: new
+  new_status: assigned
+  <<: *DEFAULTS
+
+WorkflowTransitions_02:
+  old_status: new
+  new_status: resolved
+  <<: *DEFAULTS
+
+WorkflowTransitions_03:
+  old_status: new
+  new_status: pulled
+  <<: *DEFAULTS
+
+WorkflowTransitions_04:
+  old_status: new
+  new_status: feedback
+  <<: *DEFAULTS
+
+WorkflowTransitions_05:
+  old_status: new
+  new_status: closed
+  <<: *DEFAULTS
+
+WorkflowTransitions_06:
+  old_status: new
+  new_status: rejected
+  <<: *DEFAULTS
+
+
+WorkflowTransitions_11:
+  old_status: assigned
+  new_status: new
+  <<: *DEFAULTS
+
+WorkflowTransitions_12:
+  old_status: assigned
+  new_status: resolved
+  <<: *DEFAULTS
+
+WorkflowTransitions_13:
+  old_status: assigned
+  new_status: pulled
+  <<: *DEFAULTS
+
+WorkflowTransitions_14:
+  old_status: assigned
+  new_status: feedback
+  <<: *DEFAULTS
+
+WorkflowTransitions_15:
+  old_status: assigned
+  new_status: closed
+  <<: *DEFAULTS
+
+WorkflowTransitions_16:
+  old_status: assigned
+  new_status: rejected
+  <<: *DEFAULTS
+
+
+WorkflowTransitions_21:
+  old_status: resolved
+  new_status: new
+  <<: *DEFAULTS
+
+WorkflowTransitions_22:
+  old_status: resolved
+  new_status: assigned
+  <<: *DEFAULTS
+
+WorkflowTransitions_23:
+  old_status: resolved
+  new_status: pulled
+  <<: *DEFAULTS
+
+WorkflowTransitions_24:
+  old_status: resolved
+  new_status: feedback
+  <<: *DEFAULTS
+
+WorkflowTransitions_25:
+  old_status: resolved
+  new_status: closed
+  <<: *DEFAULTS
+
+WorkflowTransitions_26:
+  old_status: resolved
+  new_status: rejected
+  <<: *DEFAULTS
+
+
+WorkflowTransitions_31:
+  old_status: pulled
+  new_status: new
+  <<: *DEFAULTS
+
+WorkflowTransitions_32:
+  old_status: pulled
+  new_status: assigned
+  <<: *DEFAULTS
+
+WorkflowTransitions_33:
+  old_status: pulled
+  new_status: resolved
+  <<: *DEFAULTS
+
+WorkflowTransitions_34:
+  old_status: pulled
+  new_status: feedback
+  <<: *DEFAULTS
+
+WorkflowTransitions_35:
+  old_status: pulled
+  new_status: closed
+  <<: *DEFAULTS
+
+WorkflowTransitions_36:
+  old_status: pulled
+  new_status: rejected
+  <<: *DEFAULTS
+
+
+WorkflowTransitions_41:
+  old_status: feedback
+  new_status: new
+  <<: *DEFAULTS
+
+WorkflowTransitions_42:
+  old_status: feedback
+  new_status: assigned
+  <<: *DEFAULTS
+
+WorkflowTransitions_43:
+  old_status: feedback
+  new_status: resolved
+  <<: *DEFAULTS
+
+WorkflowTransitions_44:
+  old_status: feedback
+  new_status: pulled
+  <<: *DEFAULTS
+
+WorkflowTransitions_45:
+  old_status: feedback
+  new_status: closed
+  <<: *DEFAULTS
+
+WorkflowTransitions_46:
+  old_status: feedback
+  new_status: rejected
+  <<: *DEFAULTS
+
+
+WorkflowTransitions_51:
+  old_status: closed
+  new_status: new
+  <<: *DEFAULTS
+
+WorkflowTransitions_52:
+  old_status: closed
+  new_status: assigned
+  <<: *DEFAULTS
+
+WorkflowTransitions_53:
+  old_status: closed
+  new_status: resolved
+  <<: *DEFAULTS
+
+WorkflowTransitions_54:
+  old_status: closed
+  new_status: pulled
+  <<: *DEFAULTS
+
+WorkflowTransitions_55:
+  old_status: closed
+  new_status: feedback
+  <<: *DEFAULTS
+
+WorkflowTransitions_56:
+  old_status: closed
+  new_status: rejected
+  <<: *DEFAULTS
+
+
+WorkflowTransitions_61:
+  old_status: rejected
+  new_status: new
+  <<: *DEFAULTS
+
+WorkflowTransitions_62:
+  old_status: rejected
+  new_status: assigned
+  <<: *DEFAULTS
+
+WorkflowTransitions_63:
+  old_status: rejected
+  new_status: resolved
+  <<: *DEFAULTS
+
+WorkflowTransitions_64:
+  old_status: rejected
+  new_status: pulled
+  <<: *DEFAULTS
+
+WorkflowTransitions_65:
+  old_status: rejected
+  new_status: feedback
+  <<: *DEFAULTS
+
+WorkflowTransitions_66:
+  old_status: rejected
+  new_status: closed
+  <<: *DEFAULTS
+

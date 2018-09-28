@@ -1,0 +1,28 @@
+DEFAULTS: &DEFAULTS
+  login: $LABEL
+  # password = foo
+  salt: 7599f9963ec07b5a3b55b354407120c0
+  hashed_password: 8f659c8d7c072f189374edacfa90d6abbc26d8ed
+  firstname: $LABEL
+  lastname: $LABEL
+  admin: false
+  status: true
+  type: User
+  mail_notification: ''
+  must_change_passwd: false
+
+alice:
+  <<: *DEFAULTS
+
+bob:
+  <<: *DEFAULTS
+
+charlie:
+  <<: *DEFAULTS
+
+dave:
+  <<: *DEFAULTS
+
+gopher:
+  <<: *DEFAULTS
+

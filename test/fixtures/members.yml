@@ -1,0 +1,20 @@
+member_01:
+  project: project_01
+  user: alice
+
+member_02:
+  project: project_01
+  user: bob
+
+member_03:
+  project: project_01
+  user: charlie
+
+member_04:
+  project: project_01
+  user: dave
+
+member_05:
+  project: project_01
+  user: gopher
+

@@ -1,0 +1,3 @@
+enabled_module_01:
+  name: issue_tracking
+  project: project_01

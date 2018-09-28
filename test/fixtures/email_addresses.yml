@@ -1,0 +1,7 @@
+<% ['alice', 'bob', 'charlie', 'dave', 'gopher'].each do |name| %>
+<%= name %>_email_address:
+  user: <%= name %>
+  address: <%= name %>@example.net
+  is_default: true
+<% end %>
+

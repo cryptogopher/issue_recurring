@@ -1,0 +1,28 @@
+new:
+  name: new
+  is_closed: false
+
+assigned:
+  name: assigned
+  is_closed: false
+
+resolved:
+  name: resolved
+  is_closed: false
+
+pulled:
+  name: pulled
+  is_closed: false
+
+feedback:
+  name: feedback
+  is_closed: false
+
+closed:
+  name: closed
+  is_closed: true
+
+rejected:
+  name: rejected
+  is_closed: true
+

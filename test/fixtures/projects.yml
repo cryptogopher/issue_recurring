@@ -1,0 +1,8 @@
+project_01:
+  name: Issue recurrence
+  description: Sample issue recurrence project
+  homepage: http://ir.michalczyk.pro/
+  is_public: true
+  identifier: issuerecurrence
+  lft: 1
+  rgt: 2

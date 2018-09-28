@@ -1,0 +1,7 @@
+normal:
+  name: Normal
+  position: 1
+  is_default: true
+  type: IssuePriority
+  active: true
+  position_name: default
