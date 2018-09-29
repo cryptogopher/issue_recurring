@@ -1,0 +1,13 @@
+<%= form_for @recurrence, :remote => true,
+  :url => issue_recurrences_path(@issue),
+  :html => {:id => 'new-recurrence-form', :style => 'display: none;'},
+  :as => :recurrence do |f| %>
+
+  <%= error_messages_for 'token_vote' %>
+
+  <p>
+
+  <%= submit_tag l(:button_activate) %>
+  <%= link_to_function l(:button_cancel), '$("#new-recurrence-form").hide();' %>
+  </p>
+<% end %>

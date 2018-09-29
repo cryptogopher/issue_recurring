@@ -1,0 +1,17 @@
+<hr/>
+<div id="issue_recurrences">
+  <div class="contextual">
+    <% if User.current.allowed_to?(:manage_issue_recurrences, @project) %>
+      <%= toggle_link l(:button_add), 'new-recurrence-form', :focus => 'recurrence_' %>
+    <% end %>
+  </div>
+
+  <p><strong><%=l(:label_recurrences)%></strong></p>
+
+  <div id="recurrences-table">
+    <%= render partial: 'issues/recurrences/index' %>
+  </div>
+
+  <div id="recurrences-flash"></div>
+  <%= render partial: 'issues/recurrences/form' %>
+</div>

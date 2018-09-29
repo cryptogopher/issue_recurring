@@ -5,7 +5,6 @@ class IssueRecurrenceTest < ActiveSupport::TestCase
 
   def setup
     @issue1 = issues(:issue_01)
-
   end
 
   def test_new
