@@ -1,4 +1,4 @@
-module IssueRecurrencePlugin
+module IssueRecurring
   module IssuesHelperPatch
     IssuesHelper.class_eval do
       def creation_mode_options
