@@ -6,8 +6,82 @@
   <%= error_messages_for 'token_vote' %>
 
   <p>
-
-  <%= submit_tag l(:button_activate) %>
-  <%= link_to_function l(:button_cancel), '$("#new-recurrence-form").hide();' %>
+    <%= t '.recur_this_issue_by' %>
+    <%= f.select :creation_mode, creation_mode_options %>
+    <%= t '.starting_from' %>
   </p>
+  <p>
+    <%= label_tag do %>
+      <%= radio_button_tag 'start_mode', 'issue_date', issue_start_date.present?,
+        disabled: issue_start_date.blank? %>
+      <%= t '.issue_date', date: issue_start_date %>
+    <% end %>
+  </p>
+  <p>
+    <%= label_tag do %>
+      <%= radio_button_tag 'start_mode', 'user_date', issue_start_date.blank? %>
+      <%= t '.user_provided_date' %>
+      <%= f.date_field :start_date, disabled: issue_start_date.present?, min: Date.today,
+        value: Date.today %>
+    <% end %>
+  </p>
+  <p>
+    <%= t '.recur' %>
+    <%= f.select :is_fixed_schedule, [[t('.exactly'), true], [t('.after_closing'), false]] %>
+    <%= t '.every' %>
+    <%= f.number_field :mode_multiplier, min: 1, step: 1, value: 1 %>
+    <%= f.select :mode, mode_options %>
+    <%= t '.until' %>
+  </p>
+  <p>
+  </p>
+  <p>
+    <%= label_tag do %>
+      <%= radio_button_tag 'limit_mode', 'never', true %>
+      <%= t '.forever' %>
+    <% end %>
+  </p>
+  <p>
+    <%= label_tag do %>
+      <%= radio_button_tag 'limit_mode', 'user_date', false %>
+      <%= t '.user_provided_date' %>
+      <%= f.date_field :date_limit, disabled: true, min: Date.today,
+        value: Date.today.next_month %>
+    <% end %>
+  </p>
+  <p>
+    <%= label_tag do %>
+      <%= radio_button_tag 'limit_mode', 'user_count', false %>
+      <%= f.number_field :count_limit, disabled: true, min: 1, step: 1, value: 1 %>
+      <%= t '.recurrences' %>
+    <% end %>
+  </p>
+
+  <p>
+    <%= submit_tag l(:button_activate) %>
+    <%= link_to_function l(:button_cancel), '$("#new-recurrence-form").hide();' %>
+  </p>
+<% end %>
+
+<%= javascript_tag do %>
+  $('#new-recurrence-form').on('click', 'label [name="start_mode"]',
+    function(e) {
+      $('#recurrence_start_date').prop(
+        'disabled',
+        !$('#start_mode_user_date').prop('checked')
+      );
+    }
+  );
+  $('#new-recurrence-form').on('click', 'label [name="limit_mode"]',
+    function(e) {
+      $('#recurrence_date_limit').prop(
+        'disabled',
+        !$('#limit_mode_user_date').prop('checked')
+      );
+      $('#recurrence_count_limit').prop(
+        'disabled',
+        !$('#limit_mode_user_count').prop('checked')
+      );
+    }
+  );
 <% end %>

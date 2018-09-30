@@ -3,6 +3,7 @@ require_dependency 'issue_recurrence_plugin/issue_recurrences_view_listener'
 ActionDispatch::Reloader.to_prepare do
   Issue.include IssueRecurrencePlugin::IssuePatch
   IssuesController.include IssueRecurrencePlugin::IssuesControllerPatch
+  IssuesHelper.include IssueRecurrencePlugin::IssuesHelperPatch
 end
 
 Redmine::Plugin.register :issue_recurrence do

@@ -1,3 +1,32 @@
 # English strings go here for Rails i18n
 en:
   label_recurrences: 'Recurrences'
+  issues:
+    recurrences:
+      form:
+        recur_this_issue_by: 'Recur this issue by'
+        creation_modes:
+          copy_first: 'copying it'
+          copy_last: 'copying its last recurrence'
+          in_place: 'modifying it in-place'
+        starting_from: 'starting from:'
+        issue_date: 'issue date (currently %{date}, will change if issue is modified)'
+        user_provided_date: 'user provided date'
+        until: 'until:'
+        forever: 'forever'
+        recurrences: 'recurrences'
+        recur: 'Recur'
+        exactly: 'exactly'
+        after_closing: 'after closing previous recurrence'
+        every: 'every'
+        modes:
+          daily: 'day(s)'
+          weekly: 'week(s)'
+          monthly_day_from_first: 'month(s), on the same day of month'
+          monthly_day_to_last: 'month(s), on the same day from the end of month'
+          monthly_dow_from_first: 'month(s), on the same weekday of month'
+          monthly_dow_to_last: 'month(s), on the same weekday from the end of month'
+          monthly_wday_from_first: 'month(s), on the same working day of month'
+          monthly_wday_to_last: 'month(s), on the same working day from the end of month'
+          yearly: 'year(s)'
+
