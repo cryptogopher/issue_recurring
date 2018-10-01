@@ -9,7 +9,6 @@ ActiveRecord::FixtureSet.create_fixtures(
     :issue_priorities,
     :users,
     :email_addresses,
-    :token_types,
     :journals,
     :journal_details,
     :projects,
@@ -21,3 +20,24 @@ ActiveRecord::FixtureSet.create_fixtures(
     :trackers
   ]
 )
+
+def logout_user
+  post signout_path
+end
+
+def create_recurrence(issue=issues(:issue_01), **attributes)
+  attributes[:mode] ||= :weekly
+  attributes[:mode_multiplier] ||= 1
+  assert_difference 'IssueRecurrence.count', 1 do
+    post "#{issue_recurrences_path(issue)}.js", params: {recurrence: attributes}
+    assert_response :ok
+    assert_empty assigns(:recurrence).errors.messages
+  end
+end
+
+def renew_all(count=0)
+  assert_difference 'Issue.count', count do
+    IssueRecurrence.renew_all
+  end
+end
+

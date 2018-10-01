@@ -1,6 +1,6 @@
 class IssueRecurrence < ActiveRecord::Base
   belongs_to :issue
-  has_one :last_issue, class_name: 'Issue'
+  belongs_to :last_issue, class_name: 'Issue'
 
   enum creation_mode: {
     copy_first: 0,
@@ -22,6 +22,7 @@ class IssueRecurrence < ActiveRecord::Base
 
   validates :issue, presence: true, associated: true
   validates :last_issue, associated: true
+#  validates :start_date, presence: {if: "issue.start_date.nil? && issue.end_date.nil?"}
   validates :is_fixed_schedule, inclusion: {in: [false, true]}
   validates :creation_mode, inclusion: {in: creation_modes.keys}
   validates :mode, inclusion: {in: modes.keys}
@@ -43,10 +44,58 @@ class IssueRecurrence < ActiveRecord::Base
   def to_s
   end
 
-  def renew
-    if self.is_fixed_schedule
-    else
+  # Advance 'dates' (hash) evenly according to recurrence mode.
+  # Return:
+  #  - earliest 'dates' after 'after' or
+  #  - next recurrence of 'dates' if 'after' is nil.
+  # 'after' has to be later than earliest 'dates' member (if not nil)
+  def advance(dates, after=nil)
+    case self.mode
+    when :daily
+      base = dates.values.min
+      periods = after.nil? ? 1 : ((after-base+1)/self.mode_multiplier).ceil
+      dates.keys.map do |k|
+        dates[k] += self.mode_multiplier*periods.days
+      end
     end
+  end
+
+  # Renew has to take into account:
+  # - addition/removal/modification of issue dates after IssueRecurrence is created
+  def renew
+    #reference_issue = case self.creation_mode
+    #                  when :copy_first, :in_place
+    #                    self.issue
+    #                  when :copy_last
+    #                    self.last_issue
+    #                  end
+
+    if self.is_fixed_schedule
+      case self.creation_mode
+      when :copy_first
+        ref_date = self.issue.start_date || self.issue.due_date
+        while true
+          new_date = self.advance(ref_date, self.last_date)
+          break if new_date > Date.today
+          self.copy(self.issue, new_date)
+          self.last_date = new_date
+        end
+      when :copy_last
+        ref_date = self.last_date || self.issue.start_date || self.issue.due_date
+        while true
+          new_date = self.advance(ref_date)
+          break if new_date > Date.today
+          self.copy(self.issue, new_date)
+          ref_date = new_date
+        end
+        self.last_date = ref_date
+        self.last_issue
+      when :in_place
+        #NOT SUPPORTED
+      end
+    end
+
+    self.save!
   end
 
   def self.renew_all

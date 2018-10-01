@@ -61,8 +61,7 @@ manager:
     - :manage_related_issues
     - :manage_project_activities
     - :import_issues
-    - :add_token_votes
-    - :manage_token_votes
+    - :manage_issue_recurrences
   position: 1
 
 developer:
@@ -111,8 +110,7 @@ developer:
     - :manage_files
     - :browse_repository
     - :view_changesets
-    - :add_token_votes
-    - :manage_token_votes
+    - :manage_issue_recurrences
   position: 2
 
 reporter:
@@ -154,7 +152,6 @@ reporter:
     - :manage_files
     - :browse_repository
     - :view_changesets
-    - :add_token_votes
   position: 3
 
 nonmember:
