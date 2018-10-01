@@ -5,7 +5,6 @@ class CreateIssueRecurrences < ActiveRecord::Migration
       t.references :last_issue, foreign: true, index: true
       t.date :last_date
       t.date :start_date
-      t.date :due_date
       t.boolean :is_fixed_schedule
       t.integer :creation_mode
       t.integer :mode

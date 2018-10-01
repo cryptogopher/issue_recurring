@@ -32,6 +32,29 @@ class IssueRecurrence < ActiveRecord::Base
 
   after_initialize :set_defaults
 
+  def visible?
+    self.issue.visible?
+  end
+
+  def deletable?
+    self.visible? && User.current.allowed_to?(:manage_issue_recurrences, self.issue.project)
+  end
+
+  def to_s
+  end
+
+  def renew
+    if self.is_fixed_schedule
+    else
+    end
+  end
+
+  def self.renew_all
+    IssueRecurrence.all.each do |r|
+      r.renew
+    end
+  end
+
   protected
 
   def set_defaults
