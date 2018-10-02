@@ -18,11 +18,10 @@ class IssueRecurrencesController < ApplicationController
 
   def recurrence_params
     params.require(:recurrence).permit(
-      :start_date,
-      :is_fixed_schedule,
       :creation_mode,
+      :anchor_mode,
       :mode,
-      :mode_multiplier,
+      :multiplier,
       :date_limit,
       :count_limit
     )

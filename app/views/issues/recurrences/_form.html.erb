@@ -14,36 +14,9 @@
     <%= t '.relative_to' %>
   </p>
   <p>
-    <%= label_tag do %>
-      <%= radio_button_tag 'anchor_mode', 'first_issue_fixed', issue_start_date.present?,
-        disabled: issue_start_date.blank? %>
-      <%= t '.first_issue_fixed', start_date: @issue.start_date, due_date: @issue.due_date %>
-    <% end %>
-  </p>
-  <p>
-    <%= label_tag do %>
-      <%= radio_button_tag 'anchor_mode', 'last_issue_fixed', true %>
-      <%= t '.last_issue_fixed' %>
-    <% end %>
-  </p>
-  <p>
-    <%= label_tag do %>
-      <%= radio_button_tag 'anchor_mode', 'last_issue_flexible', true %>
-      <%= t '.last_issue_flexible' %>
-    <% end %>
-  </p>
-  <p>
-    <%= label_tag do %>
-      <%= radio_button_tag 'anchor_mode', 'user_date', issue_start_date.blank? %>
-      <%= t '.user_date' %>
-      <%= f.date_field :start_date, disabled: issue_start_date.present?, min: Date.today,
-        value: Date.today %>
-    <% end %>
-  </p>
-  <p>
+    <% options, selected, disabled = anchor_mode_options %>
+    <%= f.select :anchor_mode, options, selected: selected, disabled: disabled %>
     <%= t '.until' %>
-  </p>
-  <p>
   </p>
   <p>
     <%= label_tag do %>
@@ -74,14 +47,6 @@
 <% end %>
 
 <%= javascript_tag do %>
-  $('#new-recurrence-form').on('click', 'label [name="anchor_mode"]',
-    function(e) {
-      $('#recurrence_start_date').prop(
-        'disabled',
-        !$('#anchor_mode_user_date').prop('checked')
-      );
-    }
-  );
   $('#new-recurrence-form').on('click', 'label [name="limit_mode"]',
     function(e) {
       $('#recurrence_date_limit').prop(

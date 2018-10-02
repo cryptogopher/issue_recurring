@@ -11,8 +11,7 @@ class IssueRecurrence < ActiveRecord::Base
   enum anchor_mode: {
     first_issue_fixed: 0,
     last_issue_fixed: 1,
-    last_issue_flexible: 2,
-    user_date: 3
+    last_issue_flexible: 2
   }
 
   enum mode: {
@@ -32,7 +31,6 @@ class IssueRecurrence < ActiveRecord::Base
   validates :count, numericality: {greater_than: 0, only_integer: true}
   validates :creation_mode, inclusion: {in: creation_modes.keys}
   validates :anchor_mode, inclusion: {in: anchor_modes.keys}
-  validates :start_date, presence: {if: "anchor_mode == :user_date"}
   validates :mode, inclusion: {in: modes.keys}
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
   validates :date_limit, absence: {if: "count_limit.present?"}
