@@ -1,6 +1,7 @@
 # English strings go here for Rails i18n
 en:
   label_recurrences: 'Recurrences'
+  journal_title: 'Issue recurrence'
   issues:
     recurrences:
       form:
@@ -9,6 +10,9 @@ en:
           copy_first: 'copying it'
           copy_last: 'copying its last recurrence'
           in_place: 'modifying it in-place'
+        including: 'including'
+        excluding: 'excluding'
+        children_issues: 'children issues,'
         every: 'every'
         modes:
           daily: 'day(s)'

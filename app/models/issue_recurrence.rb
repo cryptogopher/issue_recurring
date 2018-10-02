@@ -30,7 +30,15 @@ class IssueRecurrence < ActiveRecord::Base
   validates :last_issue, associated: true
   validates :count, numericality: {greater_than: 0, only_integer: true}
   validates :creation_mode, inclusion: {in: creation_modes.keys}
-  validates :anchor_mode, inclusion: {in: anchor_modes.keys}
+  validates :anchor_mode,
+    inclusion: {
+      in: anchor_modes.keys,
+      if: "(issue.start_date || issue.due_date).present?"
+    },
+    inclusion: {
+      in: [:last_issue_flexible],
+      if: "(issue.start_date || issue.due_date).blank? || (anchor_mode == :in_place)"
+    }
   validates :mode, inclusion: {in: modes.keys}
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
   validates :date_limit, absence: {if: "count_limit.present?"}
@@ -50,68 +58,72 @@ class IssueRecurrence < ActiveRecord::Base
   def to_s
   end
 
-  # Advance 'dates' (hash) evenly according to recurrence mode.
-  # Return:
-  #  - earliest 'dates' after 'after' or
-  #  - next recurrence of 'dates' if 'after' is nil.
-  # 'after' has to be later than earliest 'dates' member (if not nil)
-  def advance(dates, after=nil)
+  # Advance 'dates' (hash) according to recurrence mode.
+  # Return: advanced dates (hash) or nil if recurrence limit reached.
+  def advance(**dates)
     case self.mode
     when :daily
-      base = dates.values.min
-      periods = after.nil? ? 1 : ((after-base+1)/self.mode_multiplier).ceil
       dates.keys.map do |k|
-        dates[k] += self.mode_multiplier*periods.days
+        dates[k] += (self.multiplier*(self.count+1)).days unless dates[k].nil?
       end
     end
   end
 
-  def copy
+  def create(dates, as_user)
+    ref_issue = (self.creation_mode == :copy_last) ? self.last_issue : self.issue
+
+    prev_user = User.current
+    User.current = as_user || ref_issue.author
+    ref_issue.init_journal(User.current, t(:journal_recurrence))
+
+    new_issue = (self.creation_mode == :in_place) ? self.issue :
+      ref_issue.copy(nil, subtasks: self.include_children)
+
+    if self.include_children
+      new_issue.reload.descendants.each do |child|
+        child_dates = self.advance(start: child.start_date, due: child.due_date)
+        child.start_date = child_dates[:start] 
+        child.due_date = child_dates[:due]
+        child.done_ratio = 0
+        child.status = child.tracker.default_status
+        child.save!
+      end
+      new_issue.reload
+    end
+
+    new_issue.start_date = dates[:start]
+    new_issue.due_date = dates[:due]
+    new_issue.done_ratio = 0
+    new_issue.status = new_issue.tracker.default_status
+    new_issue.save!
+
+    self.last_issue = new_issue
     self.count += 1
+    self.save!
+
+    User.current = prev_user
   end
 
-  # Renew has to take into account:
-  # - addition/removal/modification of issue dates after IssueRecurrence is created
-  def renew
-    #reference_issue = case self.creation_mode
-    #                  when :copy_first, :in_place
-    #                    self.issue
-    #                  when :copy_last
-    #                    self.last_issue
-    #                  end
-
+  def renew(as_user)
     case self.anchor_mode
     when :first_issue_fixed
-      case self.creation_mode
-      when :copy_first
-        ref_date = self.issue.start_date || self.issue.due_date
-        while true
-          new_date = self.advance(ref_date, self.last_date)
-          break if new_date > Date.today
-          self.copy(self.issue, new_date)
-          self.last_date = new_date
-        end
-      when :copy_last
-        ref_date = self.last_date || self.issue.start_date || self.issue.due_date
-        while true
-          new_date = self.advance(ref_date)
-          break if new_date > Date.today
-          self.copy(self.issue, new_date)
-          ref_date = new_date
-        end
-        self.last_date = ref_date
-        self.last_issue
-      when :in_place
-        #NOT SUPPORTED
+      dates = {start: self.issue.start_date, due: self.issue.due_date}
+      while true
+        break if (dates[:start] || dates[:end]) > Date.today
+        new_dates = self.advance(dates)
+        break if new_dates.nil?
+        self.create(new_dates, as_user)
+        dates = new_dates
       end
+    when :last_issue_fixed
+    when :last_issue_flexible
     end
-
-    self.save!
   end
 
-  def self.renew_all
+  def self.renew_all(**options)
+    as_user = options[:as] && User.find_by(name: options[:as])
     IssueRecurrence.all.each do |r|
-      r.renew
+      r.renew(as_user)
     end
   end
 
@@ -124,6 +136,7 @@ class IssueRecurrence < ActiveRecord::Base
       self.anchor_mode ||= :first_issue_fixed
       self.mode ||= :monthly_day_from_first
       self.multiplier ||= 1
+      self.include_children ||= true
     end
   end
 end

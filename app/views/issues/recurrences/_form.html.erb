@@ -8,14 +8,20 @@
   <p>
     <%= t '.recur_this_issue_by' %>
     <%= f.select :creation_mode, creation_mode_options %>
+    <%= f.select :include_children, [[t('.including'), true], [t('.excluding'), false]] %>
+    <%= t '.children_issues' %>
+  </p>
+  <p>
     <%= t '.every' %>
     <%= f.number_field :mode_multiplier, min: 1, step: 1, value: 1 %>
     <%= f.select :mode, mode_options %>
-    <%= t '.relative_to' %>
   </p>
   <p>
+    <%= t '.relative_to' %>
     <% options, selected, disabled = anchor_mode_options %>
     <%= f.select :anchor_mode, options, selected: selected, disabled: disabled %>
+  </p>
+  <p>
     <%= t '.until' %>
   </p>
   <p>
