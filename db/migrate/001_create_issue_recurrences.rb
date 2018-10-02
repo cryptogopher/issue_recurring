@@ -3,12 +3,12 @@ class CreateIssueRecurrences < ActiveRecord::Migration
     create_table :issue_recurrences do |t|
       t.references :issue, foreign: true, index: true
       t.references :last_issue, foreign: true, index: true
-      t.date :last_date
-      t.date :start_date
-      t.boolean :is_fixed_schedule
+      t.integer :count
       t.integer :creation_mode
+      t.integer :anchor_mode
+      t.date :start_date
       t.integer :mode
-      t.integer :mode_multiplier
+      t.integer :multiplier
       t.date :date_limit
       t.integer :count_limit
     end

@@ -8,6 +8,13 @@ class IssueRecurrence < ActiveRecord::Base
     in_place: 2
   }
 
+  enum anchor_mode: {
+    first_issue_fixed: 0,
+    last_issue_fixed: 1,
+    last_issue_flexible: 2,
+    user_date: 3
+  }
+
   enum mode: {
     daily: 0,
     weekly: 1,
@@ -22,14 +29,15 @@ class IssueRecurrence < ActiveRecord::Base
 
   validates :issue, presence: true, associated: true
   validates :last_issue, associated: true
-#  validates :start_date, presence: {if: "issue.start_date.nil? && issue.end_date.nil?"}
-  validates :is_fixed_schedule, inclusion: {in: [false, true]}
+  validates :count, numericality: {greater_than: 0, only_integer: true}
   validates :creation_mode, inclusion: {in: creation_modes.keys}
+  validates :anchor_mode, inclusion: {in: anchor_modes.keys}
+  validates :start_date, presence: {if: "anchor_mode == :user_date"}
   validates :mode, inclusion: {in: modes.keys}
-  validates :mode_multiplier, numericality: {greater_than: 0, only_integer: true}
+  validates :multiplier, numericality: {greater_than: 0, only_integer: true}
   validates :date_limit, absence: {if: "count_limit.present?"}
-  validates :count_limit, absence: {if: "date_limit.present?"}
-  validates :count_limit, numericality: {allow_nil: true, only_integer: true}
+  validates :count_limit, absence: {if: "date_limit.present?"},
+    numericality: {allow_nil: true, only_integer: true}
 
   after_initialize :set_defaults
 
@@ -60,6 +68,10 @@ class IssueRecurrence < ActiveRecord::Base
     end
   end
 
+  def copy
+    self.count += 1
+  end
+
   # Renew has to take into account:
   # - addition/removal/modification of issue dates after IssueRecurrence is created
   def renew
@@ -70,7 +82,8 @@ class IssueRecurrence < ActiveRecord::Base
     #                    self.last_issue
     #                  end
 
-    if self.is_fixed_schedule
+    case self.anchor_mode
+    when :first_issue_fixed
       case self.creation_mode
       when :copy_first
         ref_date = self.issue.start_date || self.issue.due_date
@@ -108,10 +121,11 @@ class IssueRecurrence < ActiveRecord::Base
 
   def set_defaults
     if new_record?
-      self.is_fixed_schedule ||= true
+      self.count ||= 0
       self.creation_mode ||= :copy_first
+      self.anchor_mode ||= :first_issue_fixed
       self.mode ||= :monthly_day_from_first
-      self.mode_multiplier ||= 1
+      self.multiplier ||= 1
     end
   end
 end

@@ -8,29 +8,39 @@
   <p>
     <%= t '.recur_this_issue_by' %>
     <%= f.select :creation_mode, creation_mode_options %>
-    <%= t '.starting_from' %>
+    <%= t '.every' %>
+    <%= f.number_field :mode_multiplier, min: 1, step: 1, value: 1 %>
+    <%= f.select :mode, mode_options %>
+    <%= t '.relative_to' %>
   </p>
   <p>
     <%= label_tag do %>
-      <%= radio_button_tag 'start_mode', 'issue_date', issue_start_date.present?,
+      <%= radio_button_tag 'anchor_mode', 'first_issue_fixed', issue_start_date.present?,
         disabled: issue_start_date.blank? %>
-      <%= t '.issue_date', date: issue_start_date %>
+      <%= t '.first_issue_fixed', start_date: @issue.start_date, due_date: @issue.due_date %>
     <% end %>
   </p>
   <p>
     <%= label_tag do %>
-      <%= radio_button_tag 'start_mode', 'user_date', issue_start_date.blank? %>
-      <%= t '.user_provided_date' %>
+      <%= radio_button_tag 'anchor_mode', 'last_issue_fixed', true %>
+      <%= t '.last_issue_fixed' %>
+    <% end %>
+  </p>
+  <p>
+    <%= label_tag do %>
+      <%= radio_button_tag 'anchor_mode', 'last_issue_flexible', true %>
+      <%= t '.last_issue_flexible' %>
+    <% end %>
+  </p>
+  <p>
+    <%= label_tag do %>
+      <%= radio_button_tag 'anchor_mode', 'user_date', issue_start_date.blank? %>
+      <%= t '.user_date' %>
       <%= f.date_field :start_date, disabled: issue_start_date.present?, min: Date.today,
         value: Date.today %>
     <% end %>
   </p>
   <p>
-    <%= t '.recur' %>
-    <%= f.select :is_fixed_schedule, [[t('.exactly'), true], [t('.after_closing'), false]] %>
-    <%= t '.every' %>
-    <%= f.number_field :mode_multiplier, min: 1, step: 1, value: 1 %>
-    <%= f.select :mode, mode_options %>
     <%= t '.until' %>
   </p>
   <p>
@@ -44,7 +54,7 @@
   <p>
     <%= label_tag do %>
       <%= radio_button_tag 'limit_mode', 'user_date', false %>
-      <%= t '.user_provided_date' %>
+      <%= t '.user_date' %>
       <%= f.date_field :date_limit, disabled: true, min: Date.today,
         value: Date.today.next_month %>
     <% end %>
@@ -64,11 +74,11 @@
 <% end %>
 
 <%= javascript_tag do %>
-  $('#new-recurrence-form').on('click', 'label [name="start_mode"]',
+  $('#new-recurrence-form').on('click', 'label [name="anchor_mode"]',
     function(e) {
       $('#recurrence_start_date').prop(
         'disabled',
-        !$('#start_mode_user_date').prop('checked')
+        !$('#anchor_mode_user_date').prop('checked')
       );
     }
   );
