@@ -59,15 +59,17 @@ class IssueRecurrence < ActiveRecord::Base
   def to_s
   end
 
-  # Advance 'dates' (hash) according to recurrence mode.
+  # Advance 'dates' (hash) according to recurrence mode and adjustment (+/- # of
+  # periods).
   # Return: advanced dates (hash) or nil if recurrence limit reached.
-  def advance(**dates)
-    shift = self.anchor_mode == :first_issue_fixed ? self.multiplier*(self.count+1) : 1
+  def advance(adj=0, **dates)
+    shift = self.anchor_mode.to_sym == :first_issue_fixed ?
+      self.multiplier*(self.count + 1 + adj) : 1 + adj
 
     dates.each do |label, date|
       next if date.nil?
       dates[label] =
-        case self.mode
+        case self.mode.to_sym
         when :daily
           date + shift.days
         when :weekly
@@ -99,14 +101,15 @@ class IssueRecurrence < ActiveRecord::Base
   end
 
   def create(dates, as_user)
-    ref_issue = (self.creation_mode == :copy_last) ? self.last_issue : self.issue
+    ref_issue = (self.creation_mode.to_sym == :copy_last) ? self.last_issue : self.issue
 
     prev_user = User.current
     User.current = as_user || ref_issue.author
-    ref_issue.init_journal(User.current, t(:journal_recurrence))
+    ref_issue.init_journal(User.current, l(:journal_recurrence))
 
-    new_issue = (self.creation_mode == :in_place) ? self.issue :
+    new_issue = (self.creation_mode.to_sym == :in_place) ? self.issue :
       ref_issue.copy(nil, subtasks: self.include_children)
+    new_issue.save!
 
     if self.include_children
       new_issue.reload.descendants.each do |child|
@@ -134,18 +137,19 @@ class IssueRecurrence < ActiveRecord::Base
   end
 
   def renew(as_user)
-    case self.anchor_mode
+    #byebug
+    case self.anchor_mode.to_sym
     when :first_issue_fixed
-      dates = {start: self.issue.start_date, due: self.issue.due_date}
-      if logger && dates.values.compact.empty?
+      ref_dates = {start: self.issue.start_date, due: self.issue.due_date}
+      if logger && ref_dates.values.compact.empty?
         logger.error("Issue ##{self.issue.id} has no dates to allow for recurrence renewal.") 
       end
-      while true
-        break if (dates[:start] || dates[:end]) > Date.today
-        new_dates = self.advance(dates)
+      prev_dates = self.advance(-1, ref_dates)
+      while (prev_dates[:start] || prev_dates[:end]) < Date.tomorrow
+        new_dates = self.advance(ref_dates)
         break if new_dates.nil?
         self.create(new_dates, as_user)
-        dates = new_dates
+        prev_dates = new_dates
       end
     when :last_issue_fixed
     when :last_issue_flexible

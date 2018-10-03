@@ -9,15 +9,13 @@ ActiveRecord::FixtureSet.create_fixtures(
     :issue_priorities,
     :users,
     :email_addresses,
-    :journals,
-    :journal_details,
+    :trackers,
     :projects,
     :roles,
     :members,
     :member_roles,
     :enabled_modules,
-    :workflow_transitions,
-    :trackers
+    :workflow_transitions
   ]
 )
 
@@ -39,5 +37,6 @@ def renew_all(count=0)
   assert_difference 'Issue.count', count do
     IssueRecurrence.renew_all
   end
+  count > 0 ? Issue.last(count) : nil
 end
 

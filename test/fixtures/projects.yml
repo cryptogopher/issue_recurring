@@ -6,3 +6,4 @@ project_01:
   identifier: issuerecurrence
   lft: 1
   rgt: 2
+  trackers: bug

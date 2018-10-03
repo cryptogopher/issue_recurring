@@ -2,7 +2,8 @@ require File.expand_path('../../test_helper', __FILE__)
 
 class IssueRecurrencesTest < Redmine::IntegrationTest
   fixtures :issues, :issue_statuses, :issue_priorities,
-    :users, :email_addresses, :trackers, :projects, :journals, :journal_details
+    :users, :email_addresses, :trackers, :projects, 
+    :roles, :members, :member_roles, :enabled_modules, :workflow_transitions
 
   def setup
     super
@@ -31,8 +32,18 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     travel(9.days)
     renew_all(0)
     travel(1.day)
-    puts Date.today
-    renew_all(1)
-    #Issue.find_by!(start_date: start_date, end_date: end_date)
+    issue1 = renew_all(1).first
+    assert_equal Date.new(2018,10,11), issue1.start_date
+    assert_equal Date.new(2018,10,15), issue1.due_date
+    travel(8.days)
+    renew_all(0)
+    travel(22.days)
+    issue2, issue3, issue4 = renew_all(3)
+    assert_equal Date.new(2018,10,21), issue2.start_date
+    assert_equal Date.new(2018,10,25), issue2.due_date
+    assert_equal Date.new(2018,10,31), issue3.start_date
+    assert_equal Date.new(2018,11,4), issue3.due_date
+    assert_equal Date.new(2018,11,10), issue4.start_date
+    assert_equal Date.new(2018,11,14), issue4.due_date
   end
 end
