@@ -28,13 +28,14 @@ class IssueRecurrence < ActiveRecord::Base
 
   validates :issue, presence: true, associated: true
   validates :last_issue, associated: true
-  validates :count, numericality: {greater_than: 0, only_integer: true}
+  validates :count, numericality: {greater_than_or_equal: 0, only_integer: true}
   validates :creation_mode, inclusion: {in: creation_modes.keys}
   validates :anchor_mode,
     inclusion: {
       in: anchor_modes.keys,
       if: "(issue.start_date || issue.due_date).present?"
-    },
+    }
+  validates :anchor_mode,
     inclusion: {
       in: [:last_issue_flexible],
       if: "(issue.start_date || issue.due_date).blank? || (anchor_mode == :in_place)"
@@ -61,12 +62,40 @@ class IssueRecurrence < ActiveRecord::Base
   # Advance 'dates' (hash) according to recurrence mode.
   # Return: advanced dates (hash) or nil if recurrence limit reached.
   def advance(**dates)
-    case self.mode
-    when :daily
-      dates.keys.map do |k|
-        dates[k] += (self.multiplier*(self.count+1)).days unless dates[k].nil?
-      end
+    shift = self.anchor_mode == :first_issue_fixed ? self.multiplier*(self.count+1) : 1
+
+    dates.each do |label, date|
+      next if date.nil?
+      dates[label] =
+        case self.mode
+        when :daily
+          date + shift.days
+        when :weekly
+          date + shift.weeks
+        when :monthly_day_from_first
+          date + shift.months
+        when :monthly_day_to_last
+          days_to_last = date.end_of_month - date
+          (date + shift.months).end_of_month - days_to_last
+        when :monthly_dow_from_first
+          source_dow = date.days_to_week_start
+          target_bom = (date + shift.months).beginning_of_month
+          target_bom_dow = target_bom.days_to_week_start
+          week = ((date.mday - 1) / 7) + ((source_dow >= target_bom_dow) ? 0 : 1)
+          target_bom + week.weeks + source_dow - target_bom_dow
+        when :monthly_dow_to_last
+          source_dow = date.days_to_week_start
+          target_eom = (date + shift.months).end_of_month
+          target_eom_dow = target_eom.days_to_week_start
+          week = ((date.end_of_month - date).to_i / 7) +
+            ((source_dow > target_eom_dow) ? 1 : 0)
+          target_eom - week.weeks + source_dow - target_eom_dow
+        when :yearly
+          date + shift.years unless date.nil?
+        end
     end
+
+    dates
   end
 
   def create(dates, as_user)
@@ -108,6 +137,9 @@ class IssueRecurrence < ActiveRecord::Base
     case self.anchor_mode
     when :first_issue_fixed
       dates = {start: self.issue.start_date, due: self.issue.due_date}
+      if logger && dates.values.compact.empty?
+        logger.error("Issue ##{self.issue.id} has no dates to allow for recurrence renewal.") 
+      end
       while true
         break if (dates[:start] || dates[:end]) > Date.today
         new_dates = self.advance(dates)
@@ -131,7 +163,7 @@ class IssueRecurrence < ActiveRecord::Base
 
   def set_defaults
     if new_record?
-      self.count ||= 0
+      self.count = 0
       self.creation_mode ||= :copy_first
       self.anchor_mode ||= :first_issue_fixed
       self.mode ||= :monthly_day_from_first

@@ -19,30 +19,20 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     create_recurrence
   end
 
-  def test_renew_all
+  def test_renew_anchor_mode_first_issue_fixed_mode_daily
     log_user 'alice', 'foo'
     @issue1.start_date = Date.new(2018, 10, 1)
     @issue1.due_date = Date.new(2018, 10, 5)
-    travel_to(@issue.start_date)
+    @issue1.save!
+    travel_to(@issue1.start_date - 10.days)
 
-    setups = [
-      [{is_fixed_schedule: true, creation_mode: :copy_first, mode: :daily,
-        mode_multiplier: 10},
-       9.days,
-       []],
-      [{is_fixed_schedule: true, creation_mode: :copy_first, mode: :daily,
-        mode_multiplier: 10},
-       10.days,
-       [['2018-10-11', '2018-10-15'], ]],
-    ]
-
-    setups.each do |recurrence_attrs, t, dates|
-      create_recurrence(recurrence_attrs)
-      travel(t)
-      renew_all(count=dates.length)
-      dates.each do |start_date, due_date|
-        Issue.find_by!(start_date: start_date, end_date: end_date)
-      end
-    end
+    create_recurrence(anchor_mode: :first_issue_fixed, mode: :daily, multiplier: 10)
+    renew_all(0)
+    travel(9.days)
+    renew_all(0)
+    travel(1.day)
+    puts Date.today
+    renew_all(1)
+    #Issue.find_by!(start_date: start_date, end_date: end_date)
   end
 end

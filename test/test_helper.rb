@@ -27,7 +27,7 @@ end
 
 def create_recurrence(issue=issues(:issue_01), **attributes)
   attributes[:mode] ||= :weekly
-  attributes[:mode_multiplier] ||= 1
+  attributes[:multiplier] ||= 1
   assert_difference 'IssueRecurrence.count', 1 do
     post "#{issue_recurrences_path(issue)}.js", params: {recurrence: attributes}
     assert_response :ok

@@ -12,7 +12,7 @@ en:
           in_place: 'modifying it in-place'
         including: 'including'
         excluding: 'excluding'
-        children_issues: 'children issues,'
+        children_issues: 'descendant issues,'
         every: 'every'
         modes:
           daily: 'day(s)'
