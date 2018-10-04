@@ -195,6 +195,35 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     renew_all(1)
   end
 
+  def test_renew_anchor_mode_first_issue_fixed_mode_monthly_dow_to_last
+    log_user 'alice', 'foo'
+    @issue1.start_date = Date.new(2018, 9, 3)
+    @issue1.due_date = Date.new(2018, 9, 15)
+    @issue1.save!
+    travel_to(@issue1.start_date - 3.months)
+
+    create_recurrence(anchor_mode: :first_issue_fixed,
+                      mode: :monthly_dow_to_last,
+                      multiplier: 1)
+    renew_all(0)
+    travel(2.months)
+    renew_all(0)
+    travel(1.month)
+    issue1 = renew_all(1).first
+    assert_equal Date.new(2018,10,8), issue1.start_date
+    assert_equal Date.new(2018,10,13), issue1.due_date
+    travel(1.month+4.days)
+    renew_all(0)
+    travel(2.months+2.days)
+    issue2, issue3 = renew_all(2)
+    assert_equal Date.new(2018,11,5), issue2.start_date
+    assert_equal Date.new(2018,11,10), issue2.due_date
+    assert_equal Date.new(2018,12,10), issue3.start_date
+    assert_equal Date.new(2018,12,15), issue3.due_date
+    travel(1.day)
+    renew_all(1)
+  end
+
   # TODO:
   # - timespan much larger than recurrence period
   # - first_issue_fixed with date movement forward/backward
