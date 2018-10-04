@@ -38,7 +38,9 @@ class IssueRecurrence < ActiveRecord::Base
   validates :anchor_mode,
     inclusion: {
       in: [:last_issue_flexible],
-      if: "(issue.start_date || issue.due_date).blank? || (anchor_mode == :in_place)"
+      if: "(issue.start_date || issue.due_date).blank? || (creation_mode == :in_place)",
+      message: "has to be 'last_issue_flexible'" \
+        " if issue has no start/due date set or creation mode is 'in_place'"
     }
   validates :mode, inclusion: {in: modes.keys}
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}

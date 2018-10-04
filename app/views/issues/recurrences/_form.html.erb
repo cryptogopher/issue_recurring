@@ -34,8 +34,8 @@
     <%= label_tag do %>
       <%= radio_button_tag 'limit_mode', 'user_date', false %>
       <%= t '.user_date' %>
-      <%= f.date_field :date_limit, disabled: true, min: Date.today,
-        value: Date.today.next_month %>
+      <%= f.date_field :date_limit, disabled: true, min: Date.current,
+        value: Date.current.next_month %>
     <% end %>
   </p>
   <p>
