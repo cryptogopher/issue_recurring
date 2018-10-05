@@ -177,4 +177,17 @@ class IssueRecurrence < ActiveRecord::Base
       self.include_children ||= true
     end
   end
+
+  private
+
+  class Date < ::Date
+    def self.today
+      # Due to its nature, Date.today may sometimes be equal to Date.yesterday/tomorrow.
+      # https://rails.lighthouseapp.com/projects/8994-ruby-on-rails/tickets
+      # /6410-dateyesterday-datetoday
+      # For this reason WE SHOULD NOT USE Date.today anywhere in the code and use
+      # Date.current instead.
+      raise "Date.today should not be called!"
+    end
+  end
 end
