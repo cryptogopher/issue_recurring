@@ -94,6 +94,28 @@ class IssueRecurrence < ActiveRecord::Base
           week = ((date.end_of_month - date).to_i / 7) +
             ((source_dow > target_eom_dow) ? 1 : 0)
           target_eom - week.weeks + source_dow - target_eom_dow
+        when :monthly_wday_from_first
+          source_wdays = date.beginning_of_month.step(date.end_of_month).select do |d|
+            (1..5).include?(d.wday)
+          end
+          wday = source_wdays.bsearch_index { |d| d >= date } || source_wdays.length-1
+          target_date = date + shift.months
+          target_wdays = target_date.beginning_of_month
+            .step(target_date.end_of_month).select do |d|
+            (1..5).include?(d.wday)
+          end
+          target_wdays[wday] || target_wdays.last
+        when :monthly_wday_to_last
+          source_wdays = date.beginning_of_month.step(date.end_of_month).select do |d|
+            (1..5).include?(d.wday)
+          end
+          wday = source_wdays.reverse.bsearch_index { |d| d <= date } || 0
+          target_date = date + shift.months
+          target_wdays = target_date.beginning_of_month
+            .step(target_date.end_of_month).select do |d|
+            (1..5).include?(d.wday)
+          end
+          target_wdays.reverse[wday] || target_wdays.first
         when :yearly
           date + shift.years unless date.nil?
         end

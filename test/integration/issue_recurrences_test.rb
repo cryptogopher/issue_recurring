@@ -223,6 +223,70 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
+  def test_renew_anchor_mode_fixed_mode_monthly_wday_from_first
+    log_user 'alice', 'foo'
+    @issue1.start_date = Date.new(2018,10,1)
+    @issue1.due_date = Date.new(2018,10,3)
+    @issue1.save!
+
+    [:first_issue_fixed, :last_issue_fixed].each do |am|
+      travel_to(Date.new(2018,4,1))
+      create_recurrence(anchor_mode: am,
+                        mode: :monthly_wday_from_first,
+                        multiplier: 1)
+      renew_all(0)
+      travel_to(Date.new(2018,6,1))
+      renew_all(0)
+      travel_to(Date.new(2018,10,1))
+      issue1 = renew_all(1).first
+      assert_equal Date.new(2018,11,1), issue1.start_date
+      assert_equal Date.new(2018,11,5), issue1.due_date
+      travel_to(Date.new(2018,10,31))
+      renew_all(0)
+      travel_to(Date.new(2018,12,31))
+      issue2, issue3 = renew_all(2)
+      assert_equal Date.new(2018,12,3), issue2.start_date
+      assert_equal Date.new(2018,12,5), issue2.due_date
+      assert_equal Date.new(2019,1,1), issue3.start_date
+      assert_equal Date.new(2019,1,3), issue3.due_date
+      travel_to(Date.new(2019,1,1))
+      renew_all(1)
+      renew_all(0)
+    end
+  end
+
+  def test_renew_anchor_mode_fixed_mode_monthly_wday_to_last
+    log_user 'alice', 'foo'
+    @issue1.start_date = Date.new(2018,9,26)
+    @issue1.due_date = Date.new(2018,9,28)
+    @issue1.save!
+
+    [:first_issue_fixed, :last_issue_fixed].each do |am|
+      travel_to(Date.new(2018,3,26))
+      create_recurrence(anchor_mode: am,
+                        mode: :monthly_wday_to_last,
+                        multiplier: 2)
+      renew_all(0)
+      travel_to(Date.new(2018,5,26))
+      renew_all(0)
+      travel_to(Date.new(2018,9,26))
+      issue1 = renew_all(1).first
+      assert_equal Date.new(2018,11,28), issue1.start_date
+      assert_equal Date.new(2018,11,30), issue1.due_date
+      travel_to(Date.new(2018,11,27))
+      renew_all(0)
+      travel_to(Date.new(2019,3,26))
+      issue2, issue3 = renew_all(2)
+      assert_equal Date.new(2019,1,29), issue2.start_date
+      assert_equal Date.new(2019,1,31), issue2.due_date
+      assert_equal Date.new(2019,3,27), issue3.start_date
+      assert_equal Date.new(2019,3,29), issue3.due_date
+      travel_to(Date.new(2019,3,27))
+      renew_all(1)
+      renew_all(0)
+    end
+  end
+
   def test_renew_anchor_mode_fixed_mode_yearly
     log_user 'alice', 'foo'
     @issue1.start_date = Date.new(2018,8,19)
