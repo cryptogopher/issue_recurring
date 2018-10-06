@@ -211,9 +211,40 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     renew_all(0)
   end
 
+  def test_renew_anchor_mode_first_issue_fixed_mode_yearly
+    log_user 'alice', 'foo'
+    @issue1.start_date = Date.new(2018,8,19)
+    @issue1.due_date = Date.new(2018,9,5)
+    @issue1.save!
+    travel_to(Date.new(2017,8,2))
+
+    create_recurrence(anchor_mode: :first_issue_fixed,
+                      mode: :yearly,
+                      multiplier: 1)
+    renew_all(0)
+    travel_to(Date.new(2018,8,18))
+    renew_all(0)
+    travel_to(Date.new(2018,8,19))
+    issue1 = renew_all(1).first
+    assert_equal Date.new(2019,8,19), issue1.start_date
+    assert_equal Date.new(2019,9,5), issue1.due_date
+    travel_to(Date.new(2019,8,18))
+    renew_all(0)
+    travel_to(Date.new(2021,8,18))
+    issue2, issue3 = renew_all(2)
+    assert_equal Date.new(2020,8,19), issue2.start_date
+    assert_equal Date.new(2020,9,5), issue2.due_date
+    assert_equal Date.new(2021,8,19), issue3.start_date
+    assert_equal Date.new(2021,9,5), issue3.due_date
+    travel_to(Date.new(2021,8,20))
+    renew_all(1)
+    renew_all(0)
+  end
+
   # TODO:
   # - timespan much larger than recurrence period
   # - first_issue_fixed with date movement forward/backward
+  # - issue without start/due/both dates
   # - first_issue_fixed monthly with date > 28 recurring through February
   # - monthly_dow with same dow (2nd Tuesday+2nd Thursday) + month when 1st
   # Thursday is before 1st Tuesaday (start date ater than end date)
@@ -221,22 +252,5 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   # subsequent
   # - check effect of changing date on issue and last recurrence in fixed modes
 
-#  def test_travel
-#    # this works
-#    travel_to(Date.new(2018, 5, 1))
-#
-#    start = Date.current
-#    travel_to(Date.current - 1.month)
-#    travel(1.month)
-#    assert_equal start, Date.current
-#
-#    # this doesn't work
-#    travel_to(Date.new(2018, 4, 1))
-#
-#    start = Date.current
-#    travel_to(Date.current - 1.month)
-#    travel(1.month)
-#    assert_equal start, Date.current
-#  end
 end
 
