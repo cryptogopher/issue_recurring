@@ -61,12 +61,12 @@ class IssueRecurrence < ActiveRecord::Base
   def to_s
   end
 
-  # Advance 'dates' (hash) according to recurrence mode and adjustment (+/- # of
-  # periods).
+  # Advance 'dates' (hash) according to recurrence mode and adjustment
+  # (+/- # of periods).
   # Return: advanced dates (hash) or nil if recurrence limit reached.
   def advance(adj=0, **dates)
     shift = self.anchor_mode.to_sym == :first_issue_fixed ?
-      self.multiplier*(self.count + 1 + adj) : 1 + adj
+      self.multiplier*(self.count + 1 + adj) : self.multiplier*(1 + adj)
 
     dates.each do |label, date|
       next if date.nil?
@@ -139,12 +139,12 @@ class IssueRecurrence < ActiveRecord::Base
   end
 
   def renew(as_user)
-    #byebug
     case self.anchor_mode.to_sym
     when :first_issue_fixed
       ref_dates = {start: self.issue.start_date, due: self.issue.due_date}
       if logger && ref_dates.values.compact.empty?
-        logger.error("Issue ##{self.issue.id} has no dates to allow for recurrence renewal.") 
+        logger.warn("Issue ##{self.issue.id} has no dates to allow for recurrence renewal.") 
+        return
       end
       prev_dates = self.advance(-1, ref_dates)
       while (prev_dates[:start] || prev_dates[:end]) < Date.tomorrow
@@ -154,6 +154,18 @@ class IssueRecurrence < ActiveRecord::Base
         prev_dates = new_dates
       end
     when :last_issue_fixed
+      ref_issue = self.last_issue || self.issue
+      ref_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
+      if logger && ref_dates.values.compact.empty?
+        logger.warn("Issue ##{ref_issue.id} has no dates to allow for recurrence renewal.") 
+        return
+      end
+      while (ref_dates[:start] || ref_dates[:end]) < Date.tomorrow
+        new_dates = self.advance(ref_dates)
+        break if new_dates.nil?
+        self.create(new_dates, as_user)
+        ref_dates = new_dates
+      end
     when :last_issue_flexible
     end
   end
