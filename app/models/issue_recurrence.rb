@@ -11,7 +11,8 @@ class IssueRecurrence < ActiveRecord::Base
   enum anchor_mode: {
     first_issue_fixed: 0,
     last_issue_fixed: 1,
-    last_issue_flexible: 2
+    last_issue_flexible: 2,
+    last_issue_flexible_on_delay: 3
   }
 
   enum mode: {
@@ -37,9 +38,9 @@ class IssueRecurrence < ActiveRecord::Base
     }
   validates :anchor_mode,
     inclusion: {
-      in: [:last_issue_flexible],
+    in: [:last_issue_flexible, :last_issue_flexible_on_delay],
       if: "(issue.start_date || issue.due_date).blank? || (creation_mode == :in_place)",
-      message: "has to be 'last_issue_flexible'" \
+      message: "has to be 'last_issue_flexible{_on_delay}'" \
         " if issue has no start/due date set or creation mode is 'in_place'"
     }
   validates :mode, inclusion: {in: modes.keys}
@@ -61,9 +62,8 @@ class IssueRecurrence < ActiveRecord::Base
   def to_s
   end
 
-  # Advance 'dates' (hash) according to recurrence mode and adjustment
-  # (+/- # of periods).
-  # Return: advanced dates (hash) or nil if recurrence limit reached.
+  # Advance 'dates' according to recurrence mode and adjustment (+/- # of periods).
+  # Return advanced 'dates' or nil if recurrence limit reached.
   def advance(adj=0, **dates)
     shift = self.anchor_mode.to_sym == :first_issue_fixed ?
       self.multiplier*(self.count + 1 + adj) : self.multiplier*(1 + adj)
@@ -122,6 +122,22 @@ class IssueRecurrence < ActiveRecord::Base
     end
 
     dates
+  end
+
+  # Offset 'dates' so date with 'label' is equal (or closest to) 'target'.
+  # Return offset 'dates' or nil if 'dates' does not include 'label'.
+  def offset(target_date, target_label=:due, **dates)
+    nil unless dates.has_key?(target_label) && dates[target_label].present?
+    dates.each do |label, date|
+      next if date.nil?
+      dates[label] =
+        if label == target_label
+          target_date
+        else
+          target_label == :due ?
+            target_date-(dates[:due]-date) : target_date+(date-dates[:start])
+        end
+    end
   end
 
   def create(dates, as_user)
@@ -188,7 +204,26 @@ class IssueRecurrence < ActiveRecord::Base
         self.create(new_dates, as_user)
         ref_dates = new_dates
       end
-    when :last_issue_flexible
+    when :last_issue_flexible, :last_issue_flexible_on_delay
+      ref_issue = self.last_issue || self.issue
+      ref_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
+      if ref_issue.closed?
+        closed_date = ref_issue.closed_on.to_date
+        if ref_dates.values.compact.present?
+          unless (self.anchor_mode.to_sym == :last_issue_flexible_on_delay) &&
+              ((ref_dates[:due] || ref_dates[:start]) >= closed_date)
+            ref_label = ref_issue.due_date.present? ? :due : :start
+            offset_dates = self.offset(closed_date, ref_label, ref_dates) 
+            return if offset_dates.nil?
+            ref_dates = offset_dates
+          end
+        else
+          ref_dates[:due] = closed_date
+        end
+        new_dates = self.advance(ref_dates)
+        return if new_dates.nil?
+        self.create(new_dates, as_user)
+      end
     end
   end
 

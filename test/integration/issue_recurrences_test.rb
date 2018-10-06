@@ -319,6 +319,88 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
+  def test_renew_anchor_mode_flexible_mode_daily
+    log_user 'alice', 'foo'
+    @issue1.start_date = Date.new(2018,10,1)
+    @issue1.due_date = Date.new(2018,10,5)
+    @issue1.save!
+
+    travel_to(Date.new(2018,9,21))
+    create_recurrence(anchor_mode: :last_issue_flexible,
+                      mode: :daily,
+                      multiplier: 10)
+    renew_all(0)
+    travel_to(Date.new(2018,9,30))
+    renew_all(0)
+    travel_to(Date.new(2018,10,7))
+    # closed after due
+    close_issue(@issue1)
+    issue1 = renew_all(1).first
+    assert_equal Date.new(2018,10,13), issue1.start_date
+    assert_equal Date.new(2018,10,17), issue1.due_date
+    travel_to(Date.new(2018,10,15))
+    renew_all(0)
+    # closed between start and due
+    close_issue(issue1)
+    issue2 = renew_all(1).first
+    assert_equal Date.new(2018,10,21), issue2.start_date
+    assert_equal Date.new(2018,10,25), issue2.due_date
+    travel_to(Date.new(2018,10,19))
+    renew_all(0)
+    # closed before start
+    close_issue(issue2)
+    travel_to(Date.new(2018,10,22))
+    issue3 = renew_all(1).first
+    assert_equal Date.new(2018,10,25), issue3.start_date
+    assert_equal Date.new(2018,10,29), issue3.due_date
+    travel_to(Date.new(2018,11,18))
+    close_issue(issue3)
+    travel_to(Date.new(2018,12,31))
+    renew_all(1)
+    renew_all(0)
+  end
+
+  def test_renew_anchor_mode_flexible_on_delay_mode_daily
+    log_user 'alice', 'foo'
+    @issue1.start_date = Date.new(2018,10,1)
+    @issue1.due_date = Date.new(2018,10,5)
+    @issue1.save!
+
+    travel_to(Date.new(2018,9,21))
+    create_recurrence(anchor_mode: :last_issue_flexible_on_delay,
+                      mode: :daily,
+                      multiplier: 10)
+    renew_all(0)
+    travel_to(Date.new(2018,9,30))
+    renew_all(0)
+    travel_to(Date.new(2018,10,7))
+    # closed after due
+    close_issue(@issue1)
+    issue1 = renew_all(1).first
+    assert_equal Date.new(2018,10,13), issue1.start_date
+    assert_equal Date.new(2018,10,17), issue1.due_date
+    travel_to(Date.new(2018,10,15))
+    renew_all(0)
+    # closed between start and due
+    close_issue(issue1)
+    issue2 = renew_all(1).first
+    assert_equal Date.new(2018,10,23), issue2.start_date
+    assert_equal Date.new(2018,10,27), issue2.due_date
+    travel_to(Date.new(2018,10,21))
+    renew_all(0)
+    # closed before start
+    close_issue(issue2)
+    travel_to(Date.new(2018,10,25))
+    issue3 = renew_all(1).first
+    assert_equal Date.new(2018,11,2), issue3.start_date
+    assert_equal Date.new(2018,11,6), issue3.due_date
+    travel_to(Date.new(2018,11,18))
+    close_issue(issue3)
+    travel_to(Date.new(2018,12,31))
+    renew_all(1)
+    renew_all(0)
+  end
+
   # TODO:
   # - timespan much larger than recurrence period
   # - first_issue_fixed with date movement forward/backward on issue and last

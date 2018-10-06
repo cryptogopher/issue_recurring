@@ -29,6 +29,7 @@ en:
           first_issue_fixed: 'this issue date (currently %{start_date}-%{due_date}, will change if issue is modified any time later)'
           last_issue_fixed: 'last recurrence date'
           last_issue_flexible: 'last recurrence close date (next recurrence is created only after closing previous one)'
+          last_issue_flexible_on_delay: 'last recurrence date if closed on time, close date otherwise'
         user_date: 'user provided date'
         until: 'and repeat until:'
         forever: 'forever'
