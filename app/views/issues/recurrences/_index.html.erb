@@ -4,6 +4,15 @@
       <% if recurrence.visible? %>
         <tr id="recurrence-<%= recurrence.id %>" class="<%= cycle('odd', 'even') %>">
           <td class="description"><%= recurrence.to_s %></td>
+          <td class="description">
+            <%= "Last&nbsp;recurrence:".html_safe %>
+            <% if recurrence.last_issue.present? %>
+              <%= link_to "##{recurrence.last_issue.id}", issue_path(recurrence.last_issue) %>
+              <%= "(#{recurrence.last_date.start_date} - #{recurrence.last_date.due_date})" %>
+            <% else %>
+              <%= "-" %>
+            <% end %>
+          </td>
           <td class="buttons">
             <%= link_to l(:button_delete), recurrence_path(recurrence),
               method: :delete, remote: true, class: 'icon icon-del' if recurrence.editable? %>
