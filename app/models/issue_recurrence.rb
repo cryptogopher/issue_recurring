@@ -185,7 +185,7 @@ class IssueRecurrence < ActiveRecord::Base
         return
       end
       prev_dates = self.advance(-1, ref_dates)
-      while (prev_dates[:start] || prev_dates[:end]) < Date.tomorrow
+      while (prev_dates[:start] || prev_dates[:due]) < Date.tomorrow
         new_dates = self.advance(ref_dates)
         break if new_dates.nil?
         self.create(new_dates, as_user)
@@ -198,7 +198,7 @@ class IssueRecurrence < ActiveRecord::Base
         logger.warn("Issue ##{ref_issue.id} has no dates to allow for recurrence renewal.") 
         return
       end
-      while (ref_dates[:start] || ref_dates[:end]) < Date.tomorrow
+      while (ref_dates[:start] || ref_dates[:due]) < Date.tomorrow
         new_dates = self.advance(ref_dates)
         break if new_dates.nil?
         self.create(new_dates, as_user)

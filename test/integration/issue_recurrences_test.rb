@@ -401,6 +401,34 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     renew_all(0)
   end
 
+  def test_renew_huge_multiplier
+    log_user 'alice', 'foo'
+    @issue1.start_date = Date.new(2018,9,25)
+    @issue1.due_date = Date.new(2018,10,4)
+    @issue1.save!
+
+    items = {
+      daily: [Date.new(2021,6,21), Date.new(2021,6,30)],
+      weekly: [Date.new(2037,11,24), Date.new(2037,12,3)],
+      monthly_day_from_first: [Date.new(2102,1,25), Date.new(2102,2,4)],
+      monthly_day_to_last: [Date.new(2102,1,26), Date.new(2102,2,1)],
+      monthly_dow_from_first: [Date.new(2102,1,24), Date.new(2102,2,2)],
+      monthly_dow_to_last: [Date.new(2102,1,31), Date.new(2102,2,2)],
+      monthly_wday_from_first: [Date.new(2102,1,24), Date.new(2102,2,6)],
+      monthly_wday_to_last: [Date.new(2102,1,26), Date.new(2102,2,1)],
+      yearly: [Date.new(3018,9,25), Date.new(3018,10,4)],
+    }
+    items.each do |m, (start, due)|
+      travel_to(Date.new(2018,10,21))
+      create_recurrence(anchor_mode: :last_issue_fixed,
+                        mode: m,
+                        multiplier: 1000)
+      issue1 = renew_all(1).first
+      assert_equal start, issue1.start_date
+      assert_equal due, issue1.due_date
+    end
+  end
+
   # TODO:
   # - timespan much larger than recurrence period
   # - first_issue_fixed with date movement forward/backward on issue and last
@@ -410,7 +438,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   # - monthly_dow with same dow (2nd Tuesday+2nd Thursday) + month when 1st
   # Thursday is before 1st Tuesaday (start date ater than end date)
   # - monthly_dow when there is 5th day of week in one month but not in
-  # subsequent
+  # subsequent (and generally all recurrences that yield overflow)
 
+  # tests of creation modes
 end
 

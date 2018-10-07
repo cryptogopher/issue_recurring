@@ -31,6 +31,7 @@ def create_recurrence(issue=issues(:issue_01), **attributes)
     assert_response :ok
     assert_empty assigns(:recurrence).errors.messages
   end
+  IssueRecurrence.last
 end
 
 def renew_all(count=0)
