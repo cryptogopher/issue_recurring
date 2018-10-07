@@ -12,7 +12,7 @@ module IssueRecurring
       end
 
       def anchor_mode_options
-        dates = {start_date: @issue.start_date, due_date: @issue.due_date}
+        dates = {start: @issue.start_date, due: @issue.due_date}
         options = IssueRecurrence.anchor_modes.map do |k,v|
           [t(".anchor_modes.#{k}", dates), k]
         end

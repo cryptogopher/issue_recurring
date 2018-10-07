@@ -1,17 +1,15 @@
 <% if @recurrences.present? %>
   <table class="list odd-even">
-    <tr>
-      <th class="issue">Issue</th>
-      <th class="actions">Actions</th>
-    </tr>
     <% @recurrences.each do |recurrence| %>
-      <tr id="recurrence-<%= recurrence.id %>" class="<%= cycle('odd', 'even') %>">
-        <td class="description"><%= recurrence.to_s %></td>
-        <td class="buttons">
-          <%= link_to l(:button_delete), issue_recurrences_path(recurrence), method: :delete,
-            remote: true, class: 'icon icon-del' if recurrence.editable? %>
+      <% if recurrence.visible? %>
+        <tr id="recurrence-<%= recurrence.id %>" class="<%= cycle('odd', 'even') %>">
+          <td class="description"><%= recurrence.to_s %></td>
+          <td class="buttons">
+            <%= link_to l(:button_delete), issue_recurrences_path(recurrence),
+              method: :delete, remote: true, class: 'icon icon-del' if recurrence.editable? %>
         </td>
-      </tr>
+        </tr>
+      <% end %>
     <% end %>
     <% reset_cycle %>
   </table>

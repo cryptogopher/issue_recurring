@@ -74,6 +74,42 @@ class IssueRecurrence < ActiveRecord::Base
   end
 
   def to_s
+    s = 'issues.recurrences.form'
+    ref_dates = self.reference_dates
+    ref_modifiers = Hash.new('')
+    unless ref_dates.nil?
+      ref_dates.each do |label, date|
+        unless date.nil?
+          days_to_eom = (date.end_of_month.mday - date.mday + 1).to_i
+          values = {
+            days_from_bom: date.mday.ordinalize,
+            days_to_eom: days_to_eom.ordinalize,
+            day_of_week: date.strftime("%A"),
+            dows_from_bom: ((date.mday - 1) / 7 + 1).ordinalize,
+            dows_to_eom: (((date.end_of_month.mday - date.mday).to_i / 7) + 1).ordinalize,
+            # TODO
+            #wdays_from_bom:
+            #wdays_to_eom:
+          }
+          ref_modifiers[label] = "#{label.to_s} #{l("mode.modifier.#{self.mode}", values)}"
+        end
+      end
+    end
+
+    "#{l(".recur_this_issue_by", scope: s)}" \
+      " #{l(".creation_modes.#{self.creation_mode}", scope: s)}" \
+      " #{self.include_children ? l(".including", scope: s) : l(".excluding", scope: s)}" \
+      " #{l(".children_issues", scope: s)}" \
+      " #{l(".every", scope: s)}" \
+      " #{self.multiplier}" \
+      " #{l("mode.interval.#{self.mode}").pluralize(self.multiplier)}" \
+      " #{ref_modifiers.values.to_sentence}" \
+      " #{l(".relative_to", scope: s)}" \
+      " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
+      " #{l(".until", scope: s)}" \
+      " #{"#{l(self.date_limit)}" if self.date_limit.present?}" \
+      " #{"#{self.count_limit} recurrences" if self.count_limit.present?}" \
+      " #{"#{l(".forever", scope: s)}" if self.date_limit.nil? && self.count_limit.nil?}"
   end
 
   # Advance 'dates' according to recurrence mode and adjustment (+/- # of periods).
@@ -190,39 +226,28 @@ class IssueRecurrence < ActiveRecord::Base
     User.current = prev_user
   end
 
-  def renew(as_user)
+  # Return reference dates for next recrrence or nil if no suitable dates found.
+  def reference_dates
+    ref_dates = nil
     case self.anchor_mode.to_sym
     when :first_issue_fixed
       ref_dates = {start: self.issue.start_date, due: self.issue.due_date}
       if logger && ref_dates.values.compact.empty?
         logger.warn("Issue ##{self.issue.id} has no dates to allow for recurrence renewal.") 
-        return
-      end
-      prev_dates = self.advance(-1, ref_dates)
-      while (prev_dates[:start] || prev_dates[:due]) < Date.tomorrow
-        new_dates = self.advance(ref_dates)
-        break if new_dates.nil?
-        self.create(new_dates, as_user)
-        prev_dates = new_dates
+        ref_dates = nil
       end
     when :last_issue_fixed
       ref_issue = self.last_issue || self.issue
       ref_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
       if logger && ref_dates.values.compact.empty?
         logger.warn("Issue ##{ref_issue.id} has no dates to allow for recurrence renewal.") 
-        return
-      end
-      while (ref_dates[:start] || ref_dates[:due]) < Date.tomorrow
-        new_dates = self.advance(ref_dates)
-        break if new_dates.nil?
-        self.create(new_dates, as_user)
-        ref_dates = new_dates
+        ref_dates = nil
       end
     when :last_issue_flexible, :last_issue_flexible_on_delay
       ref_issue = self.last_issue || self.issue
-      ref_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
       if ref_issue.closed?
         closed_date = ref_issue.closed_on.to_date
+        ref_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
         if ref_dates.values.compact.present?
           unless (self.anchor_mode.to_sym == :last_issue_flexible_on_delay) &&
               ((ref_dates[:due] || ref_dates[:start]) >= closed_date)
@@ -234,10 +259,38 @@ class IssueRecurrence < ActiveRecord::Base
         else
           ref_dates[:due] = closed_date
         end
-        new_dates = self.advance(ref_dates)
-        return if new_dates.nil?
-        self.create(new_dates, as_user)
       end
+    end
+    ref_dates
+  end
+
+  def renew(as_user)
+    case self.anchor_mode.to_sym
+    when :first_issue_fixed
+      ref_dates = self.reference_dates
+      return if ref_dates.nil?
+      prev_dates = self.advance(-1, ref_dates)
+      while (prev_dates[:start] || prev_dates[:due]) < Date.tomorrow
+        new_dates = self.advance(ref_dates)
+        break if new_dates.nil?
+        self.create(new_dates, as_user)
+        prev_dates = new_dates
+      end
+    when :last_issue_fixed
+      ref_dates = self.reference_dates
+      return if ref_dates.nil?
+      while (ref_dates[:start] || ref_dates[:due]) < Date.tomorrow
+        new_dates = self.advance(ref_dates)
+        break if new_dates.nil?
+        self.create(new_dates, as_user)
+        ref_dates = new_dates
+      end
+    when :last_issue_flexible, :last_issue_flexible_on_delay
+      ref_dates = self.reference_dates
+      return if ref_dates.nil?
+      new_dates = self.advance(ref_dates)
+      return if new_dates.nil?
+      self.create(new_dates, as_user)
     end
   end
 
