@@ -28,6 +28,7 @@ class IssueRecurrence < ActiveRecord::Base
   }
 
   validates :issue, presence: true, associated: true
+  validate { errors.add(:issue, :insufficient_privileges) unless self.editable? }
   validates :last_issue, associated: true
   validates :count, numericality: {greater_than_or_equal: 0, only_integer: true}
   validates :creation_mode, inclusion: {in: creation_modes.keys}
@@ -49,14 +50,27 @@ class IssueRecurrence < ActiveRecord::Base
   validates :count_limit, absence: {if: "date_limit.present?"},
     numericality: {allow_nil: true, only_integer: true}
 
-  after_initialize :set_defaults
+  after_initialize do
+    if new_record?
+      self.count = 0
+      self.creation_mode ||= :copy_first
+      self.anchor_mode ||= :first_issue_fixed
+      self.mode ||= :monthly_day_from_first
+      self.multiplier ||= 1
+      self.include_children ||= true
+    end
+  end
+  before_destroy :valid?
 
   def visible?
-    self.issue.visible?
+    self.issue.visible? &&
+      User.current.allowed_to?(:view_issue_recurrences, self.issue.project)
   end
 
-  def deletable?
-    self.visible? && User.current.allowed_to?(:manage_issue_recurrences, self.issue.project)
+  def editable?
+    self.visible? && 
+      self.issue.attributes_editable?(User.current) &&
+      User.current.allowed_to?(:manage_issue_recurrences, self.issue.project)
   end
 
   def to_s
@@ -231,19 +245,6 @@ class IssueRecurrence < ActiveRecord::Base
     as_user = options[:as] && User.find_by(name: options[:as])
     IssueRecurrence.all.each do |r|
       r.renew(as_user)
-    end
-  end
-
-  protected
-
-  def set_defaults
-    if new_record?
-      self.count = 0
-      self.creation_mode ||= :copy_first
-      self.anchor_mode ||= :first_issue_fixed
-      self.mode ||= :monthly_day_from_first
-      self.multiplier ||= 1
-      self.include_children ||= true
     end
   end
 

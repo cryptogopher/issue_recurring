@@ -431,14 +431,14 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   # TODO:
   # - timespan much larger than recurrence period
-  # - first_issue_fixed with date movement forward/backward on issue and last
-  # recurrence
   # - issue without start/due/both dates
   # - first_issue_fixed monthly with date > 28 recurring through February
   # - monthly_dow with same dow (2nd Tuesday+2nd Thursday) + month when 1st
   # Thursday is before 1st Tuesaday (start date ater than end date)
   # - monthly_dow when there is 5th day of week in one month but not in
   # subsequent (and generally all recurrences that yield overflow)
+  # - first_issue_fixed with date movement forward/backward on issue and last
+  # recurrence
 
   # tests of creation modes
 end

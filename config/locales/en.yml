@@ -1,5 +1,13 @@
 # English strings go here for Rails i18n
 en:
+  activerecord:
+    errors:
+      models:
+        issue_recurrence:
+          attributes:
+            issue:
+              insufficient_privileges:
+                'you have insufficient privileges to edit recurrence to this issue'
   label_recurrences: 'Recurrences'
   journal_title: 'Issue recurrence'
   issues:
