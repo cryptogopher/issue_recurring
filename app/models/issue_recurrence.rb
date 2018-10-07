@@ -46,6 +46,7 @@ class IssueRecurrence < ActiveRecord::Base
     }
   validates :mode, inclusion: {in: modes.keys}
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
+  validates :include_subtasks, inclusion: {in: [true, false]}
   validates :date_limit, absence: {if: "count_limit.present?"}
   validates :count_limit, absence: {if: "date_limit.present?"},
     numericality: {allow_nil: true, only_integer: true}
@@ -57,7 +58,7 @@ class IssueRecurrence < ActiveRecord::Base
       self.anchor_mode ||= :first_issue_fixed
       self.mode ||= :monthly_day_from_first
       self.multiplier ||= 1
-      self.include_children ||= true
+      self.include_subtasks = true if self.include_subtasks.nil?
     end
   end
   before_destroy :valid?
@@ -75,6 +76,7 @@ class IssueRecurrence < ActiveRecord::Base
 
   def to_s
     s = 'issues.recurrences.form'
+
     ref_dates = self.reference_dates
     ref_modifiers = Hash.new('')
     unless ref_dates.nil?
@@ -91,25 +93,26 @@ class IssueRecurrence < ActiveRecord::Base
             #wdays_from_bom:
             #wdays_to_eom:
           }
-          ref_modifiers[label] = "#{label.to_s} #{l("mode.modifier.#{self.mode}", values)}"
+          ref_modifiers[label] = "#{label.to_s}" \
+            " #{l("#{s}.mode_modifiers.#{self.mode}", values)}"
         end
       end
     end
 
-    "#{l(".recur_this_issue_by", scope: s)}" \
-      " #{l(".creation_modes.#{self.creation_mode}", scope: s)}" \
-      " #{self.include_children ? l(".including", scope: s) : l(".excluding", scope: s)}" \
-      " #{l(".children_issues", scope: s)}" \
-      " #{l(".every", scope: s)}" \
+    "#{l("#{s}.recur_this_issue_by")}" \
+      " #{l("#{s}.creation_modes.#{self.creation_mode}")}" \
+      " #{self.include_subtasks ? l("#{s}.including") : l("#{s}.excluding")}" \
+      " #{l("#{s}.subtasks")}" \
+      " #{l("#{s}.every")}" \
       " #{self.multiplier}" \
-      " #{l("mode.interval.#{self.mode}").pluralize(self.multiplier)}" \
+      " #{l("#{s}.mode_intervals.#{self.mode}").pluralize(self.multiplier)}," \
       " #{ref_modifiers.values.to_sentence}" \
-      " #{l(".relative_to", scope: s)}" \
+      " #{l("#{s}.relative_to")}" \
       " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
-      " #{l(".until", scope: s)}" \
-      " #{"#{l(self.date_limit)}" if self.date_limit.present?}" \
-      " #{"#{self.count_limit} recurrences" if self.count_limit.present?}" \
-      " #{"#{l(".forever", scope: s)}" if self.date_limit.nil? && self.count_limit.nil?}"
+      " #{l("#{s}.until")}" \
+      " #{"#{l(self.date_limit)}." if self.date_limit.present?}" \
+      " #{"#{self.count_limit} recurrences." if self.count_limit.present?}" \
+      " #{"#{l("#{s}.forever")}." if self.date_limit.nil? && self.count_limit.nil?}"
   end
 
   # Advance 'dates' according to recurrence mode and adjustment (+/- # of periods).
@@ -198,10 +201,10 @@ class IssueRecurrence < ActiveRecord::Base
     ref_issue.init_journal(User.current, l(:journal_recurrence))
 
     new_issue = (self.creation_mode.to_sym == :in_place) ? self.issue :
-      ref_issue.copy(nil, subtasks: self.include_children)
+      ref_issue.copy(nil, subtasks: self.include_subtasks)
     new_issue.save!
 
-    if self.include_children
+    if self.include_subtasks
       new_issue.reload.descendants.each do |child|
         child_dates = self.advance(start: child.start_date, due: child.due_date)
         child.start_date = child_dates[:start] 

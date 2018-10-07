@@ -5,7 +5,7 @@
         <tr id="recurrence-<%= recurrence.id %>" class="<%= cycle('odd', 'even') %>">
           <td class="description"><%= recurrence.to_s %></td>
           <td class="buttons">
-            <%= link_to l(:button_delete), issue_recurrences_path(recurrence),
+            <%= link_to l(:button_delete), recurrence_path(recurrence),
               method: :delete, remote: true, class: 'icon icon-del' if recurrence.editable? %>
         </td>
         </tr>

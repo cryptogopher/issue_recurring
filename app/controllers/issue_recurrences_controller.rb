@@ -21,6 +21,7 @@ class IssueRecurrencesController < ApplicationController
   def recurrence_params
     params.require(:recurrence).permit(
       :creation_mode,
+      :include_subtasks,
       :anchor_mode,
       :mode,
       :multiplier,
