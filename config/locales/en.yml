@@ -13,13 +13,12 @@ en:
   issues:
     recurrences:
       form:
-        recur_this_issue_by: 'Recur this issue by'
         creation_modes:
-          copy_first: 'copying it'
-          copy_last: 'copying its last recurrence'
-          in_place: 'modifying it in-place'
-        including: 'including'
-        excluding: 'excluding'
+          copy_first: 'Copy <b>issue</b>'
+          copy_last: 'Copy <b>last recurrence</b> of issue'
+          in_place: 'Modify issue <b>in-place</b>'
+        including_subtasks: 'including subtasks'
+        excluding_subtasks: 'excluding subtasks'
         subtasks: 'subtasks'
         every: 'every'
         modes:
@@ -54,11 +53,11 @@ en:
           yearly: ''
         relative_to: 'relative to'
         anchor_modes:
-          first_issue_fixed: 'this issue date'
-          last_issue_fixed: 'last recurrence date'
-          last_issue_flexible: 'last recurrence close date (next recurrence is created only after closing previous one)'
-          last_issue_flexible_on_delay: 'last recurrence date if closed on time, close date otherwise'
-        until: 'and repeat until'
+          first_issue_fixed: 'this <b>issue date</b>'
+          last_issue_fixed: '<b>last recurrence date</b>'
+          last_issue_flexible: '<b>last recurrence close date</b> (next recurrence is created only after closing previous one)'
+          last_issue_flexible_on_delay: '<b>last recurrence date if closed on time</b>, close date otherwise'
+        until: 'and repeat <b>until</b>'
         forever: 'forever'
         user_date: 'user provided date'
         recurrences: 'recurrences'

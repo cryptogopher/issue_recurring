@@ -58,7 +58,7 @@ class IssueRecurrence < ActiveRecord::Base
       self.anchor_mode ||= :first_issue_fixed
       self.mode ||= :monthly_day_from_first
       self.multiplier ||= 1
-      self.include_subtasks = true if self.include_subtasks.nil?
+      self.include_subtasks = false if self.include_subtasks.nil?
     end
   end
   before_destroy :valid?
@@ -99,20 +99,18 @@ class IssueRecurrence < ActiveRecord::Base
       end
     end
 
-    "#{l("#{s}.recur_this_issue_by")}" \
-      " #{l("#{s}.creation_modes.#{self.creation_mode}")}" \
-      " #{self.include_subtasks ? l("#{s}.including") : l("#{s}.excluding")}" \
-      " #{l("#{s}.subtasks")}" \
+    "#{l("#{s}.creation_modes.#{self.creation_mode}")}" \
+      " <b>#{l("#{s}.including_subtasks") if self.include_subtasks}</b>" \
       " #{l("#{s}.every")}" \
-      " #{self.multiplier}" \
-      " #{l("#{s}.mode_intervals.#{self.mode}").pluralize(self.multiplier)}," \
+      " <b>#{self.multiplier}" \
+      " #{l("#{s}.mode_intervals.#{self.mode}").pluralize(self.multiplier)}</b>," \
       " #{ref_modifiers.values.to_sentence}" \
       " #{l("#{s}.relative_to")}" \
       " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
-      " #{l("#{s}.until")}" \
-      " #{"#{l(self.date_limit)}." if self.date_limit.present?}" \
-      " #{"#{self.count_limit} recurrences." if self.count_limit.present?}" \
-      " #{"#{l("#{s}.forever")}." if self.date_limit.nil? && self.count_limit.nil?}"
+      "#{"." if self.date_limit.nil? && self.count_limit.nil?}" \
+      " #{l("#{s}.until") if self.date_limit.present? || self.count_limit.present?}" \
+      " #{"<b>#{self.date_limit}</b>." if self.date_limit.present?}" \
+      " #{"<b>#{self.count_limit} recurrences</b>." if self.count_limit.present?}".html_safe
   end
 
   # Advance 'dates' according to recurrence mode and adjustment (+/- # of periods).
