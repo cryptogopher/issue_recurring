@@ -8,9 +8,11 @@ en:
             issue:
               insufficient_privileges:
                 'you have insufficient privileges to edit recurrence to this issue'
-  label_recurrences: 'Recurrences'
   journal_title: 'Issue recurrence'
+  project_menu_caption: 'Issue recurrences'
   issues:
+    issue_recurrences_hook:
+      recurrences: 'Recurrences'
     recurrences:
       index:
         last_recurrence: 'Last&nbsp;recurrence:'

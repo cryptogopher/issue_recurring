@@ -14,10 +14,14 @@ Redmine::Plugin.register :issue_recurring do
   url 'https://github.com/cryptogopher/issue_recurring'
   author_url 'https://github.com/cryptogopher'
 
-  project_module :issue_tracking do
+  project_module :issue_recurring do
     permission :view_issue_recurrences, {:issue_recurrences => [:index]},
       read: true
     permission :manage_issue_recurrences, {:issue_recurrences => [:create, :destroy]},
       require: :loggedin
   end
+  menu :project_menu, :issue_recurrences,
+    {:controller => 'issue_recurrences', :action => 'index'},
+    :caption => :project_menu_caption,
+    :after => :issues, :param => :project_id
 end

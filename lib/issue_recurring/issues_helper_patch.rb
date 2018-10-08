@@ -41,8 +41,8 @@ module IssueRecurring
       end
 
       def next_recurrence_date(r)
-        "#{t ".next_recurrence"}" \
-          " #{"#{r.next[:start]}" if r.next[:start]}" \
+        "#{t ".next_recurrence"} " \
+          "#{"#{r.next[:start]}" if r.next[:start]}" \
           " -" \
           " #{"#{r.next[:due]}" if r.next[:due]}".html_safe
       end

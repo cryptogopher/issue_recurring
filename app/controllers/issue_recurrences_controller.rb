@@ -1,7 +1,11 @@
 class IssueRecurrencesController < ApplicationController
+  before_filter :find_project, only: [:index]
   before_filter :find_issue, only: [:create]
   before_filter :find_recurrence, only: [:destroy]
-  before_filter :authorize, only: [:create, :destroy]
+  before_filter :authorize
+
+  def index
+  end
 
   def create
     @recurrence = IssueRecurrence.new(recurrence_params)
@@ -32,6 +36,12 @@ class IssueRecurrencesController < ApplicationController
 
   # :find_* methods are called before :authorize,
   # @project is required for :authorize to succeed
+  def find_project
+    @project = Project.find(params[:project_id])
+  rescue ActiveRecord::RecordNotFound
+    render_404
+  end
+
   def find_issue
     @issue = Issue.find(params[:issue_id])
     @project = @issue.project
