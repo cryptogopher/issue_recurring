@@ -265,6 +265,15 @@ class IssueRecurrence < ActiveRecord::Base
     ref_dates
   end
 
+  # Return predicted next recurrence dates or nils.
+  def next
+    ref_dates = self.reference_dates
+    return {} if ref_dates.nil?
+    dates = self.advance(ref_dates)
+    return {} if dates.nil?
+    dates
+  end
+
   def renew(as_user)
     case self.anchor_mode.to_sym
     when :first_issue_fixed

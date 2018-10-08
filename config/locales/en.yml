@@ -12,6 +12,9 @@ en:
   journal_title: 'Issue recurrence'
   issues:
     recurrences:
+      index:
+        last_recurrence: 'Last&nbsp;recurrence:'
+        next_recurrence: 'Next&nbsp;recurrence:'
       form:
         creation_modes:
           copy_first: 'Copy <b>issue</b>'

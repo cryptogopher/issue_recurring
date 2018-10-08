@@ -28,6 +28,24 @@ module IssueRecurring
       def issue_start_date
         @issue.start_date || @issue.due_date
       end
+
+      def last_recurrence(r)
+        s = "#{t ".last_recurrence"} "
+        if r.last_issue.present?
+          s += "#{link_to("##{r.last_issue.id}", issue_path(r.last_issue)) }" \
+            "#{r.last_date.start_date} - #{r.last_date.due_date}"
+        else
+          s += "-"
+        end
+        s.html_safe
+      end
+
+      def next_recurrence_date(r)
+        "#{t ".next_recurrence"}" \
+          " #{"#{r.next[:start]}" if r.next[:start]}" \
+          " -" \
+          " #{"#{r.next[:due]}" if r.next[:due]}".html_safe
+      end
     end
   end
 end
