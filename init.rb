@@ -4,6 +4,8 @@ ActionDispatch::Reloader.to_prepare do
   Issue.include IssueRecurring::IssuePatch
   IssuesController.include IssueRecurring::IssuesControllerPatch
   IssuesHelper.include IssueRecurring::IssuesHelperPatch
+
+  Project.include IssueRecurring::ProjectPatch
 end
 
 Redmine::Plugin.register :issue_recurring do

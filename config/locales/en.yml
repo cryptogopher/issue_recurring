@@ -8,8 +8,20 @@ en:
             issue:
               insufficient_privileges:
                 'you have insufficient privileges to edit recurrence to this issue'
-  journal_title: 'Issue recurrence'
   project_menu_caption: 'Issue recurrences'
+  journal_title: 'Issue recurrence'
+  issue_recurrences:
+    index:
+      heading: 'Issue recurrences'
+      issue: 'Issue'
+      last_recurrence: 'Last recurrence'
+      mode: 'Every'
+      next_recurrence: 'Next recurrence'
+      include_subtasks: 'Subtasks?'
+      creation_mode: 'Create'
+      anchor_mode: 'Relative to'
+      limit: 'Limit'
+      count: '#'
   issues:
     issue_recurrences_hook:
       recurrences: 'Recurrences'

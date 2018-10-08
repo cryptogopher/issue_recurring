@@ -31,7 +31,7 @@ class IssueRecurrence < ActiveRecord::Base
   validate { errors.add(:issue, :insufficient_privileges) unless self.editable? }
   validates :last_issue, associated: true
   validates :count, numericality: {greater_than_or_equal: 0, only_integer: true}
-  validates :creation_mode, inclusion: {in: creation_modes.keys}
+  validates :creation_mode, inclusion: creation_modes.keys
   validates :anchor_mode,
     inclusion: {
       in: anchor_modes.keys,
@@ -44,9 +44,9 @@ class IssueRecurrence < ActiveRecord::Base
       message: "has to be 'last_issue_flexible{_on_delay}'" \
         " if issue has no start/due date set or creation mode is 'in_place'"
     }
-  validates :mode, inclusion: {in: modes.keys}
+  validates :mode, inclusion: modes.keys
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
-  validates :include_subtasks, inclusion: {in: [true, false]}
+  validates :include_subtasks, inclusion: [true, false]
   validates :date_limit, absence: {if: "count_limit.present?"}
   validates :count_limit, absence: {if: "date_limit.present?"},
     numericality: {allow_nil: true, only_integer: true}

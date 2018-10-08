@@ -1,0 +1,41 @@
+<h2><%= t ".heading" %></h2>
+
+<% if @recurrences.present? %>
+  <table id="recurrences" class="list odd-even">
+    <thead>
+      <tr>
+        <th><%= t '.issue' %></th>
+        <th><%= t '.last_recurrence' %></th>
+        <th><%= t '.mode' %></th>
+        <th><%= t '.next_recurrence' %></th>
+        <th><%= t '.include_subtasks' %></th>
+        <th><%= t '.creation_mode' %></th>
+        <th><%= t '.anchor_mode' %></th>
+        <th><%= t '.limit' %></th>
+        <th><%= t '.count' %></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    <% @recurrences.each do |r| %>
+      <% if r.visible? %>
+        <tr id="recurrence-<%= r.id %>" class="<%= cycle('odd', 'even') %>">
+          <td class="subject"><%= issue_link(r) %></td>
+          <td class="last"><%= last_recurrence(r, false) %></td>
+          <td class="mode"><%= mode(r) %></td>
+          <td class="next"><%= next_recurrence_date(r, false) %></td>
+          <td class="subtasks"><%= checked_image r.include_subtasks %></td>
+          <td class="creation"><%= creation_mode(r) %></td>
+          <td class="anchor"><%= anchor_mode(r) %></td>
+          <td class="limit"><%= limit_condition(r) %></td>
+          <td class="count"><%= r.count %></td>
+          <td class="buttons"><%= delete_button(r) %></td>
+        </tr>
+      <% end %>
+    <% end %>
+    <% reset_cycle %>
+    </tbody>
+  </table>
+<% else %>
+  <div class="nodata"><%= l(:label_no_data) %></div>
+<% end %>

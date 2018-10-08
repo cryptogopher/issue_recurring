@@ -29,8 +29,8 @@ module IssueRecurring
         @issue.start_date || @issue.due_date
       end
 
-      def last_recurrence(r)
-        s = "#{t ".last_recurrence"} "
+      def last_recurrence(r, intro=true)
+        s = intro ? "#{t ".last_recurrence"} " : ""
         if r.last_issue.present?
           s += "#{link_to("##{r.last_issue.id}", issue_path(r.last_issue)) }" \
             "#{r.last_date.start_date} - #{r.last_date.due_date}"
@@ -40,11 +40,16 @@ module IssueRecurring
         s.html_safe
       end
 
-      def next_recurrence_date(r)
-        "#{t ".next_recurrence"} " \
+      def next_recurrence_date(r, intro=true)
+        "#{"#{t ".next_recurrence"} " if intro}" \
           "#{"#{r.next[:start]}" if r.next[:start]}" \
           " -" \
           " #{"#{r.next[:due]}" if r.next[:due]}".html_safe
+      end
+
+      def delete_button(r)
+        link_to l(:button_delete), recurrence_path(r), method: :delete, remote: true,
+          class: 'icon icon-del' if r.editable?
       end
     end
   end

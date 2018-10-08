@@ -8,10 +8,7 @@
             <p><%= last_recurrence(recurrence) %></p>
             <p><%= next_recurrence_date(recurrence) %></p>
           </td>
-          <td class="buttons">
-            <%= link_to l(:button_delete), recurrence_path(recurrence),
-              method: :delete, remote: true, class: 'icon icon-del' if recurrence.editable? %>
-        </td>
+          <td class="buttons"><%= delete_button(recurrence) %></td>
         </tr>
       <% end %>
     <% end %>

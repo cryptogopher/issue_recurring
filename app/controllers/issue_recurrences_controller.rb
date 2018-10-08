@@ -4,7 +4,10 @@ class IssueRecurrencesController < ApplicationController
   before_filter :find_recurrence, only: [:destroy]
   before_filter :authorize
 
+  helper :issues
+
   def index
+    @recurrences = @project.recurrences
   end
 
   def create
