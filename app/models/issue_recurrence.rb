@@ -135,6 +135,8 @@ class IssueRecurrence < ActiveRecord::Base
   # Advance 'dates' according to recurrence mode and adjustment (+/- # of periods).
   # Return advanced 'dates' or nil if recurrence limit reached.
   def advance(adj=0, **dates)
+    return nil if self.count_limit.present? && self.count >= self.count_limit
+
     shift = self.anchor_mode.to_sym == :first_issue_fixed ?
       self.multiplier*(self.count + 1 + adj) : self.multiplier*(1 + adj)
 
@@ -191,6 +193,8 @@ class IssueRecurrence < ActiveRecord::Base
         end
     end
 
+    return nil if self.date_limit.present? && (dates[:start] || dates[:due]) > self.date_limit
+
     dates
   end
 
@@ -210,6 +214,24 @@ class IssueRecurrence < ActiveRecord::Base
     end
   end
 
+  # Delay 'dates' according to delay mode.
+  def delay(**dates)
+    dates if (self.delay_multiplier == 0) || (self.count > 0)
+    dates.each do |label, date|
+      next if date.nil?
+      dates[label] +=
+        case self.delay_mode.to_sym
+        when :day
+          self.delay_multiplier.days
+        when :week
+          self.delay_multiplier.weeks
+        when :month
+          self.delay_multiplier.months
+        end
+    end
+  end
+
+  # Create next recurrence issue. Assumes that 'advance' will return valid date.
   def create(dates, as_user)
     ref_issue = (self.creation_mode.to_sym == :copy_last) ? self.last_issue : self.issue
 
@@ -256,6 +278,7 @@ class IssueRecurrence < ActiveRecord::Base
         logger.warn("Issue ##{self.issue.id} has no dates to allow for recurrence renewal.") 
         ref_dates = nil
       end
+      self.delay(ref_dates)
     when :last_issue_fixed
       ref_issue = self.last_issue || self.issue
       ref_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
@@ -263,6 +286,7 @@ class IssueRecurrence < ActiveRecord::Base
         logger.warn("Issue ##{ref_issue.id} has no dates to allow for recurrence renewal.") 
         ref_dates = nil
       end
+      self.delay(ref_dates)
     when :last_issue_flexible, :last_issue_flexible_on_delay
       ref_issue = self.last_issue || self.issue
       if ref_issue.closed?
