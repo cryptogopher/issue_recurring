@@ -6,8 +6,15 @@ en:
         issue_recurrence:
           attributes:
             issue:
-              insufficient_privileges:
-                'you have insufficient privileges to edit recurrence to this issue'
+              insufficient_privileges: 'you have insufficient privileges to edit recurrence
+                to this issue'
+            anchor_mode:
+              delay_fixed_only: 'delay cannot be specified for recurrences relative to close
+                date'
+              blank_dates_flexible_only: 'only recurrences relative to issue close date can
+                be created for issue with both (start and due) dates blank'
+              in_place_flexible_only: 'only recurrences relative to issue close date can
+                modify issue in-place'
   project_menu_caption: 'Issue recurrences'
   journal_title: 'Issue recurrence'
   issue_recurrences:
@@ -72,8 +79,10 @@ en:
         anchor_modes:
           first_issue_fixed: 'this <b>issue date</b>'
           last_issue_fixed: '<b>last recurrence date</b>'
-          last_issue_flexible: '<b>last recurrence close date</b> (next recurrence is created only after closing previous one)'
-          last_issue_flexible_on_delay: '<b>last recurrence date if closed on time</b>, close date otherwise'
+          last_issue_flexible: '<b>last recurrence close date</b>
+            (next recurrence is created only after closing previous one)'
+          last_issue_flexible_on_delay: '<b>last recurrence date if closed on time</b>,
+            close date otherwise'
         delayed_by: 'delayed by'
         delay_modes:
           day: 'day(s)'

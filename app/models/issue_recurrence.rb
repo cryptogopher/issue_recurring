@@ -38,17 +38,24 @@ class IssueRecurrence < ActiveRecord::Base
   validates :last_issue, associated: true
   validates :count, numericality: {greater_than_or_equal: 0, only_integer: true}
   validates :creation_mode, inclusion: creation_modes.keys
+  validates :anchor_mode, inclusion: anchor_modes.keys
   validates :anchor_mode,
     inclusion: {
-      in: anchor_modes.keys,
-      if: "(issue.start_date || issue.due_date).present?"
+      in: [:first_issue_fixed, :last_issue_fixed],
+      if: "delay_multiplier > 0",
+      message: :delay_fixed_only
     }
   validates :anchor_mode,
     inclusion: {
-    in: [:last_issue_flexible, :last_issue_flexible_on_delay],
-      if: "(issue.start_date || issue.due_date).blank? || (creation_mode == :in_place)",
-      message: "has to be 'last_issue_flexible{_on_delay}'" \
-        " if issue has no start/due date set or creation mode is 'in_place'"
+      in: [:last_issue_flexible, :last_issue_flexible_on_delay],
+      if: "(issue.start_date || issue.due_date).blank?",
+      message: :blank_dates_flexible_only
+    }
+  validates:anchor_mode,
+    inclusion: {
+      in: [:last_issue_flexible, :last_issue_flexible_on_delay],
+      if: "creation_mode == :in_place",
+      message: :in_place_flexible_only
     }
   validates :mode, inclusion: modes.keys
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
