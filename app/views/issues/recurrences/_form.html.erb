@@ -12,12 +12,13 @@
     <%= t '.every' %>
     <%= f.number_field :multiplier, min: 1, step: 1, value: 1 %>
     <%= f.select :mode, mode_options %>
-  </p>
-  <p>
     <%= t '.relative_to' %>
     <% options, selected, disabled = anchor_mode_options %>
     <%= f.select :anchor_mode, options, selected: selected, disabled: disabled %>
-  <%= "#{sanitize(t('.until'), tags:{})}:" %>
+    <%= t '.delayed_by' %>
+    <%= f.number_field :delay_multiplier, min: 0, step: 1, value: 0 %>
+    <%= f.select :delay_mode, delay_mode_options %>
+    <%= "#{sanitize(t('.until'), tags:{})}:" %>
   </p>
   <p>
     <%= label_tag do %>

@@ -74,8 +74,18 @@ en:
           last_issue_fixed: '<b>last recurrence date</b>'
           last_issue_flexible: '<b>last recurrence close date</b> (next recurrence is created only after closing previous one)'
           last_issue_flexible_on_delay: '<b>last recurrence date if closed on time</b>, close date otherwise'
+        delayed_by: 'delayed by'
+        delay_modes:
+          day: 'day(s)'
+          week: 'week(s)'
+          month: 'month(s)'
+        delay_intervals:
+          day: 'day'
+          week: 'week'
+          month: 'month'
         until: 'and repeat <b>until</b>'
         forever: 'forever'
         user_date: 'user provided date'
-        recurrences: 'recurrences'
+        recurrences: 'recurrence(s)'
+        recurrence: 'recurrence'
 

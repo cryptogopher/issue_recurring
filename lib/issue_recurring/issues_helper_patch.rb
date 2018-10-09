@@ -25,6 +25,13 @@ module IssueRecurring
         [options, selected, disabled]
       end
 
+      def delay_mode_options
+        translations = t('.delay_modes')
+        IssueRecurrence.delay_modes.map do |k,v|
+          [translations[k.to_sym], k]
+        end
+      end
+
       def issue_start_date
         @issue.start_date || @issue.due_date
       end

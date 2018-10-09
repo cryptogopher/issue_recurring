@@ -27,6 +27,12 @@ class IssueRecurrence < ActiveRecord::Base
     yearly: 8
   }
 
+  enum delay_mode: {
+    day: 0,
+    week: 1,
+    month: 2
+  }
+
   validates :issue, presence: true, associated: true
   validate { errors.add(:issue, :insufficient_privileges) unless self.editable? }
   validates :last_issue, associated: true
@@ -46,6 +52,8 @@ class IssueRecurrence < ActiveRecord::Base
     }
   validates :mode, inclusion: modes.keys
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
+  validates :delay_mode, inclusion: delay_modes.keys
+  validates :delay_multiplier, numericality: {greater_than_or_equal_to: 0, only_integer: true}
   validates :include_subtasks, inclusion: [true, false]
   validates :date_limit, absence: {if: "count_limit.present?"}
   validates :count_limit, absence: {if: "date_limit.present?"},
@@ -58,6 +66,8 @@ class IssueRecurrence < ActiveRecord::Base
       self.anchor_mode ||= :first_issue_fixed
       self.mode ||= :monthly_day_from_first
       self.multiplier ||= 1
+      self.delay_mode ||= :day
+      self.delay_multiplier ||= 0
       self.include_subtasks = false if self.include_subtasks.nil?
     end
   end
@@ -99,6 +109,14 @@ class IssueRecurrence < ActiveRecord::Base
       end
     end
 
+    delay_info = self.delay_multiplier > 0 ?
+      " #{l("#{s}.delayed_by")} <b>#{self.delay_multiplier}" \
+      " #{l("#{s}.delay_intervals.#{self.delay_mode}").pluralize(self.delay_multiplier)}" \
+      "</b>" : ''
+
+    count_limit_info = self.count_limit.present? ? " #{"<b>#{self.count_limit}" \
+        " #{l("#{s}.recurrence").pluralize(self.count_limit)}</b>."}" : ''
+
     "#{l("#{s}.creation_modes.#{self.creation_mode}")}" \
       " <b>#{l("#{s}.including_subtasks") if self.include_subtasks}</b>" \
       " #{l("#{s}.every")}" \
@@ -107,10 +125,11 @@ class IssueRecurrence < ActiveRecord::Base
       " #{ref_modifiers.values.to_sentence}" \
       " #{l("#{s}.relative_to")}" \
       " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
+      "#{delay_info}" \
       "#{"." if self.date_limit.nil? && self.count_limit.nil?}" \
       " #{l("#{s}.until") if self.date_limit.present? || self.count_limit.present?}" \
       " #{"<b>#{self.date_limit}</b>." if self.date_limit.present?}" \
-      " #{"<b>#{self.count_limit} recurrences</b>." if self.count_limit.present?}".html_safe
+      "#{count_limit_info}".html_safe
   end
 
   # Advance 'dates' according to recurrence mode and adjustment (+/- # of periods).

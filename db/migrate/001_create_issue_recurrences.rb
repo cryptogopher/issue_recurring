@@ -8,6 +8,8 @@ class CreateIssueRecurrences < ActiveRecord::Migration
       t.integer :anchor_mode
       t.integer :mode
       t.integer :multiplier
+      t.integer :delay_mode
+      t.integer :delay_multiplier
       t.boolean :include_subtasks
       t.date :date_limit
       t.integer :count_limit

@@ -32,6 +32,8 @@ class IssueRecurrencesController < ApplicationController
       :anchor_mode,
       :mode,
       :multiplier,
+      :delay_mode,
+      :delay_multiplier,
       :date_limit,
       :count_limit
     )

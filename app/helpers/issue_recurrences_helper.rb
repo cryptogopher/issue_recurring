@@ -13,7 +13,8 @@ module IssueRecurrencesHelper
   end
 
   def anchor_mode(r)
-    case r.anchor_mode.to_sym
+    s = 'issues.recurrences.form.delay_intervals'
+    t = case r.anchor_mode.to_sym
     when :first_issue_fixed
       "first issue"
     when :last_issue_fixed
@@ -23,6 +24,9 @@ module IssueRecurrencesHelper
     when :last_issue_flexible_on_delay
       "last issue close if delayed"
     end
+    t += r.delay_multiplier > 0 ? " + #{r.delay_multiplier}" \
+      " #{l("#{s}.#{r.delay_mode}").pluralize(r.delay_multiplier)}" : ''
+    t
   end
 
   def limit_condition(r)
