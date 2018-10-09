@@ -40,7 +40,7 @@ module IssueRecurring
         s = intro ? "#{t ".last_recurrence"} " : ""
         if r.last_issue.present?
           s += "#{link_to("##{r.last_issue.id}", issue_path(r.last_issue)) }" \
-            "#{r.last_date.start_date} - #{r.last_date.due_date}"
+            "#{r.last_issue.start_date} - #{r.last_issue.due_date}"
         else
           s += "-"
         end

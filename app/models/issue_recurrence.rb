@@ -100,8 +100,8 @@ class IssueRecurrence < ActiveRecord::Base
             dows_from_bom: ((date.mday - 1) / 7 + 1).ordinalize,
             dows_to_eom: (((date.end_of_month.mday - date.mday).to_i / 7) + 1).ordinalize,
             # TODO
-            #wdays_from_bom:
-            #wdays_to_eom:
+            wdays_from_bom: '',
+            wdays_to_eom: ''
           }
           ref_modifiers[label] = "#{label.to_s}" \
             " #{l("#{s}.mode_modifiers.#{self.mode}", values)}"
