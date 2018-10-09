@@ -3,9 +3,11 @@ module IssueRecurring
     IssuesHelper.class_eval do
       def creation_mode_options
         translations = t('.creation_modes')
-        IssueRecurrence.creation_modes.map do |k,v|
+        options = IssueRecurrence.creation_modes.map do |k,v|
           [sanitize(translations[k.to_sym], tags:{}), k]
         end
+        disabled = @recurrence.fixed? ? [:in_place] : []
+        [options, disabled]
       end
 
       def mode_options
@@ -16,13 +18,18 @@ module IssueRecurring
       end
 
       def anchor_mode_options
-        dates = {start: @issue.start_date, due: @issue.due_date}
+        issue_has_date = (@issue.start_date || @issue.due_date).present?
         options = IssueRecurrence.anchor_modes.map do |k,v|
-          [sanitize(t(".anchor_modes.#{k}", dates), tags:{}), k]
+          next if !issue_has_date && IssueRecurrence::FIXED_MODES.include?(k.to_sym)
+          [sanitize(t(".anchor_modes.#{k}"), tags:{}), k]
         end
-        selected = issue_start_date.present? ? [:first_issue_fixed] : [:last_issue_fixed]
-        disabled = issue_start_date.blank? ? [:first_issue_fixed] : []
-        [options, selected, disabled]
+        options.compact!
+
+        disabled = []
+        disabled = IssueRecurrence::FIXED_MODES if @recurrence.creation_mode == 'in_place'
+        disabled += IssueRecurrence::FLEXIBLE_MODES if @recurrence.delay_multiplier > 0
+
+        [options, disabled]
       end
 
       def delay_mode_options
@@ -30,10 +37,6 @@ module IssueRecurring
         IssueRecurrence.delay_modes.map do |k,v|
           [translations[k.to_sym], k]
         end
-      end
-
-      def issue_start_date
-        @issue.start_date || @issue.due_date
       end
 
       def last_recurrence(r, intro=true)

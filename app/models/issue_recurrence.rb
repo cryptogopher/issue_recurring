@@ -14,6 +14,8 @@ class IssueRecurrence < ActiveRecord::Base
     last_issue_flexible: 2,
     last_issue_flexible_on_delay: 3
   }
+  FIXED_MODES = [:first_issue_fixed, :last_issue_fixed]
+  FLEXIBLE_MODES = [:last_issue_flexible, :last_issue_flexible_on_delay]
 
   enum mode: {
     daily: 0,
@@ -39,24 +41,21 @@ class IssueRecurrence < ActiveRecord::Base
   validates :count, numericality: {greater_than_or_equal: 0, only_integer: true}
   validates :creation_mode, inclusion: creation_modes.keys
   validates :anchor_mode, inclusion: anchor_modes.keys
-  validates :anchor_mode,
-    inclusion: {
-      in: [:first_issue_fixed, :last_issue_fixed],
-      if: "delay_multiplier > 0",
-      message: :delay_fixed_only
-    }
-  validates :anchor_mode,
-    inclusion: {
-      in: [:last_issue_flexible, :last_issue_flexible_on_delay],
-      if: "(issue.start_date || issue.due_date).blank?",
-      message: :blank_dates_flexible_only
-    }
-  validates:anchor_mode,
-    inclusion: {
-      in: [:last_issue_flexible, :last_issue_flexible_on_delay],
-      if: "creation_mode == :in_place",
-      message: :in_place_flexible_only
-    }
+  validates :anchor_mode, inclusion: {
+    in: FIXED_MODES,
+    if: "delay_multiplier > 0",
+    message: :delay_fixed_only
+  }
+  validates :anchor_mode, inclusion: {
+    in: FLEXIBLE_MODES,
+    if: "(issue.start_date || issue.due_date).blank?",
+    message: :blank_dates_flexible_only
+  }
+  validates:anchor_mode, inclusion: {
+    in: FLEXIBLE_MODES,
+    if: "creation_mode == :in_place",
+    message: :in_place_flexible_only
+  }
   validates :mode, inclusion: modes.keys
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
   validates :delay_mode, inclusion: delay_modes.keys
@@ -79,6 +78,14 @@ class IssueRecurrence < ActiveRecord::Base
     end
   end
   before_destroy :valid?
+
+  def fixed?
+    FIXED_MODES.include?(self.anchor_mode.to_sym)
+  end
+
+  def flexible?
+    FLEXIBLE_MODES.include?(self.anchor_mode.to_sym)
+  end
 
   def visible?
     self.issue.visible? &&
