@@ -3,7 +3,9 @@
   :html => {:id => 'new-recurrence-form', :style => 'display: none;'},
   :as => :recurrence do |f| %>
 
-  <%= error_messages_for 'recurrence' %>
+  <div id='recurrence-errors'>
+    <%= error_messages_for 'recurrence' %>
+  </div>
 
   <p>
     <% options, disabled = creation_mode_options %>

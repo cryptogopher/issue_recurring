@@ -14,8 +14,8 @@ class IssueRecurrence < ActiveRecord::Base
     last_issue_flexible: 2,
     last_issue_flexible_on_delay: 3
   }
-  FIXED_MODES = [:first_issue_fixed, :last_issue_fixed]
-  FLEXIBLE_MODES = [:last_issue_flexible, :last_issue_flexible_on_delay]
+  FIXED_MODES = anchor_modes.keys.select {|m| m.include?('_fixed')}
+  FLEXIBLE_MODES = anchor_modes.keys.select {|m| m.include?('_flexible')}
 
   enum mode: {
     daily: 0,
@@ -80,11 +80,11 @@ class IssueRecurrence < ActiveRecord::Base
   before_destroy :valid?
 
   def fixed?
-    FIXED_MODES.include?(self.anchor_mode.to_sym)
+    FIXED_MODES.include?(self.anchor_mode)
   end
 
   def flexible?
-    FLEXIBLE_MODES.include?(self.anchor_mode.to_sym)
+    FLEXIBLE_MODES.include?(self.anchor_mode)
   end
 
   def visible?

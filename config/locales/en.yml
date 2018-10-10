@@ -1,5 +1,7 @@
 # English strings go here for Rails i18n
 en:
+  errors:
+    format: '%{message}'
   activerecord:
     errors:
       models:

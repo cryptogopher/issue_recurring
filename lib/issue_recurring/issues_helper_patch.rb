@@ -20,7 +20,7 @@ module IssueRecurring
       def anchor_mode_options
         issue_has_date = (@issue.start_date || @issue.due_date).present?
         options = IssueRecurrence.anchor_modes.map do |k,v|
-          next if !issue_has_date && IssueRecurrence::FIXED_MODES.include?(k.to_sym)
+          next if !issue_has_date && IssueRecurrence::FIXED_MODES.include?(k)
           [sanitize(t(".anchor_modes.#{k}"), tags:{}), k]
         end
         options.compact!
