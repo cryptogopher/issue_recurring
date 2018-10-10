@@ -36,7 +36,7 @@ class IssueRecurrence < ActiveRecord::Base
   }
 
   validates :issue, presence: true, associated: true
-  validate { errors.add(:issue, :insufficient_privileges) unless self.editable? }
+  validate { errors.add(:issue, :insufficient_privileges) unless editable? }
   validates :last_issue, associated: true
   validates :count, numericality: {greater_than_or_equal: 0, only_integer: true}
   validates :creation_mode, inclusion: creation_modes.keys
@@ -62,6 +62,9 @@ class IssueRecurrence < ActiveRecord::Base
   validates :delay_multiplier, numericality: {greater_than_or_equal_to: 0, only_integer: true}
   validates :include_subtasks, inclusion: [true, false]
   validates :date_limit, absence: {if: "count_limit.present?"}
+  validate on: :create, if: "date_limit.present?" do
+    errors.add(:date_limit, :not_in_future) unless Date.current < date_limit
+  end
   validates :count_limit, absence: {if: "date_limit.present?"},
     numericality: {allow_nil: true, only_integer: true}
 

@@ -1,7 +1,10 @@
-$('#recurrences').html('<%= escape_javascript(render :partial => 'issues/recurrences/index') %>');
+$('#recurrences')
+  .html('<%= escape_javascript(render :partial => 'issues/recurrences/index') %>');
+
 <% if @recurrence.errors.present? %>
   $('#recurrence-errors').html('<%= escape_javascript(error_messages_for 'recurrence') %>');
 <% else %>
   $('#recurrence-errors').empty();
 <% end %>
+
 $('#new-recurrence-form').show();

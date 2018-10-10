@@ -17,6 +17,8 @@ en:
                 be created for issue with both (start and due) dates blank'
               in_place_flexible_only: 'only recurrences relative to issue close date can
                 modify issue in-place'
+            date_limit:
+              not_in_future: 'user provided recurrence limit date has to be in future'
   project_menu_caption: 'Issue recurrences'
   journal_title: 'Issue recurrence'
   issue_recurrences:
