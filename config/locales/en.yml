@@ -32,10 +32,13 @@ en:
   issues:
     issue_recurrences_hook:
       recurrences: 'Recurrences'
+      this_is_recurrence: 'This issue is a recurrence of issue'
+      button_details: 'Details'
     recurrences:
       index:
         last_recurrence: 'Last&nbsp;recurrence:'
         next_recurrence: 'Next&nbsp;recurrence:'
+      details:
       form:
         creation_modes:
           copy_first: 'Copy <b>issue</b>'

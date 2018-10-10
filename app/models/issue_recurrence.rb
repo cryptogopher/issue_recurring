@@ -264,6 +264,7 @@ class IssueRecurrence < ActiveRecord::Base
         child.due_date = child_dates[:due]
         child.done_ratio = 0
         child.status = child.tracker.default_status
+        child.recurrence_of = child.copied_from if child.respond_to?('copied_from')
         child.save!
       end
       new_issue.reload
@@ -273,6 +274,7 @@ class IssueRecurrence < ActiveRecord::Base
     new_issue.due_date = dates[:due]
     new_issue.done_ratio = 0
     new_issue.status = new_issue.tracker.default_status
+    new_issue.recurrence_of = new_issue.copied_from if new_issue.respond_to?('copied_from')
     new_issue.save!
 
     self.last_issue = new_issue

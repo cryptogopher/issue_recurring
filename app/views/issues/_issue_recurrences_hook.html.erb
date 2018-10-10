@@ -3,11 +3,20 @@
   <div id="issue_recurrences">
     <div class="contextual">
       <% if User.current.allowed_to?(:manage_issue_recurrences, @project) %>
-        <%= toggle_link l(:button_add), 'new-recurrence-form', :focus => 'recurrence_' %>
+        <%= toggle_link t('.button_details'), 'recurrence-details' %>
+        |
+        <%= toggle_link t(:button_add), 'new-recurrence-form', :focus => 'recurrence_' %>
       <% end %>
     </div>
 
-    <p><strong><%=t('.recurrences')%></strong></p>
+    <p><strong><%= t('.recurrences') %></strong></p>
+
+    <% if @issue.recurrence_of.present? %>
+      <p>
+        <%= t('.this_is_recurrence') %>
+        <%= ": ##{@issue.recurrence_of.id} #{@issue.recurrence_of.subject}" %>
+      </p>
+    <% end %>
 
     <div id="recurrences">
       <%= render partial: 'issues/recurrences/index' %>
@@ -16,5 +25,9 @@
     <% if User.current.allowed_to?(:manage_issue_recurrences, @project) %>
       <%= render partial: 'issues/recurrences/form' %>
     <% end %>
+
+    <div id="recurrence-details">
+      <%= render partial: 'issues/recurrences/details' %>
+    </div>
   </div>
 <% end %>
