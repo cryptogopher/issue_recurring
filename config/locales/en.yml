@@ -36,8 +36,8 @@ en:
       button_details: 'Details'
     recurrences:
       index:
-        last_recurrence: 'Last&nbsp;recurrence:'
-        next_recurrence: 'Next&nbsp;recurrence:'
+        last_recurrence: 'Last:'
+        next_recurrence: 'Next:'
       details:
       form:
         creation_modes:

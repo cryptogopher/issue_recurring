@@ -5,8 +5,8 @@
         <tr id="recurrence-<%= recurrence.id %>" class="<%= cycle('odd', 'even') %>">
           <td class="description"><%= recurrence.to_s %></td>
           <td class="description">
-            <p><%= last_recurrence(recurrence) %></p>
-            <p><%= next_recurrence_date(recurrence) %></p>
+            <p><nobr><%= last_recurrence(recurrence) %></nobr></p>
+            <p><nobr><%= next_recurrence_date(recurrence) %></nobr></p>
           </td>
           <td class="buttons"><%= delete_button(recurrence) %></td>
         </tr>

@@ -51,10 +51,9 @@ module IssueRecurring
       end
 
       def next_recurrence_date(r, intro=true)
+        next_dates = r.next
         "#{"#{t ".next_recurrence"} " if intro}" \
-          "#{"#{r.next[:start]}" if r.next[:start]}" \
-          " -" \
-          " #{"#{r.next[:due]}" if r.next[:due]}".html_safe
+          "#{next_dates[:start]} - #{next_dates[:due]}".html_safe
       end
 
       def delete_button(r)
