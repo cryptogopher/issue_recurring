@@ -51,7 +51,7 @@ module IssueRecurring
       end
 
       def next_recurrence_date(r, intro=true)
-        next_dates = r.next
+        next_dates = r.next_dates || {}
         "#{"#{t ".next_recurrence"} " if intro}" \
           "#{next_dates[:start]} - #{next_dates[:due]}".html_safe
       end

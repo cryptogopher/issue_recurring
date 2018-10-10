@@ -245,7 +245,8 @@ class IssueRecurrence < ActiveRecord::Base
     end
   end
 
-  # Create next recurrence issue. Assumes that 'advance' will return valid date.
+  # Create next recurrence issue. Assumes that 'advance' will return valid date
+  # (so advance must be called first and checked for return value).
   def create(dates, as_user)
     ref_issue = (self.creation_mode.to_sym == :copy_last) ? self.last_issue : self.issue
 
@@ -324,14 +325,29 @@ class IssueRecurrence < ActiveRecord::Base
     ref_dates
   end
 
-  # Return predicted next recurrence dates or nils.
-  def next
+  # Return predicted next recurrence dates or nil.
+  def next_dates
     ref_dates = self.reference_dates
-    return {} if ref_dates.nil?
-    dates = self.advance(ref_dates)
-    return {} if dates.nil?
-    dates
+    return nil if ref_dates.nil?
+    self.advance(ref_dates)
   end
+
+  # Estimate future recurrence dates.
+  # Returns first 3 dates and last date if recurrence limited.
+  #def estimate_schedule
+  #  schedule = []
+  #  saved_count = self.count
+  #
+  #  begin
+  #    dates = self.next_dates
+  #    schedule << dates if dates.present?
+  #    self.count += 1
+  #  end while dates.present? &&
+  #    ((self.date_limit || self.count_limit).present? || (self.count - saved_count < 3))
+  #
+  #  self.count = saved_count
+  #  schedule
+  #end
 
   def renew(as_user)
     case self.anchor_mode.to_sym
