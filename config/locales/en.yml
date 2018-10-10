@@ -8,8 +8,8 @@ en:
         issue_recurrence:
           attributes:
             issue:
-              insufficient_privileges: 'you have insufficient privileges to edit recurrence
-                to this issue'
+              insufficient_privileges: 'you have insufficient privileges to edit recurrences
+                for this issue'
             anchor_mode:
               delay_fixed_only: 'delay cannot be specified for recurrences relative to close
                 date'
