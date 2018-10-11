@@ -429,8 +429,91 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
+  def test_renew_closed_on_cleared_for_new_recurrences_of_closed_issue
+    log_user 'alice', 'foo'
+    @issue1.start_date = Date.new(2018,9,25)
+    @issue1.due_date = Date.new(2018,10,4)
+    @issue1.save!
+
+    assert_nil @issue1.closed_on
+    travel_to(Date.new(2018,10,22))
+    create_recurrence(anchor_mode: :first_issue_fixed,
+                      mode: :weekly,
+                      multiplier: 2)
+    close_issue(@issue1)
+    @issue1.reload
+    assert_not_nil @issue1.closed_on
+    r1, r2 = renew_all(2)
+    assert_nil r1.closed_on
+    assert_nil r2.closed_on
+  end
+
+  def test_renew_issue_with_timespan_much_larger_than_recurrence_period
+    log_user 'alice', 'foo'
+    @issue1.start_date = Date.new(2018,8,20)
+    @issue1.due_date = Date.new(2019,1,10)
+    @issue1.save!
+
+    create_recurrence(anchor_mode: :last_issue_fixed,
+                      mode: :daily,
+                      multiplier: 3)
+    travel_to(Date.new(2018,9,1))
+    *, r5 = renew_all(5)
+    assert_equal Date.new(2018,9,4), r5.start_date
+    assert_equal Date.new(2019,1,25), r5.due_date
+  end
+
+  def test_renew_anchor_mode_fixed_issue_one_date_not_set
+    log_user 'alice', 'foo'
+
+    dates = {
+      {start: Date.new(2018,10,10), due: nil} =>
+      [
+        [Date.new(2018,10,9), nil],
+        [Date.new(2018,10,10), {start: Date.new(2018,11,14), due: nil}],
+        [Date.new(2018,11,13), nil],
+        [Date.new(2018,11,14), {start: Date.new(2018,12,12), due: nil}]
+      ],
+      {start: nil, due: Date.new(2018,10,15)} =>
+      [
+        [Date.new(2018,10,14), nil],
+        [Date.new(2018,10,15), {start: nil, due: Date.new(2018,11,19)}],
+        [Date.new(2018,11,18), nil],
+        [Date.new(2018,11,19), {start: nil, due: Date.new(2018,12,17)}]
+      ]
+    }
+
+    [:first_issue_fixed, :last_issue_fixed].each do |am|
+      dates.each do |issue_dates, setup_dates|
+        @issue1.start_date = issue_dates[:start]
+        @issue1.due_date = issue_dates[:due]
+        @issue1.save!
+
+        create_recurrence(anchor_mode: am,
+                          mode: :monthly_dow_from_first,
+                          multiplier: 1)
+
+        setup_dates.each do |t, r_dates|
+          travel_to(t)
+          r = renew_all(r_dates.present? ? 1 : 0)
+          if r_dates.present?
+            if r_dates[:start].present?
+              assert_equal r_dates[:start], r.first.start_date
+            else
+              assert_nil r.first.start_date
+            end
+            if r_dates[:due].present?
+              assert_equal r_dates[:due], r.first.due_date
+            else
+              assert_nil r.first.due_date
+            end
+          end
+        end
+      end
+    end
+  end
+
   # TODO:
-  # - timespan much larger than recurrence period
   # - issue without start/due/both dates
   # - first_issue_fixed monthly with date > 28 recurring through February
   # - monthly_dow with same dow (2nd Tuesday+2nd Thursday) + month when 1st
@@ -439,7 +522,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   # subsequent (and generally all recurrences that yield overflow)
   # - first_issue_fixed with date movement forward/backward on issue and last
   # recurrence
-
-  # tests of creation modes
+  # - renew_all with and without as_user
+  # - tests of creation modes
 end
 
