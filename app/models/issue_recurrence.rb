@@ -59,20 +59,6 @@ class IssueRecurrence < ActiveRecord::Base
     message: :in_place_flexible_only
   }
   validates :mode, inclusion: modes.keys
-  validates :mode, exclusion: {
-    in: ['monthly_day_from_first', 'monthly_dow_from_first', 'monthly_wday_from_first'],
-    if: "(issue.start_date.present? && (issue.start_date.mday > 28)) ||" \
-        "(issue.due_date.present? && (issue.due_date.mday > 28))",
-    message: :monthly_from_first_28_days
-  }
-  validates :mode, exclusion: {
-    in: ['monthly_day_to_last', 'monthly_dow_to_last', 'monthly_wday_to_last'],
-    if: "(issue.start_date.present? &&" \
-        "(issue.start_date.end_of_month.mday - issue.start_date.mday > 27)) ||" \
-        "(issue.due_date.present? &&" \
-        "(issue.due_date.end_of_month.mday - issue.due_date.mday > 27))",
-    message: :monthly_to_last_28_days
-  }
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
   validates :delay_mode, inclusion: delay_modes.keys
   validates :delay_multiplier, numericality: {greater_than_or_equal_to: 0, only_integer: true}

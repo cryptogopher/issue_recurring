@@ -3,7 +3,7 @@ module IssueRecurring
     Issue.class_eval do
       has_many :recurrences, class_name: 'IssueRecurrence', dependent: :destroy
 
-      belongs_to :recurrence_of, class_name: 'Issue', validate: true
+      belongs_to :recurrence_of, class_name: 'Issue'
       has_many :recurrence_copies, class_name: 'Issue', foreign_key: 'recurrence_of_id',
         dependent: :nullify
 

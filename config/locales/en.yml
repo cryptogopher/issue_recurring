@@ -19,11 +19,6 @@ en:
                 modify issue in-place'
             date_limit:
               not_in_future: 'user provided recurrence limit date has to be in future'
-            mode:
-              monthly_from_first_28_days: 'cannot recur issue monthly if issue date is after
-                first 28 days of month'
-              monthly_to_last_28_days: 'cannot recur issue monthly if issue date is before
-                last 28 days of month'
   project_menu_caption: 'Issue recurrences'
   journal_title: 'Issue recurrence'
   issue_recurrences:
