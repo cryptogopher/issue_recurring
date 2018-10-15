@@ -565,6 +565,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   # TODO:
+  # - check monthly mode when issue date changed to unsupported value after
+  # recurrence creation (issue belongs_to validate true)
   # - issue without start/due/both dates
   # - first_issue_fixed monthly with date > 28 recurring through February
   # - monthly_dow with same dow (2nd Tuesday+2nd Thursday) + month when 1st

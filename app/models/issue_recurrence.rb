@@ -14,8 +14,8 @@ class IssueRecurrence < ActiveRecord::Base
     last_issue_flexible: 2,
     last_issue_flexible_on_delay: 3
   }
-  FIXED_MODES = anchor_modes.keys.select {|m| m.include?('_fixed')}
-  FLEXIBLE_MODES = anchor_modes.keys.select {|m| m.include?('_flexible')}
+  FIXED_MODES = anchor_modes.keys.select { |m| m.include?('_fixed') }
+  FLEXIBLE_MODES = anchor_modes.keys.select { |m| m.include?('_flexible') }
 
   enum mode: {
     daily: 0,
@@ -36,7 +36,9 @@ class IssueRecurrence < ActiveRecord::Base
   }
 
   validates :issue, presence: true, associated: true
-  validate { errors.add(:issue, :insufficient_privileges) unless editable? }
+  validate on: :create do
+    errors.add(:issue, :insufficient_privileges) unless editable?
+  end
   validates :last_issue, associated: true
   validates :count, numericality: {greater_than_or_equal: 0, only_integer: true}
   validates :creation_mode, inclusion: creation_modes.keys
@@ -51,12 +53,26 @@ class IssueRecurrence < ActiveRecord::Base
     if: "(issue.start_date || issue.due_date).blank?",
     message: :blank_dates_flexible_only
   }
-  validates:anchor_mode, inclusion: {
+  validates :anchor_mode, inclusion: {
     in: FLEXIBLE_MODES,
     if: "creation_mode == :in_place",
     message: :in_place_flexible_only
   }
   validates :mode, inclusion: modes.keys
+  validates :mode, exclusion: {
+    in: ['monthly_day_from_first', 'monthly_dow_from_first', 'monthly_wday_from_first'],
+    if: "(issue.start_date.present? && (issue.start_date.mday > 28)) ||" \
+        "(issue.due_date.present? && (issue.due_date.mday > 28))",
+    message: :monthly_from_first_28_days
+  }
+  validates :mode, exclusion: {
+    in: ['monthly_day_to_last', 'monthly_dow_to_last', 'monthly_wday_to_last'],
+    if: "(issue.start_date.present? &&" \
+        "(issue.start_date.end_of_month.mday - issue.start_date.mday > 27)) ||" \
+        "(issue.due_date.present? &&" \
+        "(issue.due_date.end_of_month.mday - issue.due_date.mday > 27))",
+    message: :monthly_to_last_28_days
+  }
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
   validates :delay_mode, inclusion: delay_modes.keys
   validates :delay_multiplier, numericality: {greater_than_or_equal_to: 0, only_integer: true}
@@ -80,7 +96,7 @@ class IssueRecurrence < ActiveRecord::Base
       self.include_subtasks = false if self.include_subtasks.nil?
     end
   end
-  before_destroy :valid?
+  before_destroy :editable?
 
   def fixed?
     FIXED_MODES.include?(self.anchor_mode)
