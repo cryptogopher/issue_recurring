@@ -171,20 +171,24 @@ class IssueRecurrence < ActiveRecord::Base
           date + shift.months
         when :monthly_day_to_last
           days_to_last = date.end_of_month - date
-          (date + shift.months).end_of_month - days_to_last
+          target_eom = (date + shift.months).end_of_month
+          target_eom - [days_to_last, target_eom.mday-1].min
         when :monthly_dow_from_first
           source_dow = date.days_to_week_start
           target_bom = (date + shift.months).beginning_of_month
           target_bom_dow = target_bom.days_to_week_start
-          week = ((date.mday - 1) / 7) + ((source_dow >= target_bom_dow) ? 0 : 1)
-          target_bom + week.weeks + source_dow - target_bom_dow
+          week = ((date.mday - 1) / 7) + (source_dow >= target_bom_dow ? 0 : 1)
+          target_bom_shift = week.weeks + (source_dow - target_bom_dow).days
+          overflow = target_bom_shift > (target_bom.end_of_month.mday-1).days ? 1.week : 0
+          target_bom + target_bom_shift - overflow
         when :monthly_dow_to_last
           source_dow = date.days_to_week_start
           target_eom = (date + shift.months).end_of_month
           target_eom_dow = target_eom.days_to_week_start
-          week = ((date.end_of_month - date).to_i / 7) +
-            ((source_dow > target_eom_dow) ? 1 : 0)
-          target_eom - week.weeks + source_dow - target_eom_dow
+          week = ((date.end_of_month - date).to_i / 7) + (source_dow > target_eom_dow ? 1 : 0)
+          target_eom_shift = week.weeks + (target_eom_dow - source_dow).days
+          overflow = target_eom_shift > (target_eom.mday-1).days ? 1.week : 0
+          target_eom - target_eom_shift + overflow
         when :monthly_wday_from_first
           source_wdays = date.beginning_of_month.step(date.end_of_month).select do |d|
             (1..5).include?(d.wday)
@@ -208,7 +212,7 @@ class IssueRecurrence < ActiveRecord::Base
           end
           target_wdays.reverse[wday] || target_wdays.first
         when :yearly
-          date + shift.years unless date.nil?
+          date + shift.years
         end
     end
 
@@ -217,7 +221,7 @@ class IssueRecurrence < ActiveRecord::Base
     dates
   end
 
-  # Offset 'dates' so date with 'label' is equal (or closest to) 'target'.
+  # Offset 'dates' so date with 'label' is equal 'target'.
   # Return offset 'dates' or nil if 'dates' does not include 'label'.
   def offset(target_date, target_label=:due, **dates)
     nil unless dates.has_key?(target_label) && dates[target_label].present?
