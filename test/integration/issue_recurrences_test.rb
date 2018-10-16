@@ -537,7 +537,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       @issue1.start_date = issue_dates[:start]
       @issue1.due_date = issue_dates[:due]
       @issue1.save!
-      assert_nil @issue1.closed_on
+      reopen_issue(@issue1) if @issue1.closed?
+      assert !@issue1.closed?
 
       ir = create_recurrence(anchor_mode: :last_issue_flexible,
                              mode: :monthly_dow_from_first,
@@ -564,16 +565,95 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
+  def test_create_anchor_mode_fixed_issue_dates_not_set_should_fail
+    log_user 'alice', 'foo'
+    @issue1.start_date = nil
+    @issue1.due_date = nil
+    @issue1.save!
+
+    [:first_issue_fixed, :last_issue_fixed].each do |am|
+      errors = create_recurrence_should_fail(anchor_mode: am)
+      assert errors.has_key?(:anchor_mode)
+    end
+  end
+
+  def test_renew_anchor_mode_flexible_issue_dates_not_set
+    log_user 'alice', 'foo'
+
+    dates = [
+      [Date.new(2018,10,12), false, nil],
+      [Date.new(2018,10,15), true, {start: nil, due: Date.new(2018,10,22)}],
+      [Date.new(2018,11,25), false, nil],
+      [Date.new(2018,11,30), true, {start: nil, due: Date.new(2018,12,7)}]
+    ]
+
+    @issue1.start_date = nil
+    @issue1.due_date = nil
+    @issue1.save!
+    assert !@issue1.closed?
+
+    ir = create_recurrence(anchor_mode: :last_issue_flexible)
+
+    dates.each do |t, close, r_dates|
+      travel_to(t)
+      close_issue(ir.last_issue || @issue1) if close
+      ir.reload
+      r = renew_all(r_dates.present? ? 1 : 0)
+      if r_dates.present?
+        if r_dates[:start].present?
+          assert_equal r_dates[:start], r.first.start_date
+        else
+          assert_nil r.first.start_date
+        end
+        if r_dates[:due].present?
+          assert_equal r_dates[:due], r.first.due_date
+        else
+          assert_nil r.first.due_date
+        end
+      end
+    end
+  end
+
+  def test_renew_mode_monthly_should_not_overflow_in_shorter_month
+    log_user 'alice', 'foo'
+
+    dates = [
+      [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_day_from_first,
+       Date.new(2019,2,28), Date.new(2019,2,28)],
+      [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_day_to_last,
+       Date.new(2019,2,1), Date.new(2019,2,1)],
+      [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_dow_from_first,
+       Date.new(2019,2,26), Date.new(2019,2,28)],
+      [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_dow_to_last,
+       Date.new(2019,2,5), Date.new(2019,2,7)],
+      [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_wday_from_first,
+       Date.new(2019,2,28), Date.new(2019,2,28)],
+      [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_wday_to_last,
+       Date.new(2019,2,1), Date.new(2019,2,1)],
+    ]
+
+    travel_to(Date.new(2019,1,31))
+    dates.each do |start, due, mode, r_start, r_due|
+      @issue1.start_date = start
+      @issue1.due_date = due
+      @issue1.save!
+
+      ir = create_recurrence(mode: mode)
+
+      r = renew_all(1).first
+      assert_equal r_start, r.start_date
+      assert_equal r_due, r.due_date
+    end
+  end
+
+  def test_renew_mode_monthly_dow
+  end
   # TODO:
-  # - issue without start/due/both dates
-  # - first_issue_fixed monthly with date > 28 recurring through February
   # - monthly_dow with same dow (2nd Tuesday+2nd Thursday) + month when 1st
   # Thursday is before 1st Tuesaday (start date ater than end date)
-  # - monthly_dow when there is 5th day of week in one month but not in
-  # subsequent (and generally all recurrences that yield overflow)
+  # - renew_all with and without as_user
   # - first_issue_fixed with date movement forward/backward on issue and last
   # recurrence
-  # - renew_all with and without as_user
   # - tests of creation modes
 end
 

@@ -34,6 +34,17 @@ def create_recurrence(issue=issues(:issue_01), **attributes)
   IssueRecurrence.last
 end
 
+def create_recurrence_should_fail(issue=issues(:issue_01), **attributes)
+  attributes[:mode] ||= :weekly
+  attributes[:multiplier] ||= 1
+  assert_no_difference 'IssueRecurrence.count' do
+    post "#{issue_recurrences_path(issue)}.js", params: {recurrence: attributes}
+    assert_response :ok
+    assert_not_empty assigns(:recurrence).errors.messages
+  end
+  assigns(:recurrence).errors.messages
+end
+
 def renew_all(count=0)
   assert_difference 'Issue.count', count do
     IssueRecurrence.renew_all
@@ -41,12 +52,21 @@ def renew_all(count=0)
   count > 0 ? Issue.last(count) : nil
 end
 
+def reopen_issue(issue)
+  assert issue.closed?
+  status = issue.tracker.default_status
+  put "/issues/#{issue.id}", params: {issue: {status_id: status.id}}
+  issue.reload
+  assert_equal issue.status_id, status.id
+  assert !issue.closed?
+end
+
 def close_issue(issue)
-  assert_nil issue.closed_on
+  assert !issue.closed?
   status = IssueStatus.all.where(is_closed: true).first
   put "/issues/#{issue.id}", params: {issue: {status_id: status.id}}
   issue.reload
   assert_equal issue.status_id, status.id
-  assert_not_nil issue.closed_on
+  assert issue.closed?
 end
 
