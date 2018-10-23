@@ -20,13 +20,19 @@ class IssueRecurrence < ActiveRecord::Base
   enum mode: {
     daily: 0,
     weekly: 1,
-    monthly_day_from_first: 2,
-    monthly_day_to_last: 3,
-    monthly_dow_from_first: 4,
-    monthly_dow_to_last: 5,
-    monthly_wday_from_first: 6,
-    monthly_wday_to_last: 7,
-    yearly: 8
+    monthly_start_day_from_first: 2,
+    monthly_due_day_from_first: 3,
+    monthly_start_day_to_last: 4,
+    monthly_due_day_to_last: 5,
+    monthly_start_dow_from_first: 6,
+    monthly_due_dow_from_first: 7,
+    monthly_start_dow_to_last: 8,
+    monthly_due_dow_to_last: 9,
+    monthly_start_wday_from_first: 10,
+    monthly_due_wday_from_first: 11,
+    monthly_start_wday_to_last: 12,
+    monthly_due_wday_to_last: 13,
+    yearly: 14
   }
 
   enum delay_mode: {
@@ -75,7 +81,7 @@ class IssueRecurrence < ActiveRecord::Base
       self.count = 0
       self.creation_mode ||= :copy_first
       self.anchor_mode ||= :first_issue_fixed
-      self.mode ||= :monthly_day_from_first
+      self.mode ||= :monthly_start_day_from_first
       self.multiplier ||= 1
       self.delay_mode ||= :day
       self.delay_multiplier ||= 0
@@ -159,61 +165,81 @@ class IssueRecurrence < ActiveRecord::Base
     shift = self.anchor_mode.to_sym == :first_issue_fixed ?
       self.multiplier*(self.count + 1 + adj) : self.multiplier*(1 + adj)
 
-    dates.each do |label, date|
-      next if date.nil?
-      dates[label] =
-        case self.mode.to_sym
-        when :daily
-          date + shift.days
-        when :weekly
-          date + shift.weeks
-        when :monthly_day_from_first
-          date + shift.months
-        when :monthly_day_to_last
-          days_to_last = date.end_of_month - date
-          target_eom = (date + shift.months).end_of_month
-          target_eom - [days_to_last, target_eom.mday-1].min
-        when :monthly_dow_from_first
-          source_dow = date.days_to_week_start
-          target_bom = (date + shift.months).beginning_of_month
-          target_bom_dow = target_bom.days_to_week_start
-          week = ((date.mday - 1) / 7) + (source_dow >= target_bom_dow ? 0 : 1)
-          target_bom_shift = week.weeks + (source_dow - target_bom_dow).days
-          overflow = target_bom_shift > (target_bom.end_of_month.mday-1).days ? 1.week : 0
-          target_bom + target_bom_shift - overflow
-        when :monthly_dow_to_last
-          source_dow = date.days_to_week_start
-          target_eom = (date + shift.months).end_of_month
-          target_eom_dow = target_eom.days_to_week_start
-          week = ((date.end_of_month - date).to_i / 7) + (source_dow > target_eom_dow ? 1 : 0)
-          target_eom_shift = week.weeks + (target_eom_dow - source_dow).days
-          overflow = target_eom_shift > (target_eom.mday-1).days ? 1.week : 0
-          target_eom - target_eom_shift + overflow
-        when :monthly_wday_from_first
-          source_wdays = date.beginning_of_month.step(date.end_of_month).select do |d|
-            (1..5).include?(d.wday)
-          end
-          wday = source_wdays.bsearch_index { |d| d >= date } || source_wdays.length-1
-          target_date = date + shift.months
-          target_wdays = target_date.beginning_of_month
-            .step(target_date.end_of_month).select do |d|
-            (1..5).include?(d.wday)
-          end
-          target_wdays[wday] || target_wdays.last
-        when :monthly_wday_to_last
-          source_wdays = date.beginning_of_month.step(date.end_of_month).select do |d|
-            (1..5).include?(d.wday)
-          end
-          wday = source_wdays.reverse.bsearch_index { |d| d <= date } || 0
-          target_date = date + shift.months
-          target_wdays = target_date.beginning_of_month
-            .step(target_date.end_of_month).select do |d|
-            (1..5).include?(d.wday)
-          end
-          target_wdays.reverse[wday] || target_wdays.first
-        when :yearly
-          date + shift.years
-        end
+    case self.mode.to_sym
+    when :daily
+      dates.each do |label, date|
+        dates[label] = date + shift.days if date.present?
+      end
+    when :weekly
+      dates.each do |label, date|
+        dates[label] = date + shift.weeks
+      end
+    when :monthly_start_day_from_first, :monthly_due_day_from_first
+      label, date = self.monthly_base_date(dates, :monthly_start_day_from_first)
+      return nil unless label
+      target_date = date + shift.months
+      self.offset(target_date, label, dates)
+    when :monthly_start_day_to_last, :monthly_due_day_to_last
+      label, date = self.monthly_base_date(dates, :monthly_start_day_to_last)
+      return nil unless label
+      days_to_last = date.end_of_month - date
+      target_eom = (date + shift.months).end_of_month
+      target_date = target_eom - [days_to_last, target_eom.mday-1].min
+      self.offset(target_date, label, dates)
+    when :monthly_start_dow_from_first, :monthly_due_dow_from_first
+      label, date = self.monthly_base_date(dates, :monthly_start_dow_from_first)
+      return nil unless label
+      source_dow = date.days_to_week_start
+      target_bom = (date + shift.months).beginning_of_month
+      target_bom_dow = target_bom.days_to_week_start
+      week = ((date.mday - 1) / 7) + (source_dow >= target_bom_dow ? 0 : 1)
+      target_bom_shift = week.weeks + (source_dow - target_bom_dow).days
+      overflow = target_bom_shift > (target_bom.end_of_month.mday-1).days ? 1.week : 0
+      target_date = target_bom + target_bom_shift - overflow
+      self.offset(target_date, label, dates)
+    when :monthly_start_dow_to_last, :monthly_due_dow_to_last
+      label, date = self.monthly_base_date(dates, :monthly_start_dow_to_last)
+      return nil unless label
+      source_dow = date.days_to_week_start
+      target_eom = (date + shift.months).end_of_month
+      target_eom_dow = target_eom.days_to_week_start
+      week = ((date.end_of_month - date).to_i / 7) + (source_dow > target_eom_dow ? 1 : 0)
+      target_eom_shift = week.weeks + (target_eom_dow - source_dow).days
+      overflow = target_eom_shift > (target_eom.mday-1).days ? 1.week : 0
+      target_date = target_eom - target_eom_shift + overflow
+      self.offset(target_date, label, dates)
+    when :monthly_start_wday_from_first, :monthly_due_wday_from_first
+      label, date = self.monthly_base_date(dates, :monthly_start_wday_from_first)
+      return nil unless label
+      source_wdays = date.beginning_of_month.step(date.end_of_month).select do |d|
+        (1..5).include?(d.wday)
+      end
+      wday = source_wdays.bsearch_index { |d| d >= date } || source_wdays.length-1
+      target_date = date + shift.months
+      target_wdays = target_date.beginning_of_month
+        .step(target_date.end_of_month).select do |d|
+        (1..5).include?(d.wday)
+      end
+      target_wdate = target_wdays[wday] || target_wdays.last
+      self.offset(target_wdate, label, dates)
+    when :monthly_start_wday_to_last, :monthly_due_wday_to_last
+      label, date = self.monthly_base_date(dates, :monthly_start_wday_to_last)
+      return nil unless label
+      source_wdays = date.beginning_of_month.step(date.end_of_month).select do |d|
+        (1..5).include?(d.wday)
+      end
+      wday = source_wdays.reverse.bsearch_index { |d| d <= date } || 0
+      target_date = date + shift.months
+      target_wdays = target_date.beginning_of_month
+        .step(target_date.end_of_month).select do |d|
+        (1..5).include?(d.wday)
+      end
+      target_wdate = target_wdays.reverse[wday] || target_wdays.first
+      self.offset(target_wdate, label, dates)
+    when :yearly
+      dates.each do |label, date|
+        dates[label] = date + shift.years
+      end
     end
 
     return nil if self.date_limit.present? && (dates[:start] || dates[:due]) > self.date_limit
@@ -221,10 +247,20 @@ class IssueRecurrence < ActiveRecord::Base
     dates
   end
 
+  def monthly_base_date(dates, start_label)
+    label = self.mode.to_sym == start_label ? :start : :due
+    if dates[label].nil?
+      logger.warn("Issue ##{self.issue.id} has no #{label} date " \
+                  "to allow for recurrence renewal.") if logger
+      return nil
+    end
+    [label, dates[label]]
+  end
+
   # Offset 'dates' so date with 'label' is equal 'target'.
   # Return offset 'dates' or nil if 'dates' does not include 'label'.
   def offset(target_date, target_label=:due, **dates)
-    nil unless dates.has_key?(target_label) && dates[target_label].present?
+    nil unless dates[target_label].present?
     dates.each do |label, date|
       next if date.nil?
       dates[label] =
