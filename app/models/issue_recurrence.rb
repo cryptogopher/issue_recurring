@@ -172,23 +172,23 @@ class IssueRecurrence < ActiveRecord::Base
       end
     when :weekly
       dates.each do |label, date|
-        dates[label] = date + shift.weeks
+        dates[label] = date + shift.weeks if date.present?
       end
     when :monthly_start_day_from_first, :monthly_due_day_from_first
       label, date = self.monthly_base_date(dates, :monthly_start_day_from_first)
-      return nil unless label
+      return nil if label.nil?
       target_date = date + shift.months
-      self.offset(target_date, label, dates)
+      dates = self.offset(target_date, label, dates)
     when :monthly_start_day_to_last, :monthly_due_day_to_last
       label, date = self.monthly_base_date(dates, :monthly_start_day_to_last)
-      return nil unless label
+      return nil if label.nil?
       days_to_last = date.end_of_month - date
       target_eom = (date + shift.months).end_of_month
       target_date = target_eom - [days_to_last, target_eom.mday-1].min
-      self.offset(target_date, label, dates)
+      dates = self.offset(target_date, label, dates)
     when :monthly_start_dow_from_first, :monthly_due_dow_from_first
       label, date = self.monthly_base_date(dates, :monthly_start_dow_from_first)
-      return nil unless label
+      return nil if label.nil?
       source_dow = date.days_to_week_start
       target_bom = (date + shift.months).beginning_of_month
       target_bom_dow = target_bom.days_to_week_start
@@ -196,10 +196,10 @@ class IssueRecurrence < ActiveRecord::Base
       target_bom_shift = week.weeks + (source_dow - target_bom_dow).days
       overflow = target_bom_shift > (target_bom.end_of_month.mday-1).days ? 1.week : 0
       target_date = target_bom + target_bom_shift - overflow
-      self.offset(target_date, label, dates)
+      dates = self.offset(target_date, label, dates)
     when :monthly_start_dow_to_last, :monthly_due_dow_to_last
       label, date = self.monthly_base_date(dates, :monthly_start_dow_to_last)
-      return nil unless label
+      return nil if label.nil?
       source_dow = date.days_to_week_start
       target_eom = (date + shift.months).end_of_month
       target_eom_dow = target_eom.days_to_week_start
@@ -207,10 +207,10 @@ class IssueRecurrence < ActiveRecord::Base
       target_eom_shift = week.weeks + (target_eom_dow - source_dow).days
       overflow = target_eom_shift > (target_eom.mday-1).days ? 1.week : 0
       target_date = target_eom - target_eom_shift + overflow
-      self.offset(target_date, label, dates)
+      dates = self.offset(target_date, label, dates)
     when :monthly_start_wday_from_first, :monthly_due_wday_from_first
       label, date = self.monthly_base_date(dates, :monthly_start_wday_from_first)
-      return nil unless label
+      return nil if label.nil?
       source_wdays = date.beginning_of_month.step(date.end_of_month).select do |d|
         (1..5).include?(d.wday)
       end
@@ -221,10 +221,10 @@ class IssueRecurrence < ActiveRecord::Base
         (1..5).include?(d.wday)
       end
       target_wdate = target_wdays[wday] || target_wdays.last
-      self.offset(target_wdate, label, dates)
+      dates = self.offset(target_wdate, label, dates)
     when :monthly_start_wday_to_last, :monthly_due_wday_to_last
       label, date = self.monthly_base_date(dates, :monthly_start_wday_to_last)
-      return nil unless label
+      return nil if label.nil?
       source_wdays = date.beginning_of_month.step(date.end_of_month).select do |d|
         (1..5).include?(d.wday)
       end
@@ -235,10 +235,10 @@ class IssueRecurrence < ActiveRecord::Base
         (1..5).include?(d.wday)
       end
       target_wdate = target_wdays.reverse[wday] || target_wdays.first
-      self.offset(target_wdate, label, dates)
+      dates = self.offset(target_wdate, label, dates)
     when :yearly
       dates.each do |label, date|
-        dates[label] = date + shift.years
+        dates[label] = date + shift.years if date.present?
       end
     end
 
@@ -260,17 +260,14 @@ class IssueRecurrence < ActiveRecord::Base
   # Offset 'dates' so date with 'label' is equal 'target'.
   # Return offset 'dates' or nil if 'dates' does not include 'label'.
   def offset(target_date, target_label=:due, **dates)
-    nil unless dates[target_label].present?
-    dates.each do |label, date|
-      next if date.nil?
-      dates[label] =
-        if label == target_label
-          target_date
-        else
-          target_label == :due ?
-            target_date-(dates[:due]-date) : target_date+(date-dates[:start])
-        end
+    nil if dates[target_label].nil?
+    if target_label == :due
+      dates[:start] = target_date - (dates[:due] - dates[:start]) unless dates[:start].nil?
+    else
+      dates[:due] = target_date + (dates[:due] - dates[:start]) unless dates[:due].nil?
     end
+    dates[target_label] = target_date
+    dates
   end
 
   # Delay 'dates' according to delay mode.
@@ -400,6 +397,7 @@ class IssueRecurrence < ActiveRecord::Base
       ref_dates = self.reference_dates
       return if ref_dates.nil?
       prev_dates = self.advance(-1, ref_dates)
+      return if prev_dates.nil?
       while (prev_dates[:start] || prev_dates[:due]) < Date.tomorrow
         new_dates = self.advance(ref_dates)
         break if new_dates.nil?

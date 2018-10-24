@@ -104,7 +104,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     [:first_issue_fixed, :last_issue_fixed].each do |am|
       travel_to(Date.new(2017,9,8))
       create_recurrence(anchor_mode: am,
-                        mode: :monthly_day_from_first,
+                        mode: :monthly_start_day_from_first,
                         multiplier: 2)
       renew_all(0)
       travel_to(Date.new(2017,1,8))
@@ -118,9 +118,9 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       travel_to(Date.new(2019,3,7))
       issue2, issue3 = renew_all(2)
       assert_equal Date.new(2019,1,8), issue2.start_date
-      assert_equal Date.new(2019,2,2), issue2.due_date
+      assert_equal Date.new(2019,2,1), issue2.due_date
       assert_equal Date.new(2019,3,8), issue3.start_date
-      assert_equal Date.new(2019,4,2), issue3.due_date
+      assert_equal Date.new(2019,4,1), issue3.due_date
       travel_to(Date.new(2019,3,8))
       renew_all(1)
       renew_all(0)
@@ -136,7 +136,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     [:first_issue_fixed, :last_issue_fixed].each do |am|
       travel_to(Date.new(2018,3,22))
       create_recurrence(anchor_mode: am,
-                        mode: :monthly_day_to_last,
+                        mode: :monthly_due_day_to_last,
                         multiplier: 3)
       renew_all(0)
       travel_to(Date.new(2018,5,21))
@@ -149,7 +149,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       renew_all(0)
       travel_to(Date.new(2019,6,21))
       issue2, issue3 = renew_all(2)
-      assert_equal Date.new(2019,3,23), issue2.start_date
+      assert_equal Date.new(2019,3,22), issue2.start_date
       assert_equal Date.new(2019,4,9), issue2.due_date
       assert_equal Date.new(2019,6,22), issue3.start_date
       assert_equal Date.new(2019,7,10), issue3.due_date
@@ -168,7 +168,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     [:first_issue_fixed, :last_issue_fixed].each do |am|
       travel_to(Date.new(2018,3,22))
       create_recurrence(anchor_mode: am,
-                        mode: :monthly_dow_from_first,
+                        mode: :monthly_start_dow_from_first,
                         multiplier: 2)
       renew_all(0)
       travel_to(Date.new(2018,5,21))
@@ -200,24 +200,24 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     [:first_issue_fixed, :last_issue_fixed].each do |am|
       travel_to(Date.new(2018,6,3))
       create_recurrence(anchor_mode: am,
-                        mode: :monthly_dow_to_last,
+                        mode: :monthly_due_dow_to_last,
                         multiplier: 1)
       renew_all(0)
       travel_to(Date.new(2018,8,3))
       renew_all(0)
       travel_to(Date.new(2018,9,3))
       issue1 = renew_all(1).first
-      assert_equal Date.new(2018,10,8), issue1.start_date
+      assert_equal Date.new(2018,10,1), issue1.start_date
       assert_equal Date.new(2018,10,13), issue1.due_date
-      travel_to(Date.new(2018,10,7))
+      travel_to(Date.new(2018,9,30))
       renew_all(0)
-      travel_to(Date.new(2018,12,9))
+      travel_to(Date.new(2018,12,2))
       issue2, issue3 = renew_all(2)
-      assert_equal Date.new(2018,11,5), issue2.start_date
+      assert_equal Date.new(2018,10,29), issue2.start_date
       assert_equal Date.new(2018,11,10), issue2.due_date
-      assert_equal Date.new(2018,12,10), issue3.start_date
+      assert_equal Date.new(2018,12,3), issue3.start_date
       assert_equal Date.new(2018,12,15), issue3.due_date
-      travel_to(Date.new(2018,12,10))
+      travel_to(Date.new(2018,12,3))
       renew_all(1)
       renew_all(0)
     end
@@ -232,7 +232,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     [:first_issue_fixed, :last_issue_fixed].each do |am|
       travel_to(Date.new(2018,4,1))
       create_recurrence(anchor_mode: am,
-                        mode: :monthly_wday_from_first,
+                        mode: :monthly_due_wday_from_first,
                         multiplier: 1)
       renew_all(0)
       travel_to(Date.new(2018,6,1))
@@ -264,7 +264,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     [:first_issue_fixed, :last_issue_fixed].each do |am|
       travel_to(Date.new(2018,3,26))
       create_recurrence(anchor_mode: am,
-                        mode: :monthly_wday_to_last,
+                        mode: :monthly_start_wday_to_last,
                         multiplier: 2)
       renew_all(0)
       travel_to(Date.new(2018,5,26))
@@ -410,12 +410,18 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     items = {
       daily: [Date.new(2021,6,21), Date.new(2021,6,30)],
       weekly: [Date.new(2037,11,24), Date.new(2037,12,3)],
-      monthly_day_from_first: [Date.new(2102,1,25), Date.new(2102,2,4)],
-      monthly_day_to_last: [Date.new(2102,1,26), Date.new(2102,2,1)],
-      monthly_dow_from_first: [Date.new(2102,1,24), Date.new(2102,2,2)],
-      monthly_dow_to_last: [Date.new(2102,1,31), Date.new(2102,2,2)],
-      monthly_wday_from_first: [Date.new(2102,1,24), Date.new(2102,2,6)],
-      monthly_wday_to_last: [Date.new(2102,1,26), Date.new(2102,2,1)],
+      monthly_start_day_from_first: [Date.new(2102,1,25), Date.new(2102,2,3)],
+      monthly_due_day_from_first: [Date.new(2102,1,26), Date.new(2102,2,4)],
+      monthly_start_day_to_last: [Date.new(2102,1,26), Date.new(2102,2,4)],
+      monthly_due_day_to_last: [Date.new(2102,1,23), Date.new(2102,2,1)],
+      monthly_start_dow_from_first: [Date.new(2102,1,24), Date.new(2102,2,2)],
+      monthly_due_dow_from_first: [Date.new(2102,1,24), Date.new(2102,2,2)],
+      monthly_start_dow_to_last: [Date.new(2102,1,31), Date.new(2102,2,9)],
+      monthly_due_dow_to_last: [Date.new(2102,1,24), Date.new(2102,2,2)],
+      monthly_start_wday_from_first: [Date.new(2102,1,24), Date.new(2102,2,6)],
+      monthly_due_wday_from_first: [Date.new(2102,1,24), Date.new(2102,2,6)],
+      monthly_start_wday_to_last: [Date.new(2102,1,26), Date.new(2102,2,1)],
+      monthly_due_wday_to_last: [Date.new(2102,1,26), Date.new(2102,2,1)],
       yearly: [Date.new(3018,9,25), Date.new(3018,10,4)],
     }
     items.each do |m, (start, due)|
@@ -426,6 +432,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       issue1 = renew_all(1).first
       assert_equal start, issue1.start_date
       assert_equal due, issue1.due_date
+      puts m
     end
   end
 
@@ -489,9 +496,9 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
         @issue1.due_date = issue_dates[:due]
         @issue1.save!
 
-        create_recurrence(anchor_mode: am,
-                          mode: :monthly_dow_from_first,
-                          multiplier: 1)
+        mode = issue_dates[:start].present? ? :monthly_start_dow_from_first :
+          :monthly_due_dow_from_first
+        create_recurrence(anchor_mode: am, mode: mode, multiplier: 1)
 
         setup_dates.each do |t, r_dates|
           travel_to(t)
@@ -540,9 +547,9 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       reopen_issue(@issue1) if @issue1.closed?
       assert !@issue1.closed?
 
-      ir = create_recurrence(anchor_mode: :last_issue_flexible,
-                             mode: :monthly_dow_from_first,
-                             multiplier: 1)
+      mode = issue_dates[:start].present? ? :monthly_start_dow_from_first :
+        :monthly_due_dow_from_first
+      ir = create_recurrence(anchor_mode: :last_issue_flexible, mode: mode, multiplier: 1)
 
       setup_dates.each do |t, close, r_dates|
         travel_to(t)
@@ -618,17 +625,29 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     log_user 'alice', 'foo'
 
     dates = [
-      [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_day_from_first,
-       Date.new(2019,2,28), Date.new(2019,2,28)],
-      [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_day_to_last,
-       Date.new(2019,2,1), Date.new(2019,2,1)],
-      [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_dow_from_first,
+      [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_start_day_from_first,
+       Date.new(2019,2,28), Date.new(2019,3,2)],
+      [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_due_day_from_first,
        Date.new(2019,2,26), Date.new(2019,2,28)],
-      [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_dow_to_last,
+      [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_start_day_to_last,
+       Date.new(2019,2,1), Date.new(2019,2,3)],
+      [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_due_day_to_last,
+       Date.new(2019,1,30), Date.new(2019,2,1)],
+      [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_start_dow_from_first,
+       Date.new(2019,2,26), Date.new(2019,2,28)],
+      [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_due_dow_from_first,
+       Date.new(2019,2,26), Date.new(2019,2,28)],
+      [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_start_dow_to_last,
        Date.new(2019,2,5), Date.new(2019,2,7)],
-      [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_wday_from_first,
+      [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_due_dow_to_last,
+       Date.new(2019,2,5), Date.new(2019,2,7)],
+      [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_start_wday_from_first,
        Date.new(2019,2,28), Date.new(2019,2,28)],
-      [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_wday_to_last,
+      [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_due_wday_from_first,
+       Date.new(2019,2,28), Date.new(2019,2,28)],
+      [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_start_wday_to_last,
+       Date.new(2019,2,1), Date.new(2019,2,1)],
+      [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_due_wday_to_last,
        Date.new(2019,2,1), Date.new(2019,2,1)],
     ]
 
