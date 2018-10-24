@@ -19,20 +19,21 @@ class IssueRecurrence < ActiveRecord::Base
 
   enum mode: {
     daily: 0,
-    weekly: 1,
-    monthly_start_day_from_first: 2,
-    monthly_due_day_from_first: 3,
-    monthly_start_day_to_last: 4,
-    monthly_due_day_to_last: 5,
-    monthly_start_dow_from_first: 6,
-    monthly_due_dow_from_first: 7,
-    monthly_start_dow_to_last: 8,
-    monthly_due_dow_to_last: 9,
-    monthly_start_wday_from_first: 10,
-    monthly_due_wday_from_first: 11,
-    monthly_start_wday_to_last: 12,
-    monthly_due_wday_to_last: 13,
-    yearly: 14
+    daily_wday: 1,
+    weekly: 100,
+    monthly_start_day_from_first: 200,
+    monthly_due_day_from_first: 201,
+    monthly_start_day_to_last: 210,
+    monthly_due_day_to_last: 211,
+    monthly_start_dow_from_first: 220,
+    monthly_due_dow_from_first: 221,
+    monthly_start_dow_to_last: 230,
+    monthly_due_dow_to_last: 231,
+    monthly_start_wday_from_first: 240,
+    monthly_due_wday_from_first: 241,
+    monthly_start_wday_to_last: 250,
+    monthly_due_wday_to_last: 251,
+    yearly: 300
   }
 
   enum delay_mode: {
@@ -170,6 +171,10 @@ class IssueRecurrence < ActiveRecord::Base
       dates.each do |label, date|
         dates[label] = date + shift.days if date.present?
       end
+    when :daily_wday
+      dates.each do |label, date|
+        dates[label] = add_working_days(date, shift.days) if date.present?
+      end
     when :weekly
       dates.each do |label, date|
         dates[label] = date + shift.weeks if date.present?
@@ -211,31 +216,31 @@ class IssueRecurrence < ActiveRecord::Base
     when :monthly_start_wday_from_first, :monthly_due_wday_from_first
       label, date = self.monthly_base_date(dates, :monthly_start_wday_from_first)
       return nil if label.nil?
-      source_wdays = date.beginning_of_month.step(date.end_of_month).select do |d|
-        (1..5).include?(d.wday)
+      source_wdays = date.beginning_of_month.step(date.end_of_month).reject do |d|
+        non_working_week_days.include?(d.cwday)
       end
       wday = source_wdays.bsearch_index { |d| d >= date } || source_wdays.length-1
       target_date = date + shift.months
       target_wdays = target_date.beginning_of_month
-        .step(target_date.end_of_month).select do |d|
-        (1..5).include?(d.wday)
+        .step(target_date.end_of_month).reject do |d|
+        non_working_week_days.include?(d.cwday)
       end
       target_wdate = target_wdays[wday] || target_wdays.last
-      dates = self.offset(target_wdate, label, dates)
+      dates = self.offset(target_wdate, label, dates, true)
     when :monthly_start_wday_to_last, :monthly_due_wday_to_last
       label, date = self.monthly_base_date(dates, :monthly_start_wday_to_last)
       return nil if label.nil?
-      source_wdays = date.beginning_of_month.step(date.end_of_month).select do |d|
-        (1..5).include?(d.wday)
+      source_wdays = date.beginning_of_month.step(date.end_of_month).reject do |d|
+        non_working_week_days.include?(d.cwday)
       end
       wday = source_wdays.reverse.bsearch_index { |d| d <= date } || 0
       target_date = date + shift.months
       target_wdays = target_date.beginning_of_month
-        .step(target_date.end_of_month).select do |d|
-        (1..5).include?(d.wday)
+        .step(target_date.end_of_month).reject do |d|
+        non_working_week_days.include?(d.cwday)
       end
       target_wdate = target_wdays.reverse[wday] || target_wdays.first
-      dates = self.offset(target_wdate, label, dates)
+      dates = self.offset(target_wdate, label, dates, true)
     when :yearly
       dates.each do |label, date|
         dates[label] = date + shift.years if date.present?
@@ -259,15 +264,47 @@ class IssueRecurrence < ActiveRecord::Base
 
   # Offset 'dates' so date with 'label' is equal 'target'.
   # Return offset 'dates' or nil if 'dates' does not include 'label'.
-  def offset(target_date, target_label=:due, **dates)
+  def offset(target_date, target_label=:due, dates, only_working=false)
     nil if dates[target_label].nil?
-    if target_label == :due
-      dates[:start] = target_date - (dates[:due] - dates[:start]) unless dates[:start].nil?
-    else
-      dates[:due] = target_date + (dates[:due] - dates[:start]) unless dates[:due].nil?
+    if dates[:start].present? && dates[:due].present?
+      if only_working
+        timespan = working_days(dates[:start], dates[:due])
+        if target_label == :due
+          dates[:start] = subtract_working_days(target_date, timespan)
+        else
+          dates[:due] = add_working_days(target_date, timespan)
+        end
+      else
+        timespan = dates[:due] - dates[:start]
+        if target_label == :due
+          dates[:start] = target_date - timespan
+        else
+          dates[:due] = target_date + timespan
+        end
+      end
     end
     dates[target_label] = target_date
     dates
+  end
+
+  # Based on Redmine's add_working_days.
+  def subtract_working_days(date, working_days)
+    if working_days > 0
+      weeks = working_days / (7 - non_working_week_days.size)
+      result = weeks * 7
+      days_left = working_days - weeks * (7 - non_working_week_days.size)
+      cwday = date.cwday
+      while days_left > 0
+        cwday -= 1
+        unless non_working_week_days.include?(((cwday - 1) % 7) + 1)
+          days_left -= 1
+        end
+        result += 1
+      end
+      next_working_date(date - result)
+    else
+      date
+    end
   end
 
   # Delay 'dates' according to delay mode.

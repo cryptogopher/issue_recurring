@@ -18,6 +18,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def setup
     super
+    Setting.non_working_week_days = [6, 7]
     @issue1 = issues(:issue_01)
   end
 

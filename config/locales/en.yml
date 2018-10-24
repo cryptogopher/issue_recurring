@@ -54,6 +54,7 @@ en:
         every: 'every'
         modes:
           daily: 'day(s)'
+          daily: 'working day(s)'
           weekly: 'week(s)'
           monthly_start_day_from_first: 'month(s), start on the same day of month'
           monthly_due_day_from_first: 'month(s), due on the same day of month'
@@ -73,6 +74,7 @@ en:
           yearly: 'year(s)'
         mode_intervals:
           daily: 'day'
+          daily_wday: 'working day'
           weekly: 'week'
           monthly_start_day_from_first: 'month'
           monthly_due_day_from_first: 'month'
@@ -89,6 +91,7 @@ en:
           yearly: 'year'
         mode_modifiers:
           daily: ''
+          daily_wday: ''
           weekly: ''
           monthly_start_day_from_first: 'start on %{days_from_bom} day'
           monthly_due_day_from_first: 'due on %{days_from_bom} day'
