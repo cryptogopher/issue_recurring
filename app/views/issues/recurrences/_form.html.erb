@@ -14,7 +14,8 @@
       [[t('.including_subtasks'), true], [t('.excluding_subtasks'), false]] %>
     <%= t '.every' %>
     <%= f.number_field :multiplier, min: 1, step: 1, value: 1 %>
-    <%= f.select :mode, mode_options %>
+    <% options, disabled = mode_options %>
+    <%= f.select :mode, options, disabled: disabled %>
     <%= t '.relative_to' %>
     <% options, disabled = anchor_mode_options %>
     <%= f.select :anchor_mode, options, disabled: disabled %>

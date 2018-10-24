@@ -71,6 +71,16 @@ class IssueRecurrence < ActiveRecord::Base
     message: :in_place_flexible_only
   }
   validates :mode, inclusion: modes.keys
+  validates :mode, exclusion: {
+    in: START_MODES,
+    if: "issue.start_date.blank?",
+    message: :start_mode_requires_date
+  }
+  validates :mode, exclusion: {
+    in: DUE_MODES,
+    if: "issue.due_date.blank?",
+    message: :due_mode_requires_date
+  }
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
   validates :delay_mode, inclusion: delay_modes.keys
   validates :delay_multiplier, numericality: {greater_than_or_equal_to: 0, only_integer: true}
