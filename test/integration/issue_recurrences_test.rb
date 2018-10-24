@@ -669,8 +669,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   # TODO:
-  # - monthly_dow with same dow (2nd Tuesday+2nd Thursday) + month when 1st
-  # Thursday is before 1st Tuesaday (start date ater than end date)
+  # - daily_wday
   # - renew_all with and without as_user
   # - first_issue_fixed with date movement forward/backward on issue and last
   # recurrence

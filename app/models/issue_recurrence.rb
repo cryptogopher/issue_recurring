@@ -38,6 +38,8 @@ class IssueRecurrence < ActiveRecord::Base
     yearly: 300
   }
   WDAY_MODES = modes.keys.select { |m| m.include?('_wday') }
+  START_MODES = modes.keys.select { |m| m.include?('_start_') }
+  DUE_MODES = modes.keys.select { |m| m.include?('_due_') }
 
   enum delay_mode: {
     day: 0,
@@ -117,25 +119,26 @@ class IssueRecurrence < ActiveRecord::Base
     s = 'issues.recurrences.form'
 
     ref_dates = self.reference_dates
-    ref_modifiers = Hash.new('')
+    ref_modifier = ''
     unless ref_dates.nil?
+      values = Hash.new
       ref_dates.each do |label, date|
-        unless date.nil?
-          days_to_eom = (date.end_of_month.mday - date.mday + 1).to_i
-          values = {
-            days_from_bom: date.mday.ordinalize,
-            days_to_eom: days_to_eom.ordinalize,
-            day_of_week: date.strftime("%A"),
-            dows_from_bom: ((date.mday - 1) / 7 + 1).ordinalize,
-            dows_to_eom: (((date.end_of_month.mday - date.mday).to_i / 7) + 1).ordinalize,
-            # TODO
-            wdays_from_bom: '',
-            wdays_to_eom: ''
-          }
-          ref_modifiers[label] = "#{label.to_s}" \
-            " #{l("#{s}.mode_modifiers.#{self.mode}", values)}"
-        end
+        next if date.nil?
+
+        days_to_eom = (date.end_of_month.mday - date.mday + 1).to_i
+        values.update({
+          "#{label}_days_from_bom": date.mday.ordinalize,
+          "#{label}_days_to_eom": days_to_eom.ordinalize,
+          "#{label}_day_of_week": date.strftime("%A"),
+          "#{label}_dows_from_bom": ((date.mday - 1) / 7 + 1).ordinalize,
+          "#{label}_dows_to_eom":
+            (((date.end_of_month.mday - date.mday).to_i / 7) + 1).ordinalize,
+          # TODO
+          "#{label}_wdays_from_bom": '',
+          "#{label}_wdays_to_eom": ''
+        })
       end
+      ref_modifier = " #{l("#{s}.mode_modifiers.#{self.mode}", values)}"
     end
 
     delay_info = self.delay_multiplier > 0 ?
@@ -151,7 +154,7 @@ class IssueRecurrence < ActiveRecord::Base
       " #{l("#{s}.every")}" \
       " <b>#{self.multiplier}" \
       " #{l("#{s}.mode_intervals.#{self.mode}").pluralize(self.multiplier)}</b>," \
-      " #{ref_modifiers.values.to_sentence}" \
+      "#{ref_modifier}" \
       " #{l("#{s}.relative_to")}" \
       " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
       "#{delay_info}" \
@@ -183,20 +186,20 @@ class IssueRecurrence < ActiveRecord::Base
         dates[label] = date + shift.weeks if date.present?
       end
     when :monthly_start_day_from_first, :monthly_due_day_from_first
-      label, date = self.monthly_base_date(dates, :monthly_start_day_from_first)
-      return nil if label.nil?
+      label = START_MODES.include?(self.mode) ? :start : :due
+      date = dates[label]
       target_date = date + shift.months
       dates = self.offset(target_date, label, dates)
     when :monthly_start_day_to_last, :monthly_due_day_to_last
-      label, date = self.monthly_base_date(dates, :monthly_start_day_to_last)
-      return nil if label.nil?
+      label = START_MODES.include?(self.mode) ? :start : :due
+      date = dates[label]
       days_to_last = date.end_of_month - date
       target_eom = (date + shift.months).end_of_month
       target_date = target_eom - [days_to_last, target_eom.mday-1].min
       dates = self.offset(target_date, label, dates)
     when :monthly_start_dow_from_first, :monthly_due_dow_from_first
-      label, date = self.monthly_base_date(dates, :monthly_start_dow_from_first)
-      return nil if label.nil?
+      label = START_MODES.include?(self.mode) ? :start : :due
+      date = dates[label]
       source_dow = date.days_to_week_start
       target_bom = (date + shift.months).beginning_of_month
       target_bom_dow = target_bom.days_to_week_start
@@ -206,8 +209,8 @@ class IssueRecurrence < ActiveRecord::Base
       target_date = target_bom + target_bom_shift - overflow
       dates = self.offset(target_date, label, dates)
     when :monthly_start_dow_to_last, :monthly_due_dow_to_last
-      label, date = self.monthly_base_date(dates, :monthly_start_dow_to_last)
-      return nil if label.nil?
+      label = START_MODES.include?(self.mode) ? :start : :due
+      date = dates[label]
       source_dow = date.days_to_week_start
       target_eom = (date + shift.months).end_of_month
       target_eom_dow = target_eom.days_to_week_start
@@ -217,8 +220,8 @@ class IssueRecurrence < ActiveRecord::Base
       target_date = target_eom - target_eom_shift + overflow
       dates = self.offset(target_date, label, dates)
     when :monthly_start_wday_from_first, :monthly_due_wday_from_first
-      label, date = self.monthly_base_date(dates, :monthly_start_wday_from_first)
-      return nil if label.nil?
+      label = START_MODES.include?(self.mode) ? :start : :due
+      date = dates[label]
       source_wdays = date.beginning_of_month.step(date.end_of_month).reject do |d|
         non_working_week_days.include?(d.cwday)
       end
@@ -231,8 +234,8 @@ class IssueRecurrence < ActiveRecord::Base
       target_wdate = target_wdays[wday] || target_wdays.last
       dates = self.offset(target_wdate, label, dates)
     when :monthly_start_wday_to_last, :monthly_due_wday_to_last
-      label, date = self.monthly_base_date(dates, :monthly_start_wday_to_last)
-      return nil if label.nil?
+      label = START_MODES.include?(self.mode) ? :start : :due
+      date = dates[label]
       source_wdays = date.beginning_of_month.step(date.end_of_month).reject do |d|
         non_working_week_days.include?(d.cwday)
       end
@@ -253,16 +256,6 @@ class IssueRecurrence < ActiveRecord::Base
     return nil if self.date_limit.present? && (dates[:start] || dates[:due]) > self.date_limit
 
     dates
-  end
-
-  def monthly_base_date(dates, start_label)
-    label = self.mode.to_sym == start_label ? :start : :due
-    if dates[label].nil?
-      logger.warn("Issue ##{self.issue.id} has no #{label} date " \
-                  "to allow for recurrence renewal.") if logger
-      return nil
-    end
-    [label, dates[label]]
   end
 
   # Offset 'dates' so date with 'label' is equal 'target'.
@@ -342,6 +335,7 @@ class IssueRecurrence < ActiveRecord::Base
 
     if self.include_subtasks
       new_issue.reload.descendants.each do |child|
+        # FIXME: children should be offset, not advanced?
         child_dates = self.advance(start: child.start_date, due: child.due_date)
         child.start_date = child_dates[:start] 
         child.due_date = child_dates[:due]
@@ -369,21 +363,16 @@ class IssueRecurrence < ActiveRecord::Base
 
   # Return reference dates for next recrrence or nil if no suitable dates found.
   def reference_dates
+    ref_issue = nil
     ref_dates = nil
     case self.anchor_mode.to_sym
-    when :first_issue_fixed
-      ref_dates = {start: self.issue.start_date, due: self.issue.due_date}
-      if logger && ref_dates.values.compact.empty?
-        logger.warn("Issue ##{self.issue.id} has no dates to allow for recurrence renewal.") 
-        ref_dates = nil
-      end
-      self.delay(ref_dates)
-    when :last_issue_fixed
-      ref_issue = self.last_issue || self.issue
+    when :first_issue_fixed, :last_issue_fixed
+      ref_issue = self.last_issue if self.anchor_mode.to_sym == :last_issue_fixed
+      ref_issue ||= self.issue
       ref_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
-      if logger && ref_dates.values.compact.empty?
+      if logger && (ref_dates[:start] || ref_dates[:due]).nil?
         logger.warn("Issue ##{ref_issue.id} has no dates to allow for recurrence renewal.") 
-        ref_dates = nil
+        return nil
       end
       self.delay(ref_dates)
     when :last_issue_flexible, :last_issue_flexible_on_delay
@@ -396,7 +385,7 @@ class IssueRecurrence < ActiveRecord::Base
               ((ref_dates[:due] || ref_dates[:start]) >= closed_date)
             ref_label = ref_issue.due_date.present? ? :due : :start
             offset_dates = self.offset(closed_date, ref_label, ref_dates) 
-            return if offset_dates.nil?
+            return nil if offset_dates.nil?
             ref_dates = offset_dates
           end
         else
@@ -404,6 +393,16 @@ class IssueRecurrence < ActiveRecord::Base
         end
       end
     end
+
+    if logger && ref_dates && ref_dates[:start].nil? && START_MODES.include?(self.mode)
+      logger.warn("Issue ##{ref_issue.id} has no start date to allow for recurrence renewal.")
+      return nil
+    end
+    if logger && ref_dates && ref_dates[:due].nil? && DUE_MODES.include?(self.mode)
+      logger.warn("Issue ##{ref_issue.id} has no due date to allow for recurrence renewal.")
+      return nil
+    end
+
     ref_dates
   end
 
