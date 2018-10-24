@@ -1,4 +1,6 @@
 class IssueRecurrence < ActiveRecord::Base
+  include Redmine::Utils::DateCalculation
+
   belongs_to :issue
   belongs_to :last_issue, class_name: 'Issue'
 
@@ -35,6 +37,7 @@ class IssueRecurrence < ActiveRecord::Base
     monthly_due_wday_to_last: 251,
     yearly: 300
   }
+  WDAY_MODES = modes.keys.select { |m| m.include?('_wday') }
 
   enum delay_mode: {
     day: 0,
@@ -226,7 +229,7 @@ class IssueRecurrence < ActiveRecord::Base
         non_working_week_days.include?(d.cwday)
       end
       target_wdate = target_wdays[wday] || target_wdays.last
-      dates = self.offset(target_wdate, label, dates, true)
+      dates = self.offset(target_wdate, label, dates)
     when :monthly_start_wday_to_last, :monthly_due_wday_to_last
       label, date = self.monthly_base_date(dates, :monthly_start_wday_to_last)
       return nil if label.nil?
@@ -240,7 +243,7 @@ class IssueRecurrence < ActiveRecord::Base
         non_working_week_days.include?(d.cwday)
       end
       target_wdate = target_wdays.reverse[wday] || target_wdays.first
-      dates = self.offset(target_wdate, label, dates, true)
+      dates = self.offset(target_wdate, label, dates)
     when :yearly
       dates.each do |label, date|
         dates[label] = date + shift.years if date.present?
@@ -264,10 +267,10 @@ class IssueRecurrence < ActiveRecord::Base
 
   # Offset 'dates' so date with 'label' is equal 'target'.
   # Return offset 'dates' or nil if 'dates' does not include 'label'.
-  def offset(target_date, target_label=:due, dates, only_working=false)
+  def offset(target_date, target_label=:due, **dates)
     nil if dates[target_label].nil?
     if dates[:start].present? && dates[:due].present?
-      if only_working
+      if WDAY_MODES.include?(self.mode)
         timespan = working_days(dates[:start], dates[:due])
         if target_label == :due
           dates[:start] = subtract_working_days(target_date, timespan)

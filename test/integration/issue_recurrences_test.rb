@@ -419,10 +419,10 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       monthly_due_dow_from_first: [Date.new(2102,1,24), Date.new(2102,2,2)],
       monthly_start_dow_to_last: [Date.new(2102,1,31), Date.new(2102,2,9)],
       monthly_due_dow_to_last: [Date.new(2102,1,24), Date.new(2102,2,2)],
-      monthly_start_wday_from_first: [Date.new(2102,1,24), Date.new(2102,2,6)],
-      monthly_due_wday_from_first: [Date.new(2102,1,24), Date.new(2102,2,6)],
-      monthly_start_wday_to_last: [Date.new(2102,1,26), Date.new(2102,2,1)],
-      monthly_due_wday_to_last: [Date.new(2102,1,26), Date.new(2102,2,1)],
+      monthly_start_wday_from_first: [Date.new(2102,1,24), Date.new(2102,2,2)],
+      monthly_due_wday_from_first: [Date.new(2102,1,26), Date.new(2102,2,6)],
+      monthly_start_wday_to_last: [Date.new(2102,1,26), Date.new(2102,2,6)],
+      monthly_due_wday_to_last: [Date.new(2102,1,23), Date.new(2102,2,1)],
       yearly: [Date.new(3018,9,25), Date.new(3018,10,4)],
     }
     items.each do |m, (start, due)|
@@ -433,7 +433,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       issue1 = renew_all(1).first
       assert_equal start, issue1.start_date
       assert_equal due, issue1.due_date
-      puts m
     end
   end
 
@@ -643,17 +642,17 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_due_dow_to_last,
        Date.new(2019,2,5), Date.new(2019,2,7)],
       [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_start_wday_from_first,
-       Date.new(2019,2,28), Date.new(2019,2,28)],
+       Date.new(2019,2,28), Date.new(2019,3,4)],
       [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_due_wday_from_first,
-       Date.new(2019,2,28), Date.new(2019,2,28)],
+       Date.new(2019,2,26), Date.new(2019,2,28)],
       [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_start_wday_to_last,
-       Date.new(2019,2,1), Date.new(2019,2,1)],
+       Date.new(2019,2,1), Date.new(2019,2,5)],
       [Date.new(2019,1,1), Date.new(2019,1,3), :monthly_due_wday_to_last,
-       Date.new(2019,2,1), Date.new(2019,2,1)],
+       Date.new(2019,1,30), Date.new(2019,2,1)],
     ]
 
-    travel_to(Date.new(2019,1,31))
     dates.each do |start, due, mode, r_start, r_due|
+      travel_to(start)
       @issue1.start_date = start
       @issue1.due_date = due
       @issue1.save!
@@ -668,6 +667,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_mode_monthly_dow
   end
+
   # TODO:
   # - monthly_dow with same dow (2nd Tuesday+2nd Thursday) + month when 1st
   # Thursday is before 1st Tuesaday (start date ater than end date)
