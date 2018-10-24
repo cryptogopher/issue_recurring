@@ -390,7 +390,7 @@ class IssueRecurrence < ActiveRecord::Base
       if ref_issue.closed?
         closed_date = ref_issue.closed_on.to_date
         ref_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
-        if ref_dates.values.compact.present?
+        if (ref_dates[:start] || ref_dates[:due]).present?
           unless (self.anchor_mode.to_sym == :last_issue_flexible_on_delay) &&
               ((ref_dates[:due] || ref_dates[:start]) >= closed_date)
             ref_label = ref_issue.due_date.present? ? :due : :start
@@ -399,7 +399,11 @@ class IssueRecurrence < ActiveRecord::Base
             ref_dates = offset_dates
           end
         else
-          ref_dates[:due] = closed_date
+          if START_MODES.include?(self.mode)
+            ref_dates[:start] = closed_date
+          else
+            ref_dates[:due] = closed_date
+          end
         end
       end
     end

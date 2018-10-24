@@ -12,15 +12,9 @@ module IssueRecurring
 
       def mode_options
         translations = t('.modes')
-        options = IssueRecurrence.modes.map do |k,v|
+        IssueRecurrence.modes.map do |k,v|
           [sanitize(translations[k.to_sym], tags:{}), k]
         end
-
-        disabled = []
-        disabled = IssueRecurrence::START_MODES if @issue.start_date.blank?
-        disabled += IssueRecurrence::DUE_MODES if @issue.due_date.blank?
-
-        [options, disabled]
       end
 
       def anchor_mode_options
