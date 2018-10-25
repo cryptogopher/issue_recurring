@@ -8,16 +8,15 @@
   </div>
 
   <p>
-    <% options, disabled = creation_mode_options %>
-    <%= f.select :creation_mode, options, disabled: disabled %>
+    <%= f.select :creation_mode, creation_mode_options %>
     <%= f.select :include_subtasks,
       [[t('.including_subtasks'), true], [t('.excluding_subtasks'), false]] %>
     <%= t '.every' %>
     <%= f.number_field :multiplier, min: 1, step: 1, value: 1 %>
-    <%= f.select :mode, mode_options %>
+    <% options, disabled = mode_options %>
+    <%= f.select :mode, options, disabled: disabled %>
     <%= t '.relative_to' %>
-    <% options, disabled = anchor_mode_options %>
-    <%= f.select :anchor_mode, options, disabled: disabled %>
+    <%= f.select :anchor_mode, anchor_mode_options %>
     <%= t '.delayed_by' %>
     <%= f.number_field :delay_multiplier, min: 0, step: 1, value: 0 %>
     <%= f.select :delay_mode, delay_mode_options %>
@@ -52,6 +51,30 @@
 <% end %>
 
 <%= javascript_tag do %>
+  function creationModeChange() {
+    $('#recurrence_anchor_mode option[value*="_fixed"]').prop(
+      'disabled',
+      $('#recurrence_creation_mode option[value="in_place"]').prop('selected') ||
+      <%= (@issue.start_date || @issue.due_date).blank? ? 'true' : 'false' %>
+    )
+    $('#recurrence_anchor_mode option:selected:disabled').prop('selected', false);
+    anchorModeChange();
+  }
+  $('#new-recurrence-form').on('click', '#recurrence_creation_mode', creationModeChange);
+
+  function anchorModeChange() {
+    $('#recurrence_delay_mode').prop(
+      'disabled',
+      $('#recurrence_anchor_mode option:selected').val().includes('_flexible')
+    );
+    $('#recurrence_delay_multiplier').prop(
+      'disabled',
+      $('#recurrence_anchor_mode option:selected').val().includes('_flexible')
+    );
+    limitModeChange();
+  }
+  $('#new-recurrence-form').on('click', '#recurrence_anchor_mode', anchorModeChange);
+
   function limitModeChange() {
     $('#recurrence_date_limit').prop(
       'disabled',
@@ -64,35 +87,9 @@
   }
   $('#new-recurrence-form').on('click', 'label [name="limit_mode"]', limitModeChange);
 
-  function creationModeChange() {
-    $('#recurrence_anchor_mode option[value*="_fixed"]').prop(
-      'disabled',
-      $('#recurrence_creation_mode option[value="in_place"]').prop('selected')
-    )
-    $('#recurrence_anchor_mode option:selected:disabled').prop('selected', false);
-  }
-  $('#new-recurrence-form').on('click', '#recurrence_creation_mode', creationModeChange);
-
-  function anchorModeChange() {
-    $('#recurrence_creation_mode option[value="in_place"]').prop(
-      'disabled',
-      $('#recurrence_anchor_mode option:selected').val().includes('_fixed')
-    );
-    $('#recurrence_creation_mode option:selected:disabled').prop('selected', false);
-    $('#recurrence_delay_mode').prop(
-      'disabled',
-      $('#recurrence_anchor_mode option:selected').val().includes('_flexible')
-    );
-    $('#recurrence_delay_multiplier').prop(
-      'disabled',
-      $('#recurrence_anchor_mode option:selected').val().includes('_flexible')
-    );
-  }
-  $('#new-recurrence-form').on('click', '#recurrence_anchor_mode', anchorModeChange);
-
   $(document).ready(function() {
-     limitModeChange();
-     creationModeChange();
-     anchorModeChange();
+    creationModeChange();
+    anchorModeChange();
+    limitModeChange();
   });
 <% end %>

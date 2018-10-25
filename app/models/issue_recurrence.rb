@@ -73,12 +73,12 @@ class IssueRecurrence < ActiveRecord::Base
   validates :mode, inclusion: modes.keys
   validates :mode, exclusion: {
     in: START_MODES,
-    if: "issue.start_date.blank?",
+    if: "issue.start_date.blank? && issue.due_date.present?",
     message: :start_mode_requires_date
   }
   validates :mode, exclusion: {
     in: DUE_MODES,
-    if: "issue.due_date.blank?",
+    if: "issue.due_date.blank? && issue.start_date.present?",
     message: :due_mode_requires_date
   }
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
