@@ -26,6 +26,10 @@ en:
               not_in_future: 'user provided recurrence limit date has to be in future'
   project_menu_caption: 'Issue recurrences'
   journal_title: 'Issue recurrence'
+  settings:
+    issue_recurrences:
+      author: 'Author of issue recurrences'
+      author_unchanged: 'keep unchanged'
   issue_recurrences:
     index:
       heading: 'Issue recurrences'

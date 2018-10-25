@@ -334,11 +334,12 @@ class IssueRecurrence < ActiveRecord::Base
 
   # Create next recurrence issue. Assumes that 'advance' will return valid date
   # (so advance must be called first and checked for return value).
-  def create(dates, as_user)
+  def create(dates)
     ref_issue = (self.creation_mode.to_sym == :copy_last) ? self.last_issue : self.issue
 
     prev_user = User.current
-    User.current = as_user || ref_issue.author
+    author_id = Setting.plugin_issue_recurring['author_id'].to_i
+    User.current = User.find_by(id: author_id) || ref_issue.author
     ref_issue.init_journal(User.current, l(:journal_recurrence))
 
     new_issue = (self.creation_mode.to_sym == :in_place) ? self.issue :
@@ -446,7 +447,7 @@ class IssueRecurrence < ActiveRecord::Base
   #  schedule
   #end
 
-  def renew(as_user)
+  def renew
     case self.anchor_mode.to_sym
     when :first_issue_fixed
       ref_dates = self.reference_dates
@@ -456,7 +457,7 @@ class IssueRecurrence < ActiveRecord::Base
       while (prev_dates[:start] || prev_dates[:due]) < Date.tomorrow
         new_dates = self.advance(ref_dates)
         break if new_dates.nil?
-        self.create(new_dates, as_user)
+        self.create(new_dates)
         prev_dates = new_dates
       end
     when :last_issue_fixed
@@ -465,7 +466,7 @@ class IssueRecurrence < ActiveRecord::Base
       while (ref_dates[:start] || ref_dates[:due]) < Date.tomorrow
         new_dates = self.advance(ref_dates)
         break if new_dates.nil?
-        self.create(new_dates, as_user)
+        self.create(new_dates)
         ref_dates = new_dates
       end
     when :last_issue_flexible, :last_issue_flexible_on_delay
@@ -473,15 +474,12 @@ class IssueRecurrence < ActiveRecord::Base
       return if ref_dates.nil?
       new_dates = self.advance(ref_dates)
       return if new_dates.nil?
-      self.create(new_dates, as_user)
+      self.create(new_dates)
     end
   end
 
-  def self.renew_all(**options)
-    as_user = options[:as] && User.find_by(name: options[:as])
-    IssueRecurrence.all.each do |r|
-      r.renew(as_user)
-    end
+  def self.renew_all
+    IssueRecurrence.all.map(&:renew)
   end
 
   private

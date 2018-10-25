@@ -6,6 +6,8 @@ ActionDispatch::Reloader.to_prepare do
   IssuesHelper.include IssueRecurring::IssuesHelperPatch
 
   Project.include IssueRecurring::ProjectPatch
+
+  SettingsHelper.include IssueRecurring::SettingsHelperPatch
 end
 
 Redmine::Plugin.register :issue_recurring do
@@ -26,4 +28,8 @@ Redmine::Plugin.register :issue_recurring do
     {:controller => 'issue_recurrences', :action => 'index'},
     :caption => :project_menu_caption,
     :after => :issues, :param => :project_id
+
+  settings default: {
+    'author_id': 0
+  }, partial: 'settings/issue_recurrences'
 end
