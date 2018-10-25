@@ -28,9 +28,10 @@ en:
   journal_title: 'Issue recurrence'
   settings:
     issue_recurrences:
-      author: 'Author'
-      author_unchanged: 'leave unchanged'
-      keep_assignee: 'Keep assignee'
+      author: 'Set author of new recurrence to'
+      author_unchanged: 'the author of source issue'
+      keep_assignee: 'Keep assignee from previous recurrence'
+      keep_assignee_hint: 'if unchecked default assignment rules apply'
   issue_recurrences:
     index:
       heading: 'Issue recurrences'
