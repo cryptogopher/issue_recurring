@@ -30,6 +30,7 @@ Redmine::Plugin.register :issue_recurring do
     :after => :issues, :param => :project_id
 
   settings default: {
-    'author_id': 0
+    'author_id' => 0,
+    'keep_assignee' => false
   }, partial: 'settings/issue_recurrences'
 end

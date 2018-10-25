@@ -2,3 +2,7 @@
 <%= content_tag :label, t('.author') %>
 <%= select_tag "settings[author_id]", authors(@settings['author_id']) %>
 </p>
+<p>
+<%= content_tag :label, t('.keep_assignee') %>
+<%= check_box_tag "settings[keep_assignee]", true, @settings['keep_assignee'] %>
+</p>

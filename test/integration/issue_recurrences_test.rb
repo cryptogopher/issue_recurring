@@ -670,7 +670,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   # TODO:
   # - daily_wday
-  # - renew_all with and without as_user
+  # - plugin settings: author_id, keep_assignee
   # - first_issue_fixed with date movement forward/backward on issue and last
   # recurrence
   # - tests of creation modes

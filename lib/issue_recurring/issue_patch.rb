@@ -8,6 +8,11 @@ module IssueRecurring
         dependent: :nullify
 
       validates :recurrence_of, associated: true
+
+      def default_reassign
+        self.assigned_to = nil
+        default_assign
+      end
     end
   end
 end

@@ -355,6 +355,7 @@ class IssueRecurrence < ActiveRecord::Base
         child.done_ratio = 0
         child.status = child.tracker.default_status
         child.recurrence_of = child.copied_from if child.respond_to?('copied_from')
+        child.default_reassign unless Setting.plugin_issue_recurring['keep_assignee']
         child.save!
       end
       new_issue.reload
@@ -365,6 +366,7 @@ class IssueRecurrence < ActiveRecord::Base
     new_issue.done_ratio = 0
     new_issue.status = new_issue.tracker.default_status
     new_issue.recurrence_of = new_issue.copied_from if new_issue.respond_to?('copied_from')
+    new_issue.default_reassign unless Setting.plugin_issue_recurring['keep_assignee']
     new_issue.save!
 
     self.last_issue = new_issue

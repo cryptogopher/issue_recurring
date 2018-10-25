@@ -28,8 +28,9 @@ en:
   journal_title: 'Issue recurrence'
   settings:
     issue_recurrences:
-      author: 'Author of issue recurrences'
-      author_unchanged: 'keep unchanged'
+      author: 'Author'
+      author_unchanged: 'leave unchanged'
+      keep_assignee: 'Keep assignee'
   issue_recurrences:
     index:
       heading: 'Issue recurrences'
