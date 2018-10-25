@@ -129,8 +129,10 @@ class IssueRecurrence < ActiveRecord::Base
     s = 'issues.recurrences.form'
 
     ref_dates = self.reference_dates
-    ref_modifier = ''
-    unless ref_dates.nil?
+    ref_description = ''
+    if ref_dates.nil?
+      ref_description = " #{l("#{s}.mode_descriptions.#{self.mode}")}"
+    else
       values = Hash.new
       ref_dates.each do |label, date|
         next if date.nil?
@@ -148,7 +150,7 @@ class IssueRecurrence < ActiveRecord::Base
           "#{label}_wdays_to_eom": ''
         })
       end
-      ref_modifier = " #{l("#{s}.mode_modifiers.#{self.mode}", values)}"
+      ref_description = " #{l("#{s}.mode_modifiers.#{self.mode}", values)}"
     end
 
     delay_info = self.delay_multiplier > 0 ?
@@ -164,7 +166,7 @@ class IssueRecurrence < ActiveRecord::Base
       " #{l("#{s}.every")}" \
       " <b>#{self.multiplier}" \
       " #{l("#{s}.mode_intervals.#{self.mode}").pluralize(self.multiplier)}</b>," \
-      "#{ref_modifier}" \
+      "#{ref_description}" \
       " #{l("#{s}.relative_to")}" \
       " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
       "#{delay_info}" \

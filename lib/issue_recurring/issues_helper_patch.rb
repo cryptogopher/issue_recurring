@@ -9,9 +9,12 @@ module IssueRecurring
       end
 
       def mode_options
-        translations = t('.modes')
+        intervals = t('.mode_intervals')
+        descriptions = t('.mode_descriptions')
         options = IssueRecurrence.modes.map do |k,v|
-          [sanitize(translations[k.to_sym], tags:{}), k]
+          mode = intervals[k.to_sym].pluralize
+          mode += ", #{descriptions[k.to_sym]}" unless descriptions[k.to_sym].empty?
+          [sanitize(mode, tags:{}), k]
         end
         disabled = []
         disabled += IssueRecurrence::START_MODES if @issue.start_date.blank? &&
