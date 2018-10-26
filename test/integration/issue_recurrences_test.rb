@@ -492,6 +492,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
     [:first_issue_fixed, :last_issue_fixed].each do |am|
       dates.each do |issue_dates, setup_dates|
+        @issue1.reload
         @issue1.start_date = issue_dates[:start]
         @issue1.due_date = issue_dates[:due]
         @issue1.save!

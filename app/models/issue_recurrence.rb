@@ -340,7 +340,7 @@ class IssueRecurrence < ActiveRecord::Base
     prev_user = User.current
     author_id = Setting.plugin_issue_recurring['author_id'].to_i
     User.current = User.find_by(id: author_id) || ref_issue.author
-    ref_issue.init_journal(User.current, l(:journal_recurrence))
+    ref_issue.init_journal(User.current, l(:journal_title))
 
     new_issue = (self.creation_mode.to_sym == :in_place) ? self.issue :
       ref_issue.copy(nil, subtasks: self.include_subtasks)
@@ -385,8 +385,8 @@ class IssueRecurrence < ActiveRecord::Base
       ref_issue = self.last_issue if self.anchor_mode.to_sym == :last_issue_fixed
       ref_issue ||= self.issue
       ref_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
-      if logger && (ref_dates[:start] || ref_dates[:due]).nil?
-        logger.warn("Issue ##{ref_issue.id} has no dates to allow for recurrence renewal.") 
+      if (ref_dates[:start] || ref_dates[:due]).nil?
+        log("issue ##{ref_issue.id} start and due dates are blank") 
         return nil
       end
       self.delay(ref_dates)
@@ -413,12 +413,12 @@ class IssueRecurrence < ActiveRecord::Base
       end
     end
 
-    if logger && ref_dates && ref_dates[:start].nil? && START_MODES.include?(self.mode)
-      logger.warn("Issue ##{ref_issue.id} has no start date to allow for recurrence renewal.")
+    if ref_dates && ref_dates[:start].nil? && START_MODES.include?(self.mode)
+      log("issue ##{ref_issue.id} start date is blank")
       return nil
     end
-    if logger && ref_dates && ref_dates[:due].nil? && DUE_MODES.include?(self.mode)
-      logger.warn("Issue ##{ref_issue.id} has no due date to allow for recurrence renewal.")
+    if ref_dates && ref_dates[:due].nil? && DUE_MODES.include?(self.mode)
+      log("issue ##{ref_issue.id} due date is blank")
       return nil
     end
 
@@ -485,6 +485,15 @@ class IssueRecurrence < ActiveRecord::Base
   end
 
   private
+
+  def log(msg)
+    logger.warn(msg) if logger
+
+    author_id = Setting.plugin_issue_recurring['author_id'].to_i
+    User.current = User.find_by(id: author_id) || self.issue.author
+    self.issue.init_journal(User.current, l(:journal_warning, {msg: msg}))
+    self.issue.save
+  end
 
   class Date < ::Date
     def self.today

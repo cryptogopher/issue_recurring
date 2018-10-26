@@ -26,12 +26,13 @@ en:
               not_in_future: 'user provided recurrence limit date has to be in future'
   project_menu_caption: 'Issue recurrences'
   journal_title: 'Issue recurrence'
+  journal_warning: "<b>Warning</b>: can't renew recurrence, %{msg}."
   settings:
     issue_recurrences:
       author: 'Set author of new recurrence to'
       author_unchanged: 'the author of source issue'
       keep_assignee: 'Keep assignee from previous recurrence'
-      keep_assignee_hint: 'if unchecked default assignment rules apply'
+      keep_assignee_hint: 'if unchecked, default assignment rules will apply'
   issue_recurrences:
     index:
       heading: 'Issue recurrences'
