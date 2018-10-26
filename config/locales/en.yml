@@ -111,10 +111,10 @@ en:
           monthly_start_dow_to_last: 'start on %{start_dows_to_eom} to last
             %{start_day_of_week}'
           monthly_due_dow_to_last: 'due on %{due_dows_to_eom} to last %{due_day_of_week}'
-          monthly_start_wday_from_first: 'start on %{start_wdays_from_bom} weekday'
-          monthly_due_wday_from_first: 'due on %{due_wdays_from_bom} weekday'
-          monthly_start_wday_to_last: 'start on %{start_wdays_to_eom} to last weekday'
-          monthly_due_wday_to_last: 'due on %{due_wdays_to_eom} to last weekday'
+          monthly_start_wday_from_first: 'start on %{start_wdays_from_bom} working day'
+          monthly_due_wday_from_first: 'due on %{due_wdays_from_bom} working day'
+          monthly_start_wday_to_last: 'start on %{start_wdays_to_eom} to last working day'
+          monthly_due_wday_to_last: 'due on %{due_wdays_to_eom} to last working day'
           yearly: ''
         relative_to: 'relative to'
         anchor_modes:

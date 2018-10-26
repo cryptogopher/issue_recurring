@@ -139,15 +139,13 @@ class IssueRecurrence < ActiveRecord::Base
 
         days_to_eom = (date.end_of_month.mday - date.mday + 1).to_i
         values.update({
-          "#{label}_days_from_bom": date.mday.ordinalize,
-          "#{label}_days_to_eom": days_to_eom.ordinalize,
-          "#{label}_day_of_week": date.strftime("%A"),
-          "#{label}_dows_from_bom": ((date.mday - 1) / 7 + 1).ordinalize,
-          "#{label}_dows_to_eom":
-            (((date.end_of_month.mday - date.mday).to_i / 7) + 1).ordinalize,
-          # TODO
-          "#{label}_wdays_from_bom": '',
-          "#{label}_wdays_to_eom": ''
+          "#{label}_days_from_bom" => date.mday.ordinalize,
+          "#{label}_days_to_eom" => days_to_eom.ordinalize,
+          "#{label}_day_of_week" => date.strftime("%A"),
+          "#{label}_dows_from_bom" => ((date.mday - 1) / 7 + 1).ordinalize,
+          "#{label}_dows_to_eom" => ((days_to_eom - 1) / 7 + 1).ordinalize,
+          "#{label}_wdays_from_bom" => working_days(date.beginning_of_month, date).ordinalize,
+          "#{label}_wdays_to_eom" => working_days(date, date.end_of_month).ordinalize
         })
       end
       ref_description = " #{l("#{s}.mode_modifiers.#{self.mode}", values)}"
