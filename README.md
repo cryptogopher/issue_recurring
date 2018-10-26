@@ -73,7 +73,7 @@ The most notable features of this plugin include:
 
 7. Add cron task to enable recurrence creation at least once a day.
    ```
-   
+   12 6 * * * cd /var/lib/redmine && RAILS_ENV=production rake redmine:issue_recurring:renew_all >> log/cron-issue_recurring.log
    ```
 
 8. Go to Redmine, create/open issue, add issue recurrence.
