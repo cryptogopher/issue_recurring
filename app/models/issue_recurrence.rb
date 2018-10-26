@@ -335,7 +335,8 @@ class IssueRecurrence < ActiveRecord::Base
   # Create next recurrence issue. Assumes that 'advance' will return valid date
   # (so advance must be called first and checked for return value).
   def create(dates)
-    ref_issue = (self.creation_mode.to_sym == :copy_last) ? self.last_issue : self.issue
+    ref_issue = self.last_issue if self.creation_mode.to_sym == :copy_last
+    ref_issue ||= self.issue
 
     prev_user = User.current
     author_id = Setting.plugin_issue_recurring['author_id'].to_i
