@@ -41,3 +41,41 @@ The most notable features of this plugin include:
 * specification of user account under which issue recurrences will be created: any Redmine user or last recurrence author,
 * specification of recurrence assignment: can be kept as previous recurrence assignee or set to Redmine default,
 
+## Installation
+
+1. Check prerequisites. To use this plugin you need to have:
+   * Redmine (https://www.redmine.org) installed. Check that your Redmine version is compatible with plugin. Currently supported are following versions of software:
+
+     |        |versions |
+     |--------|---------|
+     |Redmine |3.4.x    |
+     
+     You may try and find this plugin working on other versions too, but be prepared to get error messages. In case it works let everyone know that through issue tracker (send _support_ issue). If it doesn't work, you are welcome to send _feature_ request to make plugin compatible with other version. Keep in mind though, that for more exotic versions there will be more vote power needed to complete such feature request.
+
+2. Login to shell, change to redmine user, clone plugin to your plugins directory, install gemfiles and migrate database:
+   ```
+   su - redmine
+   git -C /var/lib/redmine/plugins/ clone https://github.com/cryptogopher/issue_recurring.git
+   cd /var/lib/redmine
+   bundle install
+   RAILS_ENV=production rake redmine:plugins:migrate
+   ```
+
+3. Restart Redmine. Exact steps depend on your installation of Redmine. You may need to restart Apache (when using Passenger) or just Redmine daemon/service.
+
+4. Update Redmine settings.
+   * (optional) create separate Redmine user as an author of issue recurrences (Administration -> Users -> New user)
+   * re-login as administrator and grant issue recurring permissions to roles (Administration -> Roles and permissions -> Permissions report). Issue recurring permissions are inside _Issue recurring_ group. There are 2 types of permissions:
+     * _View issue recurrences_ - should be granted to everybody who needs to view recurrence information
+     * _Manage issue recurrences_ - should be granted for roles responsible for creating/deleting issue recurrences
+
+6. Update plugin settings. (Administration -> Plugins -> Issue recurring plugin -> Configure)
+
+7. Add cron task to enable recurrence creation at least once a day.
+   ```
+   
+   ```
+
+8. Go to Redmine, create/open issue, add issue recurrence.
+
+9. Have fun!
