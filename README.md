@@ -25,7 +25,7 @@ The most notable features of this plugin include:
   * weeks,
   * months with dates keeping fixed distance from the beginning or to the end of the month (e.g. 2nd to last day of month),
   * months with dates keeping the same day of week from the beginning or to the end of the month (e.g. 2nd Tuesday of month or 1st to last Friday of month),
-  * months with dates keeping the same weekday (according to non-working week days specified in Redmine settings) from the beginning or to the end of the month (e.g. 2nd working day of month or 1st to last working day of month),
+  * months with dates keeping the same working day (according to non-working week days specified in Redmine settings) from the beginning or to the end of the month (e.g. 2nd working day of month or 1st to last working day of month),
   * years,
 * creation of next issue recurrence as a copy of: first issue, last recurrence or without copying, by in-place modification,
 * next recurrence scheduling based on: original issue dates, last recurrence dates, close date of last recurrence, last recurrence dates if close on time or close date otherwise,
