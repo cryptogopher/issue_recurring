@@ -25,7 +25,7 @@ en:
             date_limit:
               not_in_future: 'user provided recurrence limit date has to be in future'
   project_menu_caption: 'Issue recurrences'
-  journal_title: 'Issue recurrence'
+  journal_title: 'This issue has been created as a recurrence of another issue.'
   journal_warning: "<b>Warning</b>: can't renew recurrence, %{msg}."
   settings:
     issue_recurrences:

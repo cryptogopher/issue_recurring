@@ -129,7 +129,7 @@ class IssueRecurrence < ActiveRecord::Base
   def to_s
     s = 'issues.recurrences.form'
 
-    ref_dates = self.reference_dates
+    ref_dates = self.next_dates
     ref_description = ''
     if ref_dates.nil?
       ref_description = " #{l("#{s}.mode_descriptions.#{self.mode}")}"
