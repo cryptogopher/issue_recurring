@@ -10,6 +10,7 @@ issue_01:
   assigned_to: alice
   author: bob
   status: new
+  root_id: <%= ActiveRecord::FixtureSet.identify(:issue_01) %>
   <<: *DEFAULTS
 
 issue_02:
@@ -17,5 +18,6 @@ issue_02:
   assigned_to: charlie
   author: dave
   status: new
+  root_id: <%= ActiveRecord::FixtureSet.identify(:issue_02) %>
   <<: *DEFAULTS
 

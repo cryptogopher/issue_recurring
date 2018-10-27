@@ -349,17 +349,20 @@ class IssueRecurrence < ActiveRecord::Base
 
     new_issue = (self.creation_mode.to_sym == :in_place) ? self.issue :
       ref_issue.copy(nil, subtasks: self.include_subtasks)
-    new_issue.save!
+    new_issue.save! if new_issue.changed?
 
     if self.include_subtasks
-      new_issue.reload.descendants.each do |child|
+      copied_from = IssueRelation
+        .where(relation_type: 'copied_to', issue_to: new_issue.children)
+        .pluck(:issue_to_id, :issue_from_id).to_h
+      new_issue.children.each do |child|
         # FIXME: children should be offset, not advanced?
         child_dates = self.advance(start: child.start_date, due: child.due_date)
         child.start_date = child_dates[:start] 
         child.due_date = child_dates[:due]
         child.done_ratio = 0
         child.status = child.tracker.default_status
-        child.recurrence_of = child.copied_from if child.respond_to?('copied_from')
+        child.recurrence_of_id = copied_from[child.id]
         child.default_reassign unless Setting.plugin_issue_recurring['keep_assignee']
         child.save!
       end
@@ -370,7 +373,7 @@ class IssueRecurrence < ActiveRecord::Base
     new_issue.due_date = dates[:due]
     new_issue.done_ratio = 0
     new_issue.status = new_issue.tracker.default_status
-    new_issue.recurrence_of = new_issue.copied_from if new_issue.respond_to?('copied_from')
+    new_issue.recurrence_of = ref_issue
     new_issue.default_reassign unless Setting.plugin_issue_recurring['keep_assignee']
     new_issue.save!
 

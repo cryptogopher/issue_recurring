@@ -24,6 +24,7 @@ def logout_user
 end
 
 def create_recurrence(issue=issues(:issue_01), **attributes)
+  attributes[:anchor_mode] ||= :first_issue_fixed
   attributes[:mode] ||= :weekly
   attributes[:multiplier] ||= 1
   assert_difference 'IssueRecurrence.count', 1 do
@@ -35,6 +36,7 @@ def create_recurrence(issue=issues(:issue_01), **attributes)
 end
 
 def create_recurrence_should_fail(issue=issues(:issue_01), **attributes)
+  attributes[:anchor_mode] ||= :first_issue_fixed
   attributes[:mode] ||= :weekly
   attributes[:multiplier] ||= 1
   assert_no_difference 'IssueRecurrence.count' do
@@ -49,7 +51,18 @@ def renew_all(count=0)
   assert_difference 'Issue.count', count do
     IssueRecurrence.renew_all
   end
-  count > 0 ? Issue.last(count) : nil
+  if count > 0
+    count == 1 ? Issue.last : Issue.last(count)
+  else
+    nil
+  end
+end
+
+def set_parent_issue(parent, child)
+  assert_not_equal child.parent_issue_id, parent.id
+  put "/issues/#{child.id}", params: {issue: {parent_issue_id: parent.id}}
+  child.reload
+  assert_equal child.parent_issue_id, parent.id
 end
 
 def reopen_issue(issue)

@@ -20,6 +20,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     super
     Setting.non_working_week_days = [6, 7]
     @issue1 = issues(:issue_01)
+    @issue2 = issues(:issue_02)
   end
 
   def teardown
@@ -49,7 +50,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       travel_to(Date.new(2018,9,30))
       renew_all(0)
       travel_to(Date.new(2018,10,1))
-      issue1 = renew_all(1).first
+      issue1 = renew_all(1)
       assert_equal Date.new(2018,10,11), issue1.start_date
       assert_equal Date.new(2018,10,15), issue1.due_date
       travel_to(Date.new(2018,10,9))
@@ -79,7 +80,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
                         multiplier: 4)
       renew_all(0)
       travel_to(Date.new(2018,8,12))
-      issue1 = renew_all(1).first
+      issue1 = renew_all(1)
       assert_equal Date.new(2018,9,9), issue1.start_date
       assert_equal Date.new(2018,9,17), issue1.due_date
       travel_to(Date.new(2018,9,8))
@@ -111,7 +112,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       travel_to(Date.new(2017,1,8))
       renew_all(0)
       travel_to(Date.new(2018,9,8))
-      issue1 = renew_all(1).first
+      issue1 = renew_all(1)
       assert_equal Date.new(2018,11,8), issue1.start_date
       assert_equal Date.new(2018,12,2), issue1.due_date
       travel_to(Date.new(2018,11,7))
@@ -143,7 +144,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       travel_to(Date.new(2018,5,21))
       renew_all(0)
       travel_to(Date.new(2018,9,22))
-      issue1 = renew_all(1).first
+      issue1 = renew_all(1)
       assert_equal Date.new(2018,12,23), issue1.start_date
       assert_equal Date.new(2019,1,10), issue1.due_date
       travel_to(Date.new(2018,12,22))
@@ -175,7 +176,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       travel_to(Date.new(2018,5,21))
       renew_all(0)
       travel_to(Date.new(2018,9,22))
-      issue1 = renew_all(1).first
+      issue1 = renew_all(1)
       assert_equal Date.new(2018,11,24), issue1.start_date
       assert_equal Date.new(2018,12,12), issue1.due_date
       travel_to(Date.new(2018,11,22))
@@ -207,7 +208,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       travel_to(Date.new(2018,8,3))
       renew_all(0)
       travel_to(Date.new(2018,9,3))
-      issue1 = renew_all(1).first
+      issue1 = renew_all(1)
       assert_equal Date.new(2018,10,1), issue1.start_date
       assert_equal Date.new(2018,10,13), issue1.due_date
       travel_to(Date.new(2018,9,30))
@@ -239,7 +240,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       travel_to(Date.new(2018,6,1))
       renew_all(0)
       travel_to(Date.new(2018,10,1))
-      issue1 = renew_all(1).first
+      issue1 = renew_all(1)
       assert_equal Date.new(2018,11,1), issue1.start_date
       assert_equal Date.new(2018,11,5), issue1.due_date
       travel_to(Date.new(2018,10,31))
@@ -271,7 +272,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       travel_to(Date.new(2018,5,26))
       renew_all(0)
       travel_to(Date.new(2018,9,26))
-      issue1 = renew_all(1).first
+      issue1 = renew_all(1)
       assert_equal Date.new(2018,11,28), issue1.start_date
       assert_equal Date.new(2018,11,30), issue1.due_date
       travel_to(Date.new(2018,11,27))
@@ -303,7 +304,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       travel_to(Date.new(2018,8,18))
       renew_all(0)
       travel_to(Date.new(2018,8,19))
-      issue1 = renew_all(1).first
+      issue1 = renew_all(1)
       assert_equal Date.new(2019,8,19), issue1.start_date
       assert_equal Date.new(2019,9,5), issue1.due_date
       travel_to(Date.new(2019,8,18))
@@ -336,14 +337,14 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     travel_to(Date.new(2018,10,7))
     # closed after due
     close_issue(@issue1)
-    issue1 = renew_all(1).first
+    issue1 = renew_all(1)
     assert_equal Date.new(2018,10,13), issue1.start_date
     assert_equal Date.new(2018,10,17), issue1.due_date
     travel_to(Date.new(2018,10,15))
     renew_all(0)
     # closed between start and due
     close_issue(issue1)
-    issue2 = renew_all(1).first
+    issue2 = renew_all(1)
     assert_equal Date.new(2018,10,21), issue2.start_date
     assert_equal Date.new(2018,10,25), issue2.due_date
     travel_to(Date.new(2018,10,19))
@@ -351,7 +352,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     # closed before start
     close_issue(issue2)
     travel_to(Date.new(2018,10,22))
-    issue3 = renew_all(1).first
+    issue3 = renew_all(1)
     assert_equal Date.new(2018,10,25), issue3.start_date
     assert_equal Date.new(2018,10,29), issue3.due_date
     travel_to(Date.new(2018,11,18))
@@ -377,14 +378,14 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     travel_to(Date.new(2018,10,7))
     # closed after due
     close_issue(@issue1)
-    issue1 = renew_all(1).first
+    issue1 = renew_all(1)
     assert_equal Date.new(2018,10,13), issue1.start_date
     assert_equal Date.new(2018,10,17), issue1.due_date
     travel_to(Date.new(2018,10,15))
     renew_all(0)
     # closed between start and due
     close_issue(issue1)
-    issue2 = renew_all(1).first
+    issue2 = renew_all(1)
     assert_equal Date.new(2018,10,23), issue2.start_date
     assert_equal Date.new(2018,10,27), issue2.due_date
     travel_to(Date.new(2018,10,21))
@@ -392,7 +393,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     # closed before start
     close_issue(issue2)
     travel_to(Date.new(2018,10,25))
-    issue3 = renew_all(1).first
+    issue3 = renew_all(1)
     assert_equal Date.new(2018,11,2), issue3.start_date
     assert_equal Date.new(2018,11,6), issue3.due_date
     travel_to(Date.new(2018,11,18))
@@ -430,7 +431,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       create_recurrence(anchor_mode: :last_issue_fixed,
                         mode: m,
                         multiplier: 1000)
-      issue1 = renew_all(1).first
+      issue1 = renew_all(1)
       assert_equal start, issue1.start_date
       assert_equal due, issue1.due_date
     end
@@ -506,14 +507,14 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
           r = renew_all(r_dates.present? ? 1 : 0)
           if r_dates.present?
             if r_dates[:start].present?
-              assert_equal r_dates[:start], r.first.start_date
+              assert_equal r_dates[:start], r.start_date
             else
-              assert_nil r.first.start_date
+              assert_nil r.start_date
             end
             if r_dates[:due].present?
-              assert_equal r_dates[:due], r.first.due_date
+              assert_equal r_dates[:due], r.due_date
             else
-              assert_nil r.first.due_date
+              assert_nil r.due_date
             end
           end
         end
@@ -559,14 +560,14 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
         r = renew_all(r_dates.present? ? 1 : 0)
         if r_dates.present?
           if r_dates[:start].present?
-            assert_equal r_dates[:start], r.first.start_date
+            assert_equal r_dates[:start], r.start_date
           else
-            assert_nil r.first.start_date
+            assert_nil r.start_date
           end
           if r_dates[:due].present?
-            assert_equal r_dates[:due], r.first.due_date
+            assert_equal r_dates[:due], r.due_date
           else
-            assert_nil r.first.due_date
+            assert_nil r.due_date
           end
         end
       end
@@ -609,14 +610,14 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       r = renew_all(r_dates.present? ? 1 : 0)
       if r_dates.present?
         if r_dates[:start].present?
-          assert_equal r_dates[:start], r.first.start_date
+          assert_equal r_dates[:start], r.start_date
         else
-          assert_nil r.first.start_date
+          assert_nil r.start_date
         end
         if r_dates[:due].present?
-          assert_equal r_dates[:due], r.first.due_date
+          assert_equal r_dates[:due], r.due_date
         else
-          assert_nil r.first.due_date
+          assert_nil r.due_date
         end
       end
     end
@@ -660,7 +661,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
       ir = create_recurrence(mode: mode)
 
-      r = renew_all(1).first
+      r = renew_all(1)
       assert_equal r_start, r.start_date
       assert_equal r_due, r.due_date
     end
@@ -681,7 +682,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
       renew_all(0)
       travel_to(Date.new(2018,9,15))
-      r1 = renew_all(1).first
+      r1 = renew_all(1)
       assert_equal Date.new(2018,10,25), r1.start_date
       assert_equal Date.new(2018,10,30), r1.due_date
 
@@ -689,7 +690,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       renew_all(0)
 
       travel_to(Date.new(2018,10,25))
-      r2 = renew_all(1).first
+      r2 = renew_all(1)
       assert_equal Date.new(2018,11,25), r2.start_date
       assert_equal Date.new(2018,11,30), r2.due_date
     end
@@ -708,6 +709,20 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
                         delay_multiplier: 10)
       assert errors.added?(:anchor_mode, :delay_fixed_only)
     end
+  end
+
+  def test_renew_sets_recurrence_of_for_new_recurrence_and_subtask
+    log_user 'alice', 'foo'
+    @issue2.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    set_parent_issue(@issue1, @issue2)
+    # Need to reload. Parent dates are computed from children by default.
+    @issue1.reload
+
+    create_recurrence(include_subtasks: true)
+    travel_to(@issue1.start_date)
+    r1, r2 = renew_all(2)
+    assert_equal @issue1, r1.recurrence_of
+    assert_equal @issue2, r2.recurrence_of
   end
 
   # TODO:
