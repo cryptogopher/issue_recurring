@@ -42,7 +42,7 @@ def create_recurrence_should_fail(issue=issues(:issue_01), **attributes)
     assert_response :ok
     assert_not_empty assigns(:recurrence).errors.messages
   end
-  assigns(:recurrence).errors.messages
+  assigns(:recurrence).errors
 end
 
 def renew_all(count=0)

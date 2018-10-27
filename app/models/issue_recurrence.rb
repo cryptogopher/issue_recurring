@@ -179,8 +179,14 @@ class IssueRecurrence < ActiveRecord::Base
   def advance(adj=0, **dates)
     return nil if self.count_limit.present? && self.count >= self.count_limit
 
-    shift = self.anchor_mode.to_sym == :first_issue_fixed ?
-      self.multiplier*(self.count + 1 + adj) : self.multiplier*(1 + adj)
+    shift = if self.anchor_mode.to_sym == :first_issue_fixed
+              self.delay(dates) if self.count + adj >= 0
+              self.multiplier*(self.count + 1 + adj)
+            else
+              self.delay(dates) if self.count == 0
+              self.multiplier
+            end
+
 
     case self.mode.to_sym
     when :daily
@@ -270,7 +276,7 @@ class IssueRecurrence < ActiveRecord::Base
 
   # Offset 'dates' so date with 'label' is equal 'target'.
   # Return offset 'dates' or nil if 'dates' does not include 'label'.
-  def offset(target_date, target_label=:due, **dates)
+  def offset(target_date, target_label=:due, dates)
     nil if dates[target_label].nil?
     if dates[:start].present? && dates[:due].present?
       if WDAY_MODES.include?(self.mode)
@@ -313,9 +319,9 @@ class IssueRecurrence < ActiveRecord::Base
     end
   end
 
-  # Delay 'dates' according to delay mode.
-  def delay(**dates)
-    dates if (self.delay_multiplier == 0) || (self.count > 0)
+  # Delay 'dates' in-place according to delay mode.
+  def delay(dates)
+    dates if self.delay_multiplier == 0
     dates.each do |label, date|
       next if date.nil?
       dates[label] +=
@@ -388,7 +394,6 @@ class IssueRecurrence < ActiveRecord::Base
         log("issue ##{ref_issue.id} start and due dates are blank") 
         return nil
       end
-      self.delay(ref_dates)
     when :last_issue_flexible, :last_issue_flexible_on_delay
       ref_issue = self.last_issue || self.issue
       if ref_issue.closed?

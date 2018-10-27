@@ -40,7 +40,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     @issue1.due_date = Date.new(2018,10,5)
     @issue1.save!
 
-    [:first_issue_fixed, :last_issue_fixed].each do |am|
+    IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,9,21))
       create_recurrence(anchor_mode: am,
                         mode: :daily,
@@ -72,7 +72,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     @issue1.due_date = Date.new(2018,8,20)
     @issue1.save!
 
-    [:first_issue_fixed, :last_issue_fixed].each do |am|
+    IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,7,29))
       create_recurrence(anchor_mode: am,
                         mode: :weekly,
@@ -102,7 +102,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     @issue1.due_date = Date.new(2018,10,2)
     @issue1.save!
 
-    [:first_issue_fixed, :last_issue_fixed].each do |am|
+    IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2017,9,8))
       create_recurrence(anchor_mode: am,
                         mode: :monthly_start_day_from_first,
@@ -134,7 +134,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     @issue1.due_date = Date.new(2018,10,10)
     @issue1.save!
 
-    [:first_issue_fixed, :last_issue_fixed].each do |am|
+    IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,3,22))
       create_recurrence(anchor_mode: am,
                         mode: :monthly_due_day_to_last,
@@ -166,7 +166,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     @issue1.due_date = Date.new(2018,10,10)
     @issue1.save!
 
-    [:first_issue_fixed, :last_issue_fixed].each do |am|
+    IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,3,22))
       create_recurrence(anchor_mode: am,
                         mode: :monthly_start_dow_from_first,
@@ -198,7 +198,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     @issue1.due_date = Date.new(2018,9,15)
     @issue1.save!
 
-    [:first_issue_fixed, :last_issue_fixed].each do |am|
+    IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,6,3))
       create_recurrence(anchor_mode: am,
                         mode: :monthly_due_dow_to_last,
@@ -230,7 +230,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     @issue1.due_date = Date.new(2018,10,3)
     @issue1.save!
 
-    [:first_issue_fixed, :last_issue_fixed].each do |am|
+    IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,4,1))
       create_recurrence(anchor_mode: am,
                         mode: :monthly_due_wday_from_first,
@@ -262,7 +262,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     @issue1.due_date = Date.new(2018,9,28)
     @issue1.save!
 
-    [:first_issue_fixed, :last_issue_fixed].each do |am|
+    IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,3,26))
       create_recurrence(anchor_mode: am,
                         mode: :monthly_start_wday_to_last,
@@ -294,7 +294,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     @issue1.due_date = Date.new(2018,9,5)
     @issue1.save!
 
-    [:first_issue_fixed, :last_issue_fixed].each do |am|
+    IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2017,8,2))
       create_recurrence(anchor_mode: am,
                         mode: :yearly,
@@ -490,7 +490,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       ]
     }
 
-    [:first_issue_fixed, :last_issue_fixed].each do |am|
+    IssueRecurrence::FIXED_MODES.each do |am|
       dates.each do |issue_dates, setup_dates|
         @issue1.reload
         @issue1.start_date = issue_dates[:start]
@@ -579,9 +579,9 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     @issue1.due_date = nil
     @issue1.save!
 
-    [:first_issue_fixed, :last_issue_fixed].each do |am|
+    IssueRecurrence::FIXED_MODES.each do |am|
       errors = create_recurrence_should_fail(anchor_mode: am)
-      assert errors.has_key?(:anchor_mode)
+      assert errors.added?(:anchor_mode, :blank_dates_flexible_only)
     end
   end
 
@@ -666,7 +666,48 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_renew_mode_monthly_dow
+  def test_renew_with_delay_anchor_mode_fixed
+    log_user 'alice', 'foo'
+    @issue1.start_date = Date.new(2018,9,15)
+    @issue1.due_date = Date.new(2018,9,20)
+    @issue1.save!
+
+    IssueRecurrence::FIXED_MODES.each do |am|
+      travel_to(Date.new(2018,9,14))
+      create_recurrence(anchor_mode: am,
+                        mode: :monthly_start_day_from_first,
+                        delay_mode: :day,
+                        delay_multiplier: 10)
+
+      renew_all(0)
+      travel_to(Date.new(2018,9,15))
+      r1 = renew_all(1).first
+      assert_equal Date.new(2018,10,25), r1.start_date
+      assert_equal Date.new(2018,10,30), r1.due_date
+
+      travel_to(Date.new(2018,10,24))
+      renew_all(0)
+
+      travel_to(Date.new(2018,10,25))
+      r2 = renew_all(1).first
+      assert_equal Date.new(2018,11,25), r2.start_date
+      assert_equal Date.new(2018,11,30), r2.due_date
+    end
+  end
+
+  def test_create_anchor_mode_flexible_with_delay_should_fail
+    log_user 'alice', 'foo'
+    @issue1.start_date = Date.new(2018,9,15)
+    @issue1.due_date = Date.new(2018,9,20)
+    @issue1.save!
+
+    IssueRecurrence::FLEXIBLE_MODES.each do |am|
+      errors = create_recurrence_should_fail(anchor_mode: am,
+                        mode: :monthly_start_day_from_first,
+                        delay_mode: :day,
+                        delay_multiplier: 10)
+      assert errors.added?(:anchor_mode, :delay_fixed_only)
+    end
   end
 
   # TODO:
