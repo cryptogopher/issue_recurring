@@ -195,7 +195,7 @@ class IssueRecurrence < ActiveRecord::Base
       end
     when :daily_wday
       dates.each do |label, date|
-        dates[label] = add_working_days(date, shift.days) if date.present?
+        dates[label] = add_working_days(date, shift) if date.present?
       end
     when :weekly
       dates.each do |label, date|

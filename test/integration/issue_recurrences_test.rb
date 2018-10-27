@@ -67,6 +67,36 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
+  def test_renew_anchor_mode_fixed_mode_daily_wday
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,13), due_date: Date.new(2018,10,2))
+
+    IssueRecurrence::FIXED_MODES.each do |am|
+      travel_to(Date.new(2018,8,12))
+      create_recurrence(anchor_mode: am,
+                        mode: :daily_wday,
+                        multiplier: 2)
+      renew_all(0)
+      travel_to(Date.new(2018,9,12))
+      renew_all(0)
+      travel_to(Date.new(2018,9,13))
+      r1 = renew_all(1)
+      assert_equal Date.new(2018,9,17), r1.start_date
+      assert_equal Date.new(2018,10,4), r1.due_date
+      travel_to(Date.new(2018,9,16))
+      renew_all(0)
+      travel_to(Date.new(2018,9,20))
+      r2, r3 = renew_all(2)
+      assert_equal Date.new(2018,9,19), r2.start_date
+      assert_equal Date.new(2018,10,8), r2.due_date
+      assert_equal Date.new(2018,9,21), r3.start_date
+      assert_equal Date.new(2018,10,10), r3.due_date
+      travel_to(Date.new(2018,9,21))
+      renew_all(1)
+      renew_all(0)
+    end
+  end
+
   def test_renew_anchor_mode_fixed_mode_weekly
     log_user 'alice', 'foo'
     @issue1.start_date = Date.new(2018,8,12)
@@ -726,7 +756,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   # TODO:
-  # - daily_wday
   # - plugin settings: author_id, keep_assignee
   # - fixed with date movement forward/backward on issue and last
   # recurrence
