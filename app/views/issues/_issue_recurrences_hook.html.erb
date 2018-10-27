@@ -13,6 +13,7 @@
 
     <p><strong><%= t('.recurrences') %></strong></p>
 
+    <% byebug %>
     <% if @issue.recurrence_of.present? %>
       <p>
         <%= t('.this_is_recurrence') %>

@@ -42,7 +42,7 @@ en:
       next_recurrence: 'Next recurrence'
       include_subtasks: 'Subtasks?'
       creation_mode: 'Create'
-      anchor_mode: 'Relative to'
+      anchor_mode: 'Based on'
       limit: 'Limit'
       count: '#'
   issues:
