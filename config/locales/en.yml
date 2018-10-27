@@ -11,11 +11,11 @@ en:
               insufficient_privileges: 'you have insufficient privileges to edit recurrences
                 for this issue'
             anchor_mode:
-              delay_fixed_only: 'delay cannot be specified for recurrences relative to close
+              delay_fixed_only: 'delay cannot be specified for recurrences based on close
                 date'
-              blank_dates_flexible_only: 'only recurrences relative to issue close date can
+              blank_dates_flexible_only: 'only recurrences based on issue close date can
                 be created for issue with both (start and due) dates blank'
-              in_place_flexible_only: 'only recurrences relative to issue close date can
+              in_place_flexible_only: 'only recurrences based on issue close date can
                 modify issue in-place'
             mode:
               start_mode_requires_date: 'recurrence based on start date cannot be created for
@@ -115,7 +115,7 @@ en:
           monthly_start_wday_to_last: 'start on %{wdays_to_eom} to last working day'
           monthly_due_wday_to_last: 'due on %{wdays_to_eom} to last working day'
           yearly: ''
-        relative_to: 'relative to'
+        based_on: 'based on'
         anchor_modes:
           first_issue_fixed: 'this <b>issue date</b>'
           last_issue_fixed: '<b>last recurrence date</b>'

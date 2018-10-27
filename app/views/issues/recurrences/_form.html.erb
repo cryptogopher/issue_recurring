@@ -15,7 +15,7 @@
     <%= f.number_field :multiplier, min: 1, step: 1, value: 1 %>
     <% options, disabled = mode_options %>
     <%= f.select :mode, options, disabled: disabled %>
-    <%= t '.relative_to' %>
+    <%= t '.based_on' %>
     <%= f.select :anchor_mode, anchor_mode_options %>
     <%= t '.delayed_by' %>
     <%= f.number_field :delay_multiplier, min: 0, step: 1, value: 0 %>

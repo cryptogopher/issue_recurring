@@ -165,7 +165,7 @@ class IssueRecurrence < ActiveRecord::Base
       " <b>#{self.multiplier}" \
       " #{l("#{s}.mode_intervals.#{self.mode}").pluralize(self.multiplier)}</b>," \
       "#{ref_description}" \
-      " #{l("#{s}.relative_to")}" \
+      " #{l("#{s}.based_on")}" \
       " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
       "#{delay_info}" \
       "#{"." if self.date_limit.nil? && self.count_limit.nil?}" \
