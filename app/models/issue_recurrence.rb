@@ -40,6 +40,7 @@ class IssueRecurrence < ActiveRecord::Base
   WDAY_MODES = modes.keys.select { |m| m.include?('_wday') }
   START_MODES = modes.keys.select { |m| m.include?('_start_') }
   DUE_MODES = modes.keys.select { |m| m.include?('_due_') }
+  MONTHLY_MODES = modes.keys.select { |m| m.include?('monthly_') }
 
   enum delay_mode: {
     day: 0,
@@ -132,24 +133,22 @@ class IssueRecurrence < ActiveRecord::Base
     ref_description = ''
     if ref_dates.nil?
       ref_description = " #{l("#{s}.mode_descriptions.#{self.mode}")}"
-    else
-      values = Hash.new
-      ref_dates.each do |label, date|
-        next if date.nil?
-
+    elsif MONTHLY_MODES.include?(self.mode)
+      label = START_MODES.include?(self.mode) ? :start : :due
+      date = ref_dates[label]
+      unless date.nil?
         days_to_eom = (date.end_of_month.mday - date.mday + 1).to_i
-        values.update({
-          "#{label}_days_from_bom" => date.mday.ordinalize,
-          "#{label}_days_to_eom" => days_to_eom.ordinalize,
-          "#{label}_day_of_week" => date.strftime("%A"),
-          "#{label}_dows_from_bom" => ((date.mday - 1) / 7 + 1).ordinalize,
-          "#{label}_dows_to_eom" => ((days_to_eom - 1) / 7 + 1).ordinalize,
-          "#{label}_wdays_from_bom" => (working_days(date.beginning_of_month, date) + 1)
-            .ordinalize,
-          "#{label}_wdays_to_eom" => (working_days(date, date.end_of_month) + 1).ordinalize
-        })
+        values = {
+          days_from_bom: date.mday.ordinalize,
+          days_to_eom: days_to_eom.ordinalize,
+          day_of_week: date.strftime("%A"),
+          dows_from_bom: ((date.mday - 1) / 7 + 1).ordinalize,
+          dows_to_eom: ((days_to_eom - 1) / 7 + 1).ordinalize,
+          wdays_from_bom: (working_days(date.beginning_of_month, date) + 1).ordinalize,
+          wdays_to_eom: (working_days(date, date.end_of_month) + 1).ordinalize
+        }
+        ref_description = " #{l("#{s}.mode_modifiers.#{self.mode}", values)}"
       end
-      ref_description = " #{l("#{s}.mode_modifiers.#{self.mode}", values)}"
     end
 
     delay_info = self.delay_multiplier > 0 ?
