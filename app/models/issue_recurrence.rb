@@ -179,7 +179,7 @@ class IssueRecurrence < ActiveRecord::Base
   def advance(adj=0, **dates)
     return nil if self.count_limit.present? && self.count >= self.count_limit
 
-    shift = if self.anchor_mode.to_sym == :first_issue_fixed
+    shift = if self.anchor_mode == 'first_issue_fixed'
               self.delay(dates) if self.count + adj >= 0
               self.multiplier*(self.count + 1 + adj)
             else
@@ -337,7 +337,7 @@ class IssueRecurrence < ActiveRecord::Base
   # Create next recurrence issue. Assumes that 'advance' will return valid date
   # (so advance must be called first and checked for return value).
   def create(dates)
-    ref_issue = self.last_issue if self.creation_mode.to_sym == :copy_last
+    ref_issue = self.last_issue if self.creation_mode == 'copy_last'
     ref_issue ||= self.issue
     prev_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
 
@@ -351,7 +351,7 @@ class IssueRecurrence < ActiveRecord::Base
         ref_issue.init_journal(User.current)
       end
 
-      new_issue = (self.creation_mode.to_sym == :in_place) ? ref_issue :
+      new_issue = (self.creation_mode == 'in_place') ? ref_issue :
         ref_issue.copy(nil, subtasks: self.include_subtasks)
 
       new_issue.start_date = dates[:start]
@@ -393,7 +393,7 @@ class IssueRecurrence < ActiveRecord::Base
     ref_dates = nil
     case self.anchor_mode.to_sym
     when :first_issue_fixed, :last_issue_fixed
-      ref_issue = self.last_issue if self.anchor_mode.to_sym == :last_issue_fixed
+      ref_issue = self.last_issue if self.anchor_mode == 'last_issue_fixed'
       ref_issue ||= self.issue
       ref_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
       if (ref_dates[:start] || ref_dates[:due]).nil?
@@ -406,7 +406,7 @@ class IssueRecurrence < ActiveRecord::Base
         closed_date = ref_issue.closed_on.to_date
         ref_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
         if (ref_dates[:start] || ref_dates[:due]).present?
-          unless (self.anchor_mode.to_sym == :last_issue_flexible_on_delay) &&
+          unless (self.anchor_mode == 'last_issue_flexible_on_delay') &&
               ((ref_dates[:due] || ref_dates[:start]) >= closed_date)
             ref_label = ref_issue.due_date.present? ? :due : :start
             offset_dates = self.offset(closed_date, ref_label, ref_dates) 
