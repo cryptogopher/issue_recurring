@@ -708,7 +708,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     travel_to(@issue1.start_date)
     r1, r2 = renew_all(2)
     assert_equal @issue1, r1.recurrence_of
-    assert_equal @issue2, r2.recurrence_of
+    assert_equal @issue1, r2.recurrence_of
   end
 
   # TODO:

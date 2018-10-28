@@ -345,49 +345,42 @@ class IssueRecurrence < ActiveRecord::Base
     prev_user = User.current
     author_id = Setting.plugin_issue_recurring['author_id'].to_i
     User.current = User.find_by(id: author_id) || ref_issue.author
-    if Setting.plugin_issue_recurring['add_journal']
-      ref_issue.init_journal(User.current)
-    end
 
-    new_issue = nil
-    if self.creation_mode.to_sym == :in_place
-      new_issue = self.issue
-    else
-      new_issue = ref_issue.copy(nil, subtasks: self.include_subtasks)
-      # Saving closes journal. Don't save if in-place, otherwise date
-      # modifications won't be recorded.
-      new_issue.save!
-    end
-
-    if self.include_subtasks
-      copied_from = IssueRelation
-        .where(relation_type: 'copied_to', issue_to: new_issue.children)
-        .pluck(:issue_to_id, :issue_from_id).to_h
-      new_issue.children.each do |child|
-        # FIXME: children should be offset, not advanced?
-        child_dates = self.advance(start: child.start_date, due: child.due_date)
-        child.start_date = child_dates[:start] 
-        child.due_date = child_dates[:due]
-        child.done_ratio = 0
-        child.status = child.tracker.default_status
-        child.recurrence_of_id = copied_from[child.id]
-        child.default_reassign unless Setting.plugin_issue_recurring['keep_assignee']
-        child.save!
+    IssueRecurrence.transaction do
+      if Setting.plugin_issue_recurring['add_journal']
+        ref_issue.init_journal(User.current)
       end
-      new_issue.reload
+
+      new_issue = (self.creation_mode.to_sym == :in_place) ? self.issue :
+        ref_issue.copy(nil, subtasks: self.include_subtasks)
+
+      new_issue.start_date = dates[:start]
+      new_issue.due_date = dates[:due]
+      new_issue.done_ratio = 0
+      new_issue.status = new_issue.tracker.default_status
+      new_issue.recurrence_of = self.issue
+      new_issue.default_reassign unless Setting.plugin_issue_recurring['keep_assignee']
+
+      new_issue.save!
+
+      if self.include_subtasks
+        new_issue.children.each do |child|
+          # FIXME: children should be offset, not advanced?
+          child_dates = self.advance(start: child.start_date, due: child.due_date)
+          child.start_date = child_dates[:start] 
+          child.due_date = child_dates[:due]
+          child.done_ratio = 0
+          child.status = child.tracker.default_status
+          child.recurrence_of = self.issue
+          child.default_reassign unless Setting.plugin_issue_recurring['keep_assignee']
+          child.save!
+        end
+      end
+
+      self.last_issue = new_issue
+      self.count += 1
+      self.save!
     end
-
-    new_issue.start_date = dates[:start]
-    new_issue.due_date = dates[:due]
-    new_issue.done_ratio = 0
-    new_issue.status = new_issue.tracker.default_status
-    new_issue.recurrence_of = ref_issue
-    new_issue.default_reassign unless Setting.plugin_issue_recurring['keep_assignee']
-    new_issue.save!
-
-    self.last_issue = new_issue
-    self.count += 1
-    self.save!
 
     User.current = prev_user
   end
