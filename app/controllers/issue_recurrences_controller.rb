@@ -21,6 +21,7 @@ class IssueRecurrencesController < ApplicationController
   def destroy
     @recurrence.destroy
     raise Unauthorized if @recurrence.errors.messages.has_key?(:issue)
+    @recurrences = @issue.reload.recurrences.select {|r| r.visible?}
   end
 
   private

@@ -14,7 +14,12 @@ module IssueRecurrencesHelper
 
   def anchor_mode(r)
     s = 'issues.recurrences.form.delay_intervals'
-    t = case r.anchor_mode.to_sym
+    t = if IssueRecurrence::MONTHLY_MODES.include?(r.mode)
+          IssueRecurrence::START_MODES.include?(r.mode) ? "start of " : "due of "
+        else
+          ''
+        end
+    t += case r.anchor_mode.to_sym
     when :first_issue_fixed
       "first issue"
     when :last_issue_fixed

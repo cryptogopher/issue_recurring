@@ -1,2 +1,8 @@
-$('#recurrence-<%= @recurrence.id %>').remove();
-$('#recurrence-errors').empty();
+$('#recurrences')
+  .html('<%= escape_javascript(render :partial => 'issues/recurrences/index') %>');
+
+<% if @recurrence.errors.present? %>
+  $('#recurrence-errors').html('<%= escape_javascript(error_messages_for 'recurrence') %>');
+<% else %>
+  $('#recurrence-errors').empty();
+<% end %>

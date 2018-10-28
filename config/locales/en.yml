@@ -48,7 +48,7 @@ en:
   issues:
     issue_recurrences_hook:
       recurrences: 'Recurrences'
-      this_is_recurrence: 'This issue is a recurrence of issue'
+      this_is_recurrence: 'This issue is a recurrence of'
       button_details: 'Details'
     recurrences:
       index:
