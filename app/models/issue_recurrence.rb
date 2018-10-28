@@ -348,6 +348,7 @@ class IssueRecurrence < ActiveRecord::Base
 
     IssueRecurrence.transaction do
       if Setting.plugin_issue_recurring['add_journal']
+        # Setting journal on self.issue won't record copy if :copy_last is used
         ref_issue.init_journal(User.current)
       end
 
@@ -500,8 +501,8 @@ class IssueRecurrence < ActiveRecord::Base
 
     logger.warn(msg) if logger
 
-    author_id = Setting.plugin_issue_recurring['author_id'].to_i
     prev_user = User.current
+    author_id = Setting.plugin_issue_recurring['author_id'].to_i
     User.current = User.find_by(id: author_id) || self.issue.author
     self.issue.init_journal(User.current, l(:journal_warning, {msg: msg}))
     self.issue.save
