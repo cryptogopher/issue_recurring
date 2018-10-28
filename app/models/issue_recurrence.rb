@@ -278,21 +278,19 @@ class IssueRecurrence < ActiveRecord::Base
   # Return offset 'dates' or nil if 'dates' does not include 'label'.
   def offset(target_date, target_label=:due, dates)
     nil if dates[target_label].nil?
-    if dates[:start].present? && dates[:due].present?
+    dates.each do |label, date|
+      next if (label == target_label) || date.nil?
       if WDAY_MODES.include?(self.mode)
-        timespan = working_days(dates[:start], dates[:due])
-        if target_label == :due
-          dates[:start] = subtract_working_days(target_date, timespan)
+        if date >= dates[target_label]
+          timespan = working_days(dates[target_label], date)
+          dates[label] = add_working_days(target_date, timespan)
         else
-          dates[:due] = add_working_days(target_date, timespan)
+          timespan = working_days(date, dates[target_label])
+          dates[label] = subtract_working_days(target_date, timespan)
         end
       else
-        timespan = dates[:due] - dates[:start]
-        if target_label == :due
-          dates[:start] = target_date - timespan
-        else
-          dates[:due] = target_date + timespan
-        end
+        timespan = date - dates[target_label]
+        dates[label] = target_date + timespan
       end
     end
     dates[target_label] = target_date
@@ -341,6 +339,7 @@ class IssueRecurrence < ActiveRecord::Base
   def create(dates)
     ref_issue = self.last_issue if self.creation_mode.to_sym == :copy_last
     ref_issue ||= self.issue
+    prev_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
 
     prev_user = User.current
     author_id = Setting.plugin_issue_recurring['author_id'].to_i
@@ -352,7 +351,7 @@ class IssueRecurrence < ActiveRecord::Base
         ref_issue.init_journal(User.current)
       end
 
-      new_issue = (self.creation_mode.to_sym == :in_place) ? self.issue :
+      new_issue = (self.creation_mode.to_sym == :in_place) ? ref_issue :
         ref_issue.copy(nil, subtasks: self.include_subtasks)
 
       new_issue.start_date = dates[:start]
@@ -365,9 +364,11 @@ class IssueRecurrence < ActiveRecord::Base
       new_issue.save!
 
       if self.include_subtasks
+        target_label = MONTHLY_MODES.include?(self.mode) && DUE_MODES.include?(self.mode) ?
+          :due : :start
         new_issue.children.each do |child|
-          # FIXME: children should be offset, not advanced?
-          child_dates = self.advance(start: child.start_date, due: child.due_date)
+          child_dates = self.offset(dates[target_label], :parent, 
+            {parent: prev_dates[target_label], start: child.start_date, due: child.due_date})
           child.start_date = child_dates[:start] 
           child.due_date = child_dates[:due]
           child.done_ratio = 0

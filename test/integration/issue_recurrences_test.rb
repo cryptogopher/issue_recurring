@@ -712,9 +712,10 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   # TODO:
+  # - subtask advancing
   # - plugin settings: author_id, keep_assignee, add_journal
-  # - fixed with date movement forward/backward on issue and last
-  # recurrence
+  # - fixed with date movement forward/backward on issue and last recurrence
   # - tests of creation modes
+  # - error logging
 end
 
