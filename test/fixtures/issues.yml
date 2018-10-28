@@ -21,3 +21,11 @@ issue_02:
   root_id: <%= ActiveRecord::FixtureSet.identify(:issue_02) %>
   <<: *DEFAULTS
 
+issue_03:
+  subject: 3rd issue
+  assigned_to: bob
+  author: alice
+  status: new
+  root_id: <%= ActiveRecord::FixtureSet.identify(:issue_03) %>
+  <<: *DEFAULTS
+

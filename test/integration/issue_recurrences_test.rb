@@ -21,6 +21,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     Setting.non_working_week_days = [6, 7]
     @issue1 = issues(:issue_01)
     @issue2 = issues(:issue_02)
+    @issue3 = issues(:issue_03)
   end
 
   def teardown
@@ -711,8 +712,129 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal @issue1, r2.recurrence_of
   end
 
+  def test_renew_with_subtasks_mode_weekly
+    log_user 'alice', 'foo'
+    @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5))
+    @issue3.update!(start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30))
+    set_parent_issue(@issue1, @issue2)
+    set_parent_issue(@issue1, @issue3)
+    @issue1.reload
+
+    create_recurrence(include_subtasks: true, mode: :weekly)
+    travel_to(@issue1.start_date-1)
+    renew_all(0)
+    travel_to(@issue1.start_date)
+    r1, * = renew_all(3)
+    assert_equal Date.new(2018,9,27), r1.start_date
+    assert_equal Date.new(2018,10,12), r1.due_date
+    r2 = IssueRelation.find_by(issue_from: @issue2, relation_type: 'copied_to').issue_to
+    assert_equal Date.new(2018,10,2), r2.start_date
+    assert_equal Date.new(2018,10,12), r2.due_date
+    r3 = IssueRelation.find_by(issue_from: @issue3, relation_type: 'copied_to').issue_to
+    assert_equal Date.new(2018,9,27), r3.start_date
+    assert_equal Date.new(2018,10,7), r3.due_date
+  end
+
+  def test_renew_with_subtasks_mode_monthly_start
+    log_user 'alice', 'foo'
+    @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5))
+    @issue3.update!(start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30))
+    set_parent_issue(@issue1, @issue2)
+    set_parent_issue(@issue1, @issue3)
+    @issue1.reload
+
+    create_recurrence(include_subtasks: true, mode: :monthly_start_dow_from_first)
+    travel_to(@issue1.start_date-1)
+    renew_all(0)
+    travel_to(@issue1.start_date)
+    r1, * = renew_all(3)
+    assert_equal Date.new(2018,10,18), r1.start_date
+    assert_equal Date.new(2018,11,2), r1.due_date
+    r2 = IssueRelation.find_by(issue_from: @issue2, relation_type: 'copied_to').issue_to
+    assert_equal Date.new(2018,10,23), r2.start_date
+    assert_equal Date.new(2018,11,2), r2.due_date
+    r3 = IssueRelation.find_by(issue_from: @issue3, relation_type: 'copied_to').issue_to
+    assert_equal Date.new(2018,10,18), r3.start_date
+    assert_equal Date.new(2018,10,28), r3.due_date
+  end
+
+  def test_renew_with_subtasks_mode_monthly_due
+    log_user 'alice', 'foo'
+    @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5))
+    @issue3.update!(start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30))
+    set_parent_issue(@issue1, @issue2)
+    set_parent_issue(@issue1, @issue3)
+    @issue1.reload
+
+    create_recurrence(include_subtasks: true, mode: :monthly_due_wday_to_last)
+    travel_to(@issue1.start_date-1)
+    renew_all(0)
+    travel_to(@issue1.start_date)
+    r1, * = renew_all(3)
+    assert_equal Date.new(2018,10,22), r1.start_date
+    assert_equal Date.new(2018,11,6), r1.due_date
+    r2 = IssueRelation.find_by(issue_from: @issue2, relation_type: 'copied_to').issue_to
+    assert_equal Date.new(2018,10,25), r2.start_date
+    assert_equal Date.new(2018,11,6), r2.due_date
+    r3 = IssueRelation.find_by(issue_from: @issue3, relation_type: 'copied_to').issue_to
+    assert_equal Date.new(2018,10,22), r3.start_date
+    assert_equal Date.new(2018,10,31), r3.due_date
+  end
+
+  def test_renew_with_creation_mode_copy_first
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    create_recurrence(creation_mode: :copy_first)
+    travel_to(@issue1.start_date)
+    r1 = renew_all(1)
+    travel_to(r1.start_date)
+    r2 = renew_all(1)
+
+    no_rel = IssueRelation.find_by(issue_from: r1, relation_type: 'copied_to')
+    assert_nil no_rel
+    rel = IssueRelation.find_by(issue_to: r2, relation_type: 'copied_to')
+    assert_not_nil rel
+    assert_equal rel.issue_from, @issue1
+  end
+
+  def test_renew_with_creation_mode_copy_last
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    create_recurrence(creation_mode: :copy_last)
+    travel_to(@issue1.start_date)
+    r1 = renew_all(1)
+    travel_to(r1.start_date)
+    r2 = renew_all(1)
+
+    rel1 = IssueRelation.find_by(issue_from: @issue1, relation_type: 'copied_to')
+    assert_not_nil rel1
+    assert_equal rel1.issue_to, r1
+    rel2 = IssueRelation.find_by(issue_from: r1, relation_type: 'copied_to')
+    assert_not_nil rel2
+    assert_equal rel2.issue_to, r2
+  end
+
+  def test_renew_with_creation_mode_in_place
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    create_recurrence(creation_mode: :in_place)
+    travel_to(@issue1.start_date)
+    renew_all(0)
+    @issue1.reload
+    assert_equal Date.new(2018,9,15), @issue1.start_date
+
+    close_issue(@issue1)
+    renew_all(0)
+    @issue1.reload
+    assert_equal Date.new(2018,9,22), @issue1.start_date
+    assert_equal Date.new(2018,9,27), @issue1.due_date
+    assert !@issue1.closed?
+  end
+
   # TODO:
-  # - subtask advancing
   # - plugin settings: author_id, keep_assignee, add_journal
   # - fixed with date movement forward/backward on issue and last recurrence
   # - tests of creation modes
