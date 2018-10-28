@@ -35,7 +35,7 @@ The most notable features of this plugin include:
 * ability to delay recurrence against base date to create multiple recurrences of the same frequency with different time offset (e.g. monthly recurrence on 10th, 20th and 30th day of month),
 * ability to limit recurrence by final date or recurrence count,
 * showing dates of last/next recurrence and history of recurrences,
-* logging errors with renewing issue recurrence as an issue note (besides logging into log file inaccessible for user),
+* logging errors when renewing issue recurrences as a note (besides logging into log file),
 * permissions to view/edit recurrences managed by Redmine roles,
 * per project enabling of issue recurring plugin,
 * specification of user account under which issue recurrences will be created: any Redmine user or last recurrence author,
@@ -65,7 +65,7 @@ The most notable features of this plugin include:
 
 4. Update Redmine settings.
    * (optional) create separate Redmine user as an author of issue recurrences (Administration -> Users -> New user)
-   * re-login as administrator and grant issue recurring permissions to roles (Administration -> Roles and permissions -> Permissions report). Issue recurring permissions are inside _Issue recurring_ group. There are 2 types of permissions:
+   * grant issue recurring permissions to roles (Administration -> Roles and permissions -> Permissions report). Issue recurring permissions are inside _Issue recurring_ group. There are 2 types of permissions:
      * _View issue recurrences_ - should be granted to everybody who needs to view recurrence information
      * _Manage issue recurrences_ - should be granted for roles responsible for creating/deleting issue recurrences
 
