@@ -834,6 +834,16 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert !@issue1.closed?
   end
 
+  def test_create_anchor_mode_fixed_with_creation_mode_in_place_should_fail
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    IssueRecurrence::FIXED_MODES.each do |am|
+      errors = create_recurrence_should_fail(creation_mode: :in_place, anchor_mode: am)
+      assert errors.added?(:anchor_mode, :in_place_flexible_only)
+    end
+  end
+
   # TODO:
   # - plugin settings: author_id, keep_assignee, add_journal
   # - fixed with date movement forward/backward on issue and last recurrence

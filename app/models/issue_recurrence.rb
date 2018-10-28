@@ -68,7 +68,7 @@ class IssueRecurrence < ActiveRecord::Base
   }
   validates :anchor_mode, inclusion: {
     in: FLEXIBLE_MODES,
-    if: "creation_mode == :in_place",
+    if: "creation_mode == 'in_place'",
     message: :in_place_flexible_only
   }
   validates :mode, inclusion: modes.keys
