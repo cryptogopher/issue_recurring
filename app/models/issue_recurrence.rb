@@ -345,11 +345,19 @@ class IssueRecurrence < ActiveRecord::Base
     prev_user = User.current
     author_id = Setting.plugin_issue_recurring['author_id'].to_i
     User.current = User.find_by(id: author_id) || ref_issue.author
-    ref_issue.init_journal(User.current, l(:journal_title))
+    if Setting.plugin_issue_recurring['add_journal']
+      ref_issue.init_journal(User.current)
+    end
 
-    new_issue = (self.creation_mode.to_sym == :in_place) ? self.issue :
-      ref_issue.copy(nil, subtasks: self.include_subtasks)
-    new_issue.save! if new_issue.changed?
+    new_issue = nil
+    if self.creation_mode.to_sym == :in_place
+      new_issue = self.issue
+    else
+      new_issue = ref_issue.copy(nil, subtasks: self.include_subtasks)
+      # Saving closes journal. Don't save if in-place, otherwise date
+      # modifications won't be recorded.
+      new_issue.save!
+    end
 
     if self.include_subtasks
       copied_from = IssueRelation
@@ -500,9 +508,11 @@ class IssueRecurrence < ActiveRecord::Base
     logger.warn(msg) if logger
 
     author_id = Setting.plugin_issue_recurring['author_id'].to_i
+    prev_user = User.current
     User.current = User.find_by(id: author_id) || self.issue.author
     self.issue.init_journal(User.current, l(:journal_warning, {msg: msg}))
     self.issue.save
+    User.current = prev_user
   end
 
   class Date < ::Date

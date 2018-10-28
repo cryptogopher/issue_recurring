@@ -31,6 +31,7 @@ Redmine::Plugin.register :issue_recurring do
 
   settings default: {
     'author_id' => 0,
-    'keep_assignee' => false
+    'keep_assignee' => false,
+    'add_journal' => false
   }, partial: 'settings/issue_recurrences'
 end

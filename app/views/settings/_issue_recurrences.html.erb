@@ -7,3 +7,7 @@
 <%= check_box_tag "settings[keep_assignee]", true, @settings['keep_assignee'] %>
 <em class="info"><%= t('.keep_assignee_hint') %></em>
 </p>
+<p>
+<%= content_tag :label, t('.add_journal') %>
+<%= check_box_tag "settings[add_journal]", true, @settings['add_journal'] %>
+</p>
