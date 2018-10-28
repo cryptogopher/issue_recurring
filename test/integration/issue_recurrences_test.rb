@@ -30,16 +30,13 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_create_recurrence
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018, 10, 1)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018, 10, 1))
     create_recurrence
   end
 
   def test_renew_anchor_mode_fixed_mode_daily
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,10,1)
-    @issue1.due_date = Date.new(2018,10,5)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,10,1), due_date: Date.new(2018,10,5))
 
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,9,21))
@@ -99,9 +96,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_anchor_mode_fixed_mode_weekly
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,8,12)
-    @issue1.due_date = Date.new(2018,8,20)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,8,12), due_date: Date.new(2018,8,20))
 
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,7,29))
@@ -129,9 +124,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_anchor_mode_fixed_mode_monthly_day_from_first
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,9,8)
-    @issue1.due_date = Date.new(2018,10,2)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,9,8), due_date: Date.new(2018,10,2))
 
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2017,9,8))
@@ -161,9 +154,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_anchor_mode_fixed_mode_monthly_day_to_last
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,9,22)
-    @issue1.due_date = Date.new(2018,10,10)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,9,22), due_date: Date.new(2018,10,10))
 
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,3,22))
@@ -193,9 +184,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_anchor_mode_fixed_mode_monthly_dow_from_first
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,9,22)
-    @issue1.due_date = Date.new(2018,10,10)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,9,22), due_date: Date.new(2018,10,10))
 
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,3,22))
@@ -225,9 +214,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_anchor_mode_fixed_mode_monthly_dow_to_last
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,9,3)
-    @issue1.due_date = Date.new(2018,9,15)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,9,3), due_date: Date.new(2018,9,15))
 
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,6,3))
@@ -257,9 +244,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_anchor_mode_fixed_mode_monthly_wday_from_first
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,10,1)
-    @issue1.due_date = Date.new(2018,10,3)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,10,1), due_date: Date.new(2018,10,3))
 
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,4,1))
@@ -289,9 +274,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_anchor_mode_fixed_mode_monthly_wday_to_last
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,9,26)
-    @issue1.due_date = Date.new(2018,9,28)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,9,26), due_date: Date.new(2018,9,28))
 
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,3,26))
@@ -321,9 +304,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_anchor_mode_fixed_mode_yearly
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,8,19)
-    @issue1.due_date = Date.new(2018,9,5)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,8,19), due_date: Date.new(2018,9,5))
 
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2017,8,2))
@@ -353,9 +334,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_anchor_mode_flexible_mode_daily
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,10,1)
-    @issue1.due_date = Date.new(2018,10,5)
-    @issue1.save!
+    @issue1.update(start_date: Date.new(2018,10,1), due_date: Date.new(2018,10,5))
 
     travel_to(Date.new(2018,9,21))
     create_recurrence(anchor_mode: :last_issue_flexible,
@@ -394,9 +373,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_anchor_mode_flexible_on_delay_mode_daily
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,10,1)
-    @issue1.due_date = Date.new(2018,10,5)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,10,1), due_date: Date.new(2018,10,5))
 
     travel_to(Date.new(2018,9,21))
     create_recurrence(anchor_mode: :last_issue_flexible_on_delay,
@@ -435,9 +412,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_huge_multiplier
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,9,25)
-    @issue1.due_date = Date.new(2018,10,4)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,4))
 
     items = {
       daily: [Date.new(2021,6,21), Date.new(2021,6,30)],
@@ -469,9 +444,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_closed_on_cleared_for_new_recurrences_of_closed_issue
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,9,25)
-    @issue1.due_date = Date.new(2018,10,4)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,4))
 
     assert_nil @issue1.closed_on
     travel_to(Date.new(2018,10,22))
@@ -488,9 +461,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_issue_with_timespan_much_larger_than_recurrence_period
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,8,20)
-    @issue1.due_date = Date.new(2019,1,10)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,8,20), due_date: Date.new(2019,1,10))
 
     create_recurrence(anchor_mode: :last_issue_fixed,
                       mode: :daily,
@@ -524,9 +495,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     IssueRecurrence::FIXED_MODES.each do |am|
       dates.each do |issue_dates, setup_dates|
         @issue1.reload
-        @issue1.start_date = issue_dates[:start]
-        @issue1.due_date = issue_dates[:due]
-        @issue1.save!
+        @issue1.update!(start_date: issue_dates[:start], due_date: issue_dates[:due])
 
         mode = issue_dates[:start].present? ? :monthly_start_dow_from_first :
           :monthly_due_dow_from_first
@@ -573,11 +542,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     }
 
     dates.each do |issue_dates, setup_dates|
-      @issue1.start_date = issue_dates[:start]
-      @issue1.due_date = issue_dates[:due]
-      @issue1.save!
+      @issue1.update!(start_date: issue_dates[:start], due_date: issue_dates[:due])
       reopen_issue(@issue1) if @issue1.closed?
-      assert !@issue1.closed?
 
       mode = issue_dates[:start].present? ? :monthly_start_dow_from_first :
         :monthly_due_dow_from_first
@@ -606,9 +572,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_create_anchor_mode_fixed_issue_dates_not_set_should_fail
     log_user 'alice', 'foo'
-    @issue1.start_date = nil
-    @issue1.due_date = nil
-    @issue1.save!
+    @issue1.update!(start_date: nil, due_date: nil)
 
     IssueRecurrence::FIXED_MODES.each do |am|
       errors = create_recurrence_should_fail(anchor_mode: am)
@@ -626,9 +590,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       [Date.new(2018,11,30), true, {start: nil, due: Date.new(2018,12,7)}]
     ]
 
-    @issue1.start_date = nil
-    @issue1.due_date = nil
-    @issue1.save!
+    @issue1.update!(start_date: nil, due_date: nil)
     assert !@issue1.closed?
 
     ir = create_recurrence(anchor_mode: :last_issue_flexible)
@@ -685,9 +647,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
     dates.each do |start, due, mode, r_start, r_due|
       travel_to(start)
-      @issue1.start_date = start
-      @issue1.due_date = due
-      @issue1.save!
+      @issue1.update!(start_date: start, due_date: due)
 
       ir = create_recurrence(mode: mode)
 
@@ -699,9 +659,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_with_delay_anchor_mode_fixed
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,9,15)
-    @issue1.due_date = Date.new(2018,9,20)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,9,14))
@@ -728,9 +686,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_create_anchor_mode_flexible_with_delay_should_fail
     log_user 'alice', 'foo'
-    @issue1.start_date = Date.new(2018,9,15)
-    @issue1.due_date = Date.new(2018,9,20)
-    @issue1.save!
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     IssueRecurrence::FLEXIBLE_MODES.each do |am|
       errors = create_recurrence_should_fail(anchor_mode: am,
