@@ -65,7 +65,7 @@ The most notable features of this plugin include:
 
 4. Update Redmine settings.
    * (optional) create separate Redmine user as an author of issue recurrences (Administration -> Users -> New user)
-   * re-login as administrator and grant issue recurring permissions to roles (Administration -> Roles and permissions -> Permissions report). Issue recurring permissions are inside _Issue recurring_ group. There are 2 types of permissions:
+   * grant issue recurring permissions to roles (Administration -> Roles and permissions -> Permissions report). Issue recurring permissions are inside _Issue recurring_ group. There are 2 types of permissions:
      * _View issue recurrences_ - should be granted to everybody who needs to view recurrence information
      * _Manage issue recurrences_ - should be granted for roles responsible for creating/deleting issue recurrences
 
