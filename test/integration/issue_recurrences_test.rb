@@ -820,8 +820,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    create_recurrence(creation_mode: :in_place)
-    travel_to(@issue1.start_date)
+    create_recurrence(creation_mode: :in_place, anchor_mode: :last_issue_flexible)
+    travel_to(Date.new(2018,9,18))
     renew_all(0)
     @issue1.reload
     assert_equal Date.new(2018,9,15), @issue1.start_date
@@ -829,15 +829,14 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     close_issue(@issue1)
     renew_all(0)
     @issue1.reload
-    assert_equal Date.new(2018,9,22), @issue1.start_date
-    assert_equal Date.new(2018,9,27), @issue1.due_date
+    assert_equal Date.new(2018,9,20), @issue1.start_date
+    assert_equal Date.new(2018,9,25), @issue1.due_date
     assert !@issue1.closed?
   end
 
   # TODO:
   # - plugin settings: author_id, keep_assignee, add_journal
   # - fixed with date movement forward/backward on issue and last recurrence
-  # - tests of creation modes
   # - error logging
 end
 
