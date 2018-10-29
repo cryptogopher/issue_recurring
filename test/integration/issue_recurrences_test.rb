@@ -852,7 +852,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal 0, Setting.plugin_issue_recurring['author_id']
     assert_equal users(:bob), @issue1.author
 
-    create_recurrence
+    create_recurrence(creation_mode: :copy_first)
 
     travel_to(@issue1.start_date)
     r1 = renew_all(1)
@@ -866,8 +866,31 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal users(:charlie), r2.author
   end
 
+  def test_renew_applies_keep_assignee_configuration_setting
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    Setting.plugin_issue_recurring['keep_assignee'] = false
+    assert !Setting.plugin_issue_recurring['keep_assignee']
+    assert_equal users(:alice), @issue1.assigned_to
+    assert_equal users(:gopher), @issue1.project.default_assigned_to
+
+    create_recurrence(creation_mode: :copy_first)
+
+    travel_to(@issue1.start_date)
+    r1 = renew_all(1)
+    assert_equal users(:gopher), r1.assigned_to
+
+    Setting.plugin_issue_recurring['keep_assignee'] = true
+    assert Setting.plugin_issue_recurring['keep_assignee']
+
+    travel_to(r1.start_date)
+    r2 = renew_all(1)
+    assert_equal users(:alice), r2.assigned_to
+  end
+
   # TODO:
-  # - plugin settings: author_id, keep_assignee, add_journal
+  # - plugin settings: keep_assignee, add_journal
   # - fixed with date movement forward/backward on issue and last recurrence
   # - error logging
 end
