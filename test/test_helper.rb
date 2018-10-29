@@ -30,7 +30,7 @@ def create_recurrence(issue=issues(:issue_01), **attributes)
   assert_difference 'IssueRecurrence.count', 1 do
     post "#{issue_recurrences_path(issue)}.js", params: {recurrence: attributes}
     assert_response :ok
-    assert_empty assigns(:recurrence).errors.messages
+    assert_empty assigns(:recurrence).errors
   end
   IssueRecurrence.last
 end
@@ -39,12 +39,15 @@ def create_recurrence_should_fail(issue=issues(:issue_01), **attributes)
   attributes[:anchor_mode] ||= :first_issue_fixed
   attributes[:mode] ||= :weekly
   attributes[:multiplier] ||= 1
+  error_code = attributes.delete(:error_code) || :ok
   assert_no_difference 'IssueRecurrence.count' do
     post "#{issue_recurrences_path(issue)}.js", params: {recurrence: attributes}
-    assert_response :ok
-    assert_not_empty assigns(:recurrence).errors.messages
+    assert_response error_code
   end
-  assigns(:recurrence).errors
+  if error_code == :ok
+    assert_not_empty assigns(:recurrence).errors
+    assigns(:recurrence).errors
+  end
 end
 
 def renew_all(count=0)

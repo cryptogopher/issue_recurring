@@ -970,9 +970,60 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal Date.new(2018,7,22), r3.due_date
   end
 
+  def test_show_issue_shows_recurrences_only_when_view_permission_granted
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    create_recurrence
+    logout_user
+
+    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
+    assert roles.any? { |role| role.has_permission? :view_issue_recurrences }
+
+    log_user 'bob', 'foo'
+    get issue_path(@issue1)
+    assert_response :ok
+    assert_select 'div#issue_recurrences'
+
+    roles.each { |role| role.remove_permission! :view_issue_recurrences }
+    refute roles.any? { |role| role.has_permission? :view_issue_recurrences }
+
+    get issue_path(@issue1)
+    assert_response :ok
+    assert_select 'div#issue_recurrences', false
+  end
+
+  def test_show_issue_shows_recurrence_form_only_when_manage_permission_granted
+    log_user 'bob', 'foo'
+
+    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
+    assert roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    get issue_path(@issue1)
+    assert_response :ok
+    assert_select 'form#new-recurrence-form'
+
+    roles.each { |role| role.remove_permission! :manage_issue_recurrences }
+    refute roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    get issue_path(@issue1)
+    assert_response :ok
+    assert_select 'form#new-recurrence-form', false
+  end
+
+  def test_create_only_when_manage_permission_granted
+    log_user 'bob', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
+    assert roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    create_recurrence
+
+    roles.each { |role| role.remove_permission! :manage_issue_recurrences }
+    refute roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    create_recurrence_should_fail(error_code: :forbidden)
+  end
+
   # TODO:
   # - error logging
   # - permissions
-  # - show views: issue/issue recurrences/settings
+  # - show views: issue recurrences/settings
 end
 
