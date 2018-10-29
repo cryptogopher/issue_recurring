@@ -712,7 +712,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal @issue1, r2.recurrence_of
   end
 
-  def test_renew_with_subtasks_mode_weekly
+  def test_renew_subtasks_mode_weekly
     log_user 'alice', 'foo'
     @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5))
     @issue3.update!(start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30))
@@ -735,7 +735,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal Date.new(2018,10,7), r3.due_date
   end
 
-  def test_renew_with_subtasks_mode_monthly_start
+  def test_renew_subtasks_mode_monthly_start
     log_user 'alice', 'foo'
     @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5))
     @issue3.update!(start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30))
@@ -758,7 +758,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal Date.new(2018,10,28), r3.due_date
   end
 
-  def test_renew_with_subtasks_mode_monthly_due
+  def test_renew_subtasks_mode_monthly_due
     log_user 'alice', 'foo'
     @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5))
     @issue3.update!(start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30))
@@ -781,7 +781,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal Date.new(2018,10,31), r3.due_date
   end
 
-  def test_renew_with_creation_mode_copy_first
+  def test_renew_creation_mode_copy_first
     log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
@@ -798,7 +798,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal rel.issue_from, @issue1
   end
 
-  def test_renew_with_creation_mode_copy_last
+  def test_renew_creation_mode_copy_last
     log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
@@ -816,7 +816,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal rel2.issue_to, r2
   end
 
-  def test_renew_with_creation_mode_in_place
+  def test_renew_creation_mode_in_place
     log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
@@ -842,6 +842,28 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       errors = create_recurrence_should_fail(creation_mode: :in_place, anchor_mode: am)
       assert errors.added?(:anchor_mode, :in_place_flexible_only)
     end
+  end
+
+  def test_renew_applies_author_id_configuration_setting
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    Setting.plugin_issue_recurring['author_id'] = 0
+    assert_equal 0, Setting.plugin_issue_recurring['author_id']
+    assert_equal users(:bob), @issue1.author
+
+    create_recurrence
+
+    travel_to(@issue1.start_date)
+    r1 = renew_all(1)
+    assert_equal users(:bob), r1.author
+
+    Setting.plugin_issue_recurring['author_id'] = users(:charlie).id
+    assert_equal users(:charlie).id, Setting.plugin_issue_recurring['author_id']
+
+    travel_to(r1.start_date)
+    r2 = renew_all(1)
+    assert_equal users(:charlie), r2.author
   end
 
   # TODO:

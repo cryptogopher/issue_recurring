@@ -187,7 +187,6 @@ class IssueRecurrence < ActiveRecord::Base
               self.multiplier
             end
 
-
     case self.mode.to_sym
     when :daily
       dates.each do |label, date|
