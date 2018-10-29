@@ -889,8 +889,32 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal users(:alice), r2.assigned_to
   end
 
+  def test_renew_applies_add_journal_configuration_setting
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    create_recurrence(creation_mode: :copy_first)
+
+    Setting.plugin_issue_recurring['add_journal'] = false
+    assert !Setting.plugin_issue_recurring['add_journal']
+
+    travel_to(@issue1.start_date)
+    r1 = nil
+    assert_no_difference 'Journal.count' do
+      r1 = renew_all(1)
+    end
+
+    Setting.plugin_issue_recurring['add_journal'] = true
+    assert Setting.plugin_issue_recurring['add_journal']
+
+    travel_to(r1.start_date)
+    assert_difference 'Journal.count', 1 do
+      renew_all(1)
+    end
+    assert_equal @issue1.author, Journal.last.user
+  end
+
   # TODO:
-  # - plugin settings: keep_assignee, add_journal
   # - fixed with date movement forward/backward on issue and last recurrence
   # - error logging
 end
