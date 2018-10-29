@@ -914,8 +914,65 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal @issue1.author, Journal.last.user
   end
 
+  def test_renew_anchor_mode_first_issue_fixed_after_first_and_last_issue_date_change
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    create_recurrence(anchor_mode: :first_issue_fixed)
+
+    travel_to(@issue1.start_date)
+    r1 = renew_all(1)
+    assert_equal Date.new(2018,9,22), r1.start_date
+    assert_equal Date.new(2018,9,27), r1.due_date
+
+    r1.update!(start_date: Date.new(2018,7,4), due_date: Date.new(2018,7,15))
+    travel_to(Date.new(2018,9,21))
+    renew_all(0)
+    travel_to(Date.new(2018,9,22))
+    r2 = renew_all(1)
+    assert_equal Date.new(2018,9,29), r2.start_date
+    assert_equal Date.new(2018,10,4), r2.due_date
+
+    @issue1.update!(start_date: Date.new(2018,9,10), due_date: Date.new(2018,9,25))
+    travel_to(Date.new(2018,9,23))
+    renew_all(0)
+    travel_to(Date.new(2018,9,24))
+    r3 = renew_all(1)
+    assert_equal Date.new(2018,10,1), r3.start_date
+    assert_equal Date.new(2018,10,16), r3.due_date
+  end
+
+  def test_renew_anchor_mode_last_issue_fixed_after_first_and_last_issue_date_change
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    create_recurrence(anchor_mode: :last_issue_fixed)
+
+    travel_to(@issue1.start_date)
+    r1 = renew_all(1)
+    assert_equal Date.new(2018,9,22), r1.start_date
+    assert_equal Date.new(2018,9,27), r1.due_date
+
+    @issue1.update!(start_date: Date.new(2018,9,10), due_date: Date.new(2018,9,25))
+    travel_to(Date.new(2018,9,21))
+    renew_all(0)
+    travel_to(Date.new(2018,9,22))
+    r2 = renew_all(1)
+    assert_equal Date.new(2018,9,29), r2.start_date
+    assert_equal Date.new(2018,10,4), r2.due_date
+
+    r2.update!(start_date: Date.new(2018,7,4), due_date: Date.new(2018,7,15))
+    travel_to(Date.new(2018,7,3))
+    renew_all(0)
+    travel_to(Date.new(2018,7,4))
+    r3 = renew_all(1)
+    assert_equal Date.new(2018,7,11), r3.start_date
+    assert_equal Date.new(2018,7,22), r3.due_date
+  end
+
   # TODO:
-  # - fixed with date movement forward/backward on issue and last recurrence
   # - error logging
+  # - permissions
+  # - show views: issue/issue recurrences/settings
 end
 
