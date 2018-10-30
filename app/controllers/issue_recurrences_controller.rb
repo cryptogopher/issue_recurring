@@ -14,13 +14,12 @@ class IssueRecurrencesController < ApplicationController
     @recurrence = IssueRecurrence.new(recurrence_params)
     @recurrence.issue = @issue
     @recurrence.save
-    raise Unauthorized if @recurrence.errors.messages.has_key?(:issue)
+    raise Unauthorized if @recurrence.errors.added?(:issue, :insufficient_privileges)
     @recurrences = @issue.reload.recurrences.select {|r| r.visible?}
   end
 
   def destroy
-    @recurrence.destroy
-    raise Unauthorized if @recurrence.errors.messages.has_key?(:issue)
+    raise Unauthorized unless @recurrence.destroy
     @recurrences = @issue.reload.recurrences.select {|r| r.visible?}
   end
 

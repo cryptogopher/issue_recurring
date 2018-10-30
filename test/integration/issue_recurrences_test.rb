@@ -1021,6 +1021,24 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     create_recurrence_should_fail(error_code: :forbidden)
   end
 
+  def test_destroy_only_when_manage_permission_granted
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    recurrence = create_recurrence
+    logout_user
+
+    log_user 'bob', 'foo'
+    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
+
+    roles.each { |role| role.remove_permission! :manage_issue_recurrences }
+    refute roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    destroy_recurrence_should_fail(recurrence, error_code: :forbidden)
+
+    roles.each { |role| role.add_permission! :manage_issue_recurrences }
+    assert roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    destroy_recurrence(recurrence)
+  end
+
   # TODO:
   # - error logging
   # - permissions

@@ -50,6 +50,26 @@ def create_recurrence_should_fail(issue=issues(:issue_01), **attributes)
   end
 end
 
+def destroy_recurrence(recurrence)
+  assert_difference 'IssueRecurrence.count', -1 do
+    delete "#{recurrence_path(recurrence)}.js"
+    assert_response :ok
+    assert_empty assigns(:recurrence).errors
+  end
+end
+
+def destroy_recurrence_should_fail(recurrence, **attributes)
+  error_code = attributes.delete(:error_code) || :ok
+  assert_no_difference 'IssueRecurrence.count' do
+    delete "#{recurrence_path(recurrence)}.js"
+    assert_response error_code
+  end
+  if error_code == :ok
+    assert_not_empty assigns(:recurrence).errors
+    assigns(:recurrence).errors
+  end
+end
+
 def renew_all(count=0)
   assert_difference 'Issue.count', count do
     IssueRecurrence.renew_all
