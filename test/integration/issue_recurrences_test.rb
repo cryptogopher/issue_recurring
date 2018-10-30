@@ -18,10 +18,14 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def setup
     super
+
     Setting.non_working_week_days = [6, 7]
+
     @issue1 = issues(:issue_01)
     @issue2 = issues(:issue_02)
     @issue3 = issues(:issue_03)
+
+    log_user 'alice', 'foo'
   end
 
   def teardown
@@ -30,13 +34,11 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_create_recurrence
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018, 10, 1))
     create_recurrence
   end
 
   def test_create_anchor_mode_fixed_issue_dates_not_set_should_fail
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: nil, due_date: nil)
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -46,7 +48,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_create_anchor_mode_fixed_with_creation_mode_in_place_should_fail
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -56,7 +57,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_create_anchor_mode_flexible_with_delay_should_fail
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     IssueRecurrence::FLEXIBLE_MODES.each do |am|
@@ -69,6 +69,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_create_only_when_manage_permission_granted
+    logout_user
     log_user 'bob', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
@@ -82,7 +83,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_destroy_only_when_manage_permission_granted
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
     recurrence = create_recurrence
     logout_user
@@ -100,7 +100,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_show_issue_shows_recurrences_only_when_view_permission_granted
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
     create_recurrence
     logout_user
@@ -122,6 +121,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_show_issue_shows_recurrence_form_only_when_manage_permission_granted
+    logout_user
     log_user 'bob', 'foo'
 
     roles = users(:bob).members.find_by(project: @issue1.project_id).roles
@@ -138,7 +138,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_show_plugin_settings
-    log_user 'alice', 'foo'
     User.current.admin = true
     User.current.save!
 
@@ -147,24 +146,23 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_index_and_project_view_tab_visible_only_when_view_permission_granted
+    logout_user
+    log_user 'bob', 'foo'
+
     roles = users(:bob).members.find_by(project: @issue1.project_id).roles
     assert roles.any? { |role| role.has_permission? :view_issue_recurrences }
-
-    log_user 'bob', 'foo'
     get project_recurrences_path(projects(:project_01))
     assert_response :ok
     assert_select 'div#main-menu ul li a.issue-recurrences'
 
     roles.each { |role| role.remove_permission! :view_issue_recurrences }
     refute roles.any? { |role| role.has_permission? :view_issue_recurrences }
-
     get project_recurrences_path(projects(:project_01))
     assert_response :forbidden
     assert_select 'div#main-menu ul li a.issue-recurrences', false
   end
 
   def test_renew_anchor_mode_fixed_mode_daily
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,10,1), due_date: Date.new(2018,10,5))
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -194,7 +192,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_mode_daily_wday
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,13), due_date: Date.new(2018,10,2))
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -224,7 +221,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_mode_weekly
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,8,12), due_date: Date.new(2018,8,20))
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -252,7 +248,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_mode_monthly_day_from_first
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,8), due_date: Date.new(2018,10,2))
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -282,7 +277,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_mode_monthly_day_to_last
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,22), due_date: Date.new(2018,10,10))
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -312,7 +306,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_mode_monthly_dow_from_first
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,22), due_date: Date.new(2018,10,10))
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -342,7 +335,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_mode_monthly_dow_to_last
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,3), due_date: Date.new(2018,9,15))
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -372,7 +364,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_mode_monthly_wday_from_first
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,10,1), due_date: Date.new(2018,10,3))
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -402,7 +393,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_mode_monthly_wday_to_last
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,26), due_date: Date.new(2018,9,28))
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -432,7 +422,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_mode_yearly
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,8,19), due_date: Date.new(2018,9,5))
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -462,7 +451,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_flexible_mode_daily
-    log_user 'alice', 'foo'
     @issue1.update(start_date: Date.new(2018,10,1), due_date: Date.new(2018,10,5))
 
     travel_to(Date.new(2018,9,21))
@@ -501,7 +489,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_flexible_on_delay_mode_daily
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,10,1), due_date: Date.new(2018,10,5))
 
     travel_to(Date.new(2018,9,21))
@@ -540,7 +527,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_huge_multiplier
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,4))
 
     items = {
@@ -572,7 +558,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_closed_on_date_cleared_for_new_recurrences_of_closed_issue
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,4))
 
     assert_nil @issue1.closed_on
@@ -589,7 +574,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_issue_with_timespan_much_larger_than_recurrence_period
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,8,20), due_date: Date.new(2019,1,10))
 
     create_recurrence(anchor_mode: :last_issue_fixed,
@@ -602,8 +586,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_issue_one_date_not_set
-    log_user 'alice', 'foo'
-
     dates = {
       {start: Date.new(2018,10,10), due: nil} =>
       [
@@ -651,8 +633,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_flexible_issue_one_date_not_set
-    log_user 'alice', 'foo'
-
     dates = {
       {start: Date.new(2018,10,10), due: nil} =>
       [
@@ -700,8 +680,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_flexible_issue_dates_not_set
-    log_user 'alice', 'foo'
-
     dates = [
       [Date.new(2018,10,12), false, nil],
       [Date.new(2018,10,15), true, {start: nil, due: Date.new(2018,10,22)}],
@@ -735,8 +713,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_mode_monthly_should_not_overflow_in_shorter_month
-    log_user 'alice', 'foo'
-
     dates = [
       [Date.new(2019,1,29), Date.new(2019,1,31), :monthly_start_day_from_first,
        Date.new(2019,2,28), Date.new(2019,3,2)],
@@ -777,7 +753,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_with_delay_anchor_mode_fixed
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     IssueRecurrence::FIXED_MODES.each do |am|
@@ -804,7 +779,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_sets_recurrence_of_for_new_recurrence_and_subtask
-    log_user 'alice', 'foo'
     @issue2.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
     set_parent_issue(@issue1, @issue2)
     # Need to reload. Parent dates are computed from children by default.
@@ -818,7 +792,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_subtasks_mode_weekly
-    log_user 'alice', 'foo'
     @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5))
     @issue3.update!(start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30))
     set_parent_issue(@issue1, @issue2)
@@ -841,7 +814,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_subtasks_mode_monthly_start
-    log_user 'alice', 'foo'
     @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5))
     @issue3.update!(start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30))
     set_parent_issue(@issue1, @issue2)
@@ -864,7 +836,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_subtasks_mode_monthly_due
-    log_user 'alice', 'foo'
     @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5))
     @issue3.update!(start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30))
     set_parent_issue(@issue1, @issue2)
@@ -887,7 +858,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_creation_mode_copy_first
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     create_recurrence(creation_mode: :copy_first)
@@ -904,7 +874,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_creation_mode_copy_last
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     create_recurrence(creation_mode: :copy_last)
@@ -922,7 +891,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_creation_mode_in_place
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     create_recurrence(creation_mode: :in_place, anchor_mode: :last_issue_flexible)
@@ -940,7 +908,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_applies_author_id_configuration_setting
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     Setting.plugin_issue_recurring['author_id'] = 0
@@ -962,7 +929,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_applies_keep_assignee_configuration_setting
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     Setting.plugin_issue_recurring['keep_assignee'] = false
@@ -985,7 +951,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_applies_add_journal_configuration_setting
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     create_recurrence(creation_mode: :copy_first)
@@ -1010,7 +975,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_first_issue_fixed_after_first_and_last_issue_date_change
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     create_recurrence(anchor_mode: :first_issue_fixed)
@@ -1038,7 +1002,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_last_issue_fixed_after_first_and_last_issue_date_change
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     create_recurrence(anchor_mode: :last_issue_fixed)
@@ -1066,7 +1029,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_first_issue_fixed_after_dates_removed_should_fail_and_log_error
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     create_recurrence(anchor_mode: :first_issue_fixed)
@@ -1082,7 +1044,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_last_issue_fixed_after_dates_removed_should_fail_and_log_error
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     create_recurrence(anchor_mode: :last_issue_fixed)
@@ -1098,7 +1059,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_mode_monthly_start_after_anchor_date_removed_should_fail_and_log_error
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: nil)
 
     create_recurrence(anchor_mode: :first_issue_fixed, mode: :monthly_start_day_from_first)
@@ -1114,7 +1074,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_mode_monthly_due_after_anchor_date_removed_should_fail_and_log_error
-    log_user 'alice', 'foo'
     @issue1.update!(start_date: nil, due_date: Date.new(2018,9,20))
 
     create_recurrence(anchor_mode: :first_issue_fixed, mode: :monthly_due_day_from_first)
@@ -1128,5 +1087,5 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
     assert Journal.last.notes.include?('due date is blank')
   end
-end
 
+end
