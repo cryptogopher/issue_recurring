@@ -48,7 +48,7 @@ The most notable features of this plugin include:
 
      |        |versions |
      |--------|---------|
-     |Redmine |3.4.x    |
+     |Redmine |3.x      |
      
      You may try and find this plugin working on other versions too, but be prepared to get error messages. In case it works let everyone know that through issue tracker (send _support_ issue). If it doesn't work, you are welcome to send _feature_ request to make plugin compatible with other version. Keep in mind though, that for more exotic versions there will be more vote power needed to complete such feature request.
 
