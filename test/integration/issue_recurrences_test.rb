@@ -35,6 +35,134 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     create_recurrence
   end
 
+  def test_create_anchor_mode_fixed_issue_dates_not_set_should_fail
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: nil, due_date: nil)
+
+    IssueRecurrence::FIXED_MODES.each do |am|
+      errors = create_recurrence_should_fail(anchor_mode: am)
+      assert errors.added?(:anchor_mode, :blank_dates_flexible_only)
+    end
+  end
+
+  def test_create_anchor_mode_fixed_with_creation_mode_in_place_should_fail
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    IssueRecurrence::FIXED_MODES.each do |am|
+      errors = create_recurrence_should_fail(creation_mode: :in_place, anchor_mode: am)
+      assert errors.added?(:anchor_mode, :in_place_flexible_only)
+    end
+  end
+
+  def test_create_anchor_mode_flexible_with_delay_should_fail
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    IssueRecurrence::FLEXIBLE_MODES.each do |am|
+      errors = create_recurrence_should_fail(anchor_mode: am,
+                        mode: :monthly_start_day_from_first,
+                        delay_mode: :day,
+                        delay_multiplier: 10)
+      assert errors.added?(:anchor_mode, :delay_fixed_only)
+    end
+  end
+
+  def test_create_only_when_manage_permission_granted
+    log_user 'bob', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
+    assert roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    create_recurrence
+
+    roles.each { |role| role.remove_permission! :manage_issue_recurrences }
+    refute roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    create_recurrence_should_fail(error_code: :forbidden)
+  end
+
+  def test_destroy_only_when_manage_permission_granted
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    recurrence = create_recurrence
+    logout_user
+
+    log_user 'bob', 'foo'
+    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
+
+    roles.each { |role| role.remove_permission! :manage_issue_recurrences }
+    refute roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    destroy_recurrence_should_fail(recurrence, error_code: :forbidden)
+
+    roles.each { |role| role.add_permission! :manage_issue_recurrences }
+    assert roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    destroy_recurrence(recurrence)
+  end
+
+  def test_show_issue_shows_recurrences_only_when_view_permission_granted
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    create_recurrence
+    logout_user
+
+    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
+    assert roles.any? { |role| role.has_permission? :view_issue_recurrences }
+
+    log_user 'bob', 'foo'
+    get issue_path(@issue1)
+    assert_response :ok
+    assert_select 'div#issue_recurrences'
+
+    roles.each { |role| role.remove_permission! :view_issue_recurrences }
+    refute roles.any? { |role| role.has_permission? :view_issue_recurrences }
+
+    get issue_path(@issue1)
+    assert_response :ok
+    assert_select 'div#issue_recurrences', false
+  end
+
+  def test_show_issue_shows_recurrence_form_only_when_manage_permission_granted
+    log_user 'bob', 'foo'
+
+    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
+    assert roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    get issue_path(@issue1)
+    assert_response :ok
+    assert_select 'form#new-recurrence-form'
+
+    roles.each { |role| role.remove_permission! :manage_issue_recurrences }
+    refute roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    get issue_path(@issue1)
+    assert_response :ok
+    assert_select 'form#new-recurrence-form', false
+  end
+
+  def test_show_plugin_settings
+    log_user 'alice', 'foo'
+    User.current.admin = true
+    User.current.save!
+
+    get plugin_settings_path('issue_recurring')
+    assert_response :ok
+  end
+
+  def test_index_and_project_view_tab_visible_only_when_view_permission_granted
+    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
+    assert roles.any? { |role| role.has_permission? :view_issue_recurrences }
+
+    log_user 'bob', 'foo'
+    get project_recurrences_path(projects(:project_01))
+    assert_response :ok
+    assert_select 'div#main-menu ul li a.issue-recurrences'
+
+    roles.each { |role| role.remove_permission! :view_issue_recurrences }
+    refute roles.any? { |role| role.has_permission? :view_issue_recurrences }
+
+    get project_recurrences_path(projects(:project_01))
+    assert_response :forbidden
+    assert_select 'div#main-menu ul li a.issue-recurrences', false
+  end
+
   def test_renew_anchor_mode_fixed_mode_daily
     log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,10,1), due_date: Date.new(2018,10,5))
@@ -443,7 +571,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_renew_closed_on_cleared_for_new_recurrences_of_closed_issue
+  def test_renew_closed_on_date_cleared_for_new_recurrences_of_closed_issue
     log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,4))
 
@@ -571,16 +699,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_create_anchor_mode_fixed_issue_dates_not_set_should_fail
-    log_user 'alice', 'foo'
-    @issue1.update!(start_date: nil, due_date: nil)
-
-    IssueRecurrence::FIXED_MODES.each do |am|
-      errors = create_recurrence_should_fail(anchor_mode: am)
-      assert errors.added?(:anchor_mode, :blank_dates_flexible_only)
-    end
-  end
-
   def test_renew_anchor_mode_flexible_issue_dates_not_set
     log_user 'alice', 'foo'
 
@@ -682,19 +800,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       r2 = renew_all(1)
       assert_equal Date.new(2018,11,25), r2.start_date
       assert_equal Date.new(2018,11,30), r2.due_date
-    end
-  end
-
-  def test_create_anchor_mode_flexible_with_delay_should_fail
-    log_user 'alice', 'foo'
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
-
-    IssueRecurrence::FLEXIBLE_MODES.each do |am|
-      errors = create_recurrence_should_fail(anchor_mode: am,
-                        mode: :monthly_start_day_from_first,
-                        delay_mode: :day,
-                        delay_multiplier: 10)
-      assert errors.added?(:anchor_mode, :delay_fixed_only)
     end
   end
 
@@ -834,16 +939,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert !@issue1.closed?
   end
 
-  def test_create_anchor_mode_fixed_with_creation_mode_in_place_should_fail
-    log_user 'alice', 'foo'
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
-
-    IssueRecurrence::FIXED_MODES.each do |am|
-      errors = create_recurrence_should_fail(creation_mode: :in_place, anchor_mode: am)
-      assert errors.added?(:anchor_mode, :in_place_flexible_only)
-    end
-  end
-
   def test_renew_applies_author_id_configuration_setting
     log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
@@ -970,102 +1065,68 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal Date.new(2018,7,22), r3.due_date
   end
 
-  def test_show_issue_shows_recurrences_only_when_view_permission_granted
+  def test_renew_anchor_mode_first_issue_fixed_after_dates_removed_should_fail_and_log_error
     log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
-    create_recurrence
-    logout_user
 
-    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
-    assert roles.any? { |role| role.has_permission? :view_issue_recurrences }
+    create_recurrence(anchor_mode: :first_issue_fixed)
+    travel_to(Date.new(2018,9,15))
+    r1 = renew_all(1)
 
-    log_user 'bob', 'foo'
-    get issue_path(@issue1)
-    assert_response :ok
-    assert_select 'div#issue_recurrences'
-
-    roles.each { |role| role.remove_permission! :view_issue_recurrences }
-    refute roles.any? { |role| role.has_permission? :view_issue_recurrences }
-
-    get issue_path(@issue1)
-    assert_response :ok
-    assert_select 'div#issue_recurrences', false
+    @issue1.update!(start_date: nil, due_date: nil)
+    travel_to(Date.new(2018,11,22))
+    assert_difference 'Journal.count', 1 do
+      renew_all(0)
+    end
+    assert Journal.last.notes.include?('start and due dates are blank')
   end
 
-  def test_show_issue_shows_recurrence_form_only_when_manage_permission_granted
-    log_user 'bob', 'foo'
-
-    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
-    assert roles.any? { |role| role.has_permission? :manage_issue_recurrences }
-    get issue_path(@issue1)
-    assert_response :ok
-    assert_select 'form#new-recurrence-form'
-
-    roles.each { |role| role.remove_permission! :manage_issue_recurrences }
-    refute roles.any? { |role| role.has_permission? :manage_issue_recurrences }
-    get issue_path(@issue1)
-    assert_response :ok
-    assert_select 'form#new-recurrence-form', false
-  end
-
-  def test_create_only_when_manage_permission_granted
-    log_user 'bob', 'foo'
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
-
-    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
-    assert roles.any? { |role| role.has_permission? :manage_issue_recurrences }
-    create_recurrence
-
-    roles.each { |role| role.remove_permission! :manage_issue_recurrences }
-    refute roles.any? { |role| role.has_permission? :manage_issue_recurrences }
-    create_recurrence_should_fail(error_code: :forbidden)
-  end
-
-  def test_destroy_only_when_manage_permission_granted
+  def test_renew_anchor_mode_last_issue_fixed_after_dates_removed_should_fail_and_log_error
     log_user 'alice', 'foo'
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
-    recurrence = create_recurrence
-    logout_user
 
-    log_user 'bob', 'foo'
-    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
+    create_recurrence(anchor_mode: :last_issue_fixed)
+    travel_to(Date.new(2018,9,15))
+    r1 = renew_all(1)
 
-    roles.each { |role| role.remove_permission! :manage_issue_recurrences }
-    refute roles.any? { |role| role.has_permission? :manage_issue_recurrences }
-    destroy_recurrence_should_fail(recurrence, error_code: :forbidden)
-
-    roles.each { |role| role.add_permission! :manage_issue_recurrences }
-    assert roles.any? { |role| role.has_permission? :manage_issue_recurrences }
-    destroy_recurrence(recurrence)
+    r1.update!(start_date: nil, due_date: nil)
+    travel_to(Date.new(2018,11,22))
+    assert_difference 'Journal.count', 1 do
+      renew_all(0)
+    end
+    assert Journal.last.notes.include?('start and due dates are blank')
   end
 
-  def test_index_and_project_view_tab_visible_only_when_view_permission_granted
-    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
-    assert roles.any? { |role| role.has_permission? :view_issue_recurrences }
-
-    log_user 'bob', 'foo'
-    get project_recurrences_path(projects(:project_01))
-    assert_response :ok
-    assert_select 'div#main-menu ul li a.issue-recurrences'
-
-    roles.each { |role| role.remove_permission! :view_issue_recurrences }
-    refute roles.any? { |role| role.has_permission? :view_issue_recurrences }
-
-    get project_recurrences_path(projects(:project_01))
-    assert_response :forbidden
-    assert_select 'div#main-menu ul li a.issue-recurrences', false
-  end
-
-  def test_show_plugin_settings
+  def test_renew_mode_monthly_start_after_anchor_date_removed_should_fail_and_log_error
     log_user 'alice', 'foo'
-    User.current.admin = true
-    User.current.save!
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: nil)
 
-    get plugin_settings_path('issue_recurring')
-    assert_response :ok
+    create_recurrence(anchor_mode: :first_issue_fixed, mode: :monthly_start_day_from_first)
+    travel_to(Date.new(2018,9,15))
+    r1 = renew_all(1)
+
+    @issue1.update!(start_date: nil, due_date: Date.new(2018,9,20))
+    travel_to(Date.new(2018,12,22))
+    assert_difference 'Journal.count', 1 do
+      renew_all(0)
+    end
+    assert Journal.last.notes.include?('start date is blank')
   end
 
-  # TODO:
-  # - error logging
+  def test_renew_mode_monthly_due_after_anchor_date_removed_should_fail_and_log_error
+    log_user 'alice', 'foo'
+    @issue1.update!(start_date: nil, due_date: Date.new(2018,9,20))
+
+    create_recurrence(anchor_mode: :first_issue_fixed, mode: :monthly_due_day_from_first)
+    travel_to(Date.new(2018,9,20))
+    r1 = renew_all(1)
+
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: nil)
+    travel_to(Date.new(2018,12,22))
+    assert_difference 'Journal.count', 1 do
+      renew_all(0)
+    end
+    assert Journal.last.notes.include?('due date is blank')
+  end
 end
 
