@@ -1039,9 +1039,33 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     destroy_recurrence(recurrence)
   end
 
+  def test_index_and_project_view_tab_visible_only_when_view_permission_granted
+    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
+    assert roles.any? { |role| role.has_permission? :view_issue_recurrences }
+
+    log_user 'bob', 'foo'
+    get project_recurrences_path(projects(:project_01))
+    assert_response :ok
+    assert_select 'div#main-menu ul li a.issue-recurrences'
+
+    roles.each { |role| role.remove_permission! :view_issue_recurrences }
+    refute roles.any? { |role| role.has_permission? :view_issue_recurrences }
+
+    get project_recurrences_path(projects(:project_01))
+    assert_response :forbidden
+    assert_select 'div#main-menu ul li a.issue-recurrences', false
+  end
+
+  def test_show_plugin_settings
+    log_user 'alice', 'foo'
+    User.current.admin = true
+    User.current.save!
+
+    get plugin_settings_path('issue_recurring')
+    assert_response :ok
+  end
+
   # TODO:
   # - error logging
-  # - permissions
-  # - show views: issue recurrences/settings
 end
 
