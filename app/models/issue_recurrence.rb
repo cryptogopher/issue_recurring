@@ -489,17 +489,15 @@ class IssueRecurrence < ActiveRecord::Base
   end
 
   def self.renew_all
-    @log_problems = true
+    @@log_problems = true
     IssueRecurrence.all.map(&:renew)
-    @log_problems = false
+    @@log_problems = false
   end
 
   private
 
   def log(msg)
-    return unless @log_problems
-
-    logger.warn(msg) if logger
+    return unless @@log_problems
 
     prev_user = User.current
     author_id = Setting.plugin_issue_recurring['author_id'].to_i
