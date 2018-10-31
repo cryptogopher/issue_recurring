@@ -33,6 +33,7 @@ en:
       keep_assignee: 'Keep assignee from previous recurrence'
       keep_assignee_hint: 'if unchecked, default assignment rules will apply'
       add_journal: 'Add journal entry on recurrence renewal'
+      add_journal_hint: 'journal is added only on reference issue (not on new copy)'
   issue_recurrences:
     index:
       heading: 'Issue recurrences'

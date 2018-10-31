@@ -10,4 +10,5 @@
 <p>
 <%= content_tag :label, t('.add_journal') %>
 <%= check_box_tag "settings[add_journal]", true, @settings['add_journal'] %>
+<em class="info"><%= t('.add_journal_hint') %></em>
 </p>
