@@ -30,6 +30,10 @@
     </div>
 
     <% if User.current.allowed_to?(:manage_issue_recurrences, @project) %>
+      <div id='recurrence-errors'>
+        <%= error_messages_for 'recurrence' %>
+      </div>
+
       <%= render partial: 'issues/recurrences/form' %>
     <% end %>
   </div>

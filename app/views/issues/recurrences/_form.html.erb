@@ -3,10 +3,6 @@
   :html => {:id => 'new-recurrence-form', :style => 'display: none;'},
   :as => :recurrence do |f| %>
 
-  <div id='recurrence-errors'>
-    <%= error_messages_for 'recurrence' %>
-  </div>
-
   <p>
     <%= f.select :creation_mode, creation_mode_options %>
     <%= f.select :include_subtasks,
