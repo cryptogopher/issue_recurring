@@ -35,7 +35,7 @@ The most notable features of this plugin include:
 * ability to delay recurrence against base date to create multiple recurrences of the same frequency with different time offset (e.g. monthly recurrence on 10th, 20th and 30th day of month),
 * ability to limit recurrence by final date or recurrence count,
 * showing dates of last/next recurrence and history of recurrences,
-* logging errors when renewing issue recurrences as a note (besides logging into log file),
+* logging errors when renewing issue recurrences as a note (no logging into web-inaccessible log file),
 * permissions to view/edit recurrences managed by Redmine roles,
 * per project enabling of issue recurring plugin,
 * specification of user account under which issue recurrences will be created: any Redmine user or last recurrence author,
