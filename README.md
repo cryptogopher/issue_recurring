@@ -2,9 +2,9 @@
 
 Redmine plugin: schedule Redmine issue recurrence based on multiple conditions.
 
-Issue tracker: https://ir.michalczyk.pro/ (don't be afraid, you can register/login there with your __Github account__).
+Issue tracker: https://it.michalczyk.pro/ (don't be afraid, you can register/login there with your __Github account__).
 
-Screenshots: https://ir.michalczyk.pro/projects/issue-recurring/wiki/Screenshots
+Screenshots: https://it.michalczyk.pro/projects/issue-recurring/wiki/Screenshots
 
 ## Motivation
 
