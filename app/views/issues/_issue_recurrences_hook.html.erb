@@ -15,8 +15,8 @@
 
     <% if @issue.recurrence_of.present? %>
       <p>
-      <%= "#{t('.this_is_recurrence')}: " %>
-      <%= link_to "##{@issue.recurrence_of.id} #{@issue.recurrence_of.subject}",
+      <%= "#{t('.this_is_recurrence')} " %>
+      <%= link_to "##{@issue.recurrence_of.id}: #{@issue.recurrence_of.subject}",
         issue_path(@issue.recurrence_of) %>
       </p>
     <% end %>
