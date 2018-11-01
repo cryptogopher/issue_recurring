@@ -27,19 +27,19 @@ The most notable features of this plugin include:
   * months with dates keeping the same day of week from the beginning or to the end of the month (e.g. 2nd Tuesday of month or 1st to last Friday of month),
   * months with dates keeping the same working day (according to non-working week days specified in Redmine settings) from the beginning or to the end of the month (e.g. 2nd working day of month or 1st to last working day of month),
   * years,
-* creation of next issue recurrence as a copy of: first issue, last recurrence or without copying, by in-place modification,
-* next recurrence scheduling based on: original issue dates, last recurrence dates, close date of last recurrence, last recurrence dates if close on time or close date otherwise,
+* creation of next issue recurrence as a copy of: first issue; last recurrence; without copying, by in-place modification,
+* next recurrence scheduling based on: original issue dates; last recurrence dates; close date of last recurrence; last recurrence dates if closed on time or close date otherwise,
 * ability to specify recurrence based on start or due date of issue (in cases where that matters),
 * updating both start and due dates according to schedule (if specified),
 * ability to recur with or without subtasks,
 * ability to delay recurrence against base date to create multiple recurrences of the same frequency with different time offset (e.g. monthly recurrence on 10th, 20th and 30th day of month),
 * ability to limit recurrence by final date or recurrence count,
 * showing dates of last/next recurrence and history of recurrences,
-* logging errors when renewing issue recurrences as a note (no logging into web-inaccessible log file),
-* permissions to view/edit recurrences managed by Redmine roles,
+* logging errors when renewing issue recurrences as an issue note (no logging into web-inaccessible log file),
+* permissions to view/manage recurrences managed by Redmine roles,
 * per project enabling of issue recurring plugin,
 * specification of user account under which issue recurrences will be created: any Redmine user or last recurrence author,
-* specification of recurrence assignment: can be kept as previous recurrence assignee or set to Redmine default,
+* specification of recurrence issue assignment: assignee can be kept unchanged from previous recurrence or set to Redmine's default.
 
 ## Installation
 
@@ -64,18 +64,19 @@ The most notable features of this plugin include:
 3. Restart Redmine. Exact steps depend on your installation of Redmine. You may need to restart Apache (when using Passenger) or just Redmine daemon/service.
 
 4. Update Redmine settings.
+   * enable _Issue recurring_ module per project (choose project -> Settings -> Modules -> check Issue recurring)
    * (optional) create separate Redmine user as an author of issue recurrences (Administration -> Users -> New user)
    * grant issue recurring permissions to roles (Administration -> Roles and permissions -> Permissions report). Issue recurring permissions are inside _Issue recurring_ group. There are 2 types of permissions:
      * _View issue recurrences_ - should be granted to everybody who needs to view recurrence information
      * _Manage issue recurrences_ - should be granted for roles responsible for creating/deleting issue recurrences
 
-6. Update plugin settings. (Administration -> Plugins -> Issue recurring plugin -> Configure)
+5. Update plugin settings. (Administration -> Plugins -> Issue recurring plugin -> Configure)
 
-7. Add cron task to enable recurrence creation at least once a day.
+6. Add cron task to enable recurrence creation at least once a day.
    ```
    12 6 * * * cd /var/lib/redmine && RAILS_ENV=production rake redmine:issue_recurring:renew_all >> log/cron-issue_recurring.log
    ```
 
-8. Go to Redmine, create/open issue, add issue recurrence.
+7. Go to Redmine, create/open issue, add issue recurrence.
 
-9. Have fun!
+8. Have fun!
