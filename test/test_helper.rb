@@ -106,3 +106,12 @@ def close_issue(issue)
   assert issue.closed?
 end
 
+def destroy_issue(issue)
+  project = issue.project
+  assert_not issue.reload.destroyed?
+  assert_difference 'Issue.count', -1 do
+    delete issue_path(issue)
+    assert_redirected_to project_issues_path(project)
+  end
+  assert_raises(ActiveRecord::RecordNotFound) { issue.reload }
+end

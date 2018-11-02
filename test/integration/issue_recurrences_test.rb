@@ -1088,4 +1088,26 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert Journal.last.notes.include?('due date is blank')
   end
 
+  def test_deleting_first_issue_destroys_recurrence_and_nullifies_recurrence_of
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    recurrence = create_recurrence(anchor_mode: :first_issue_fixed)
+    travel_to(Date.new(2018,9,22))
+    r1, r2 = renew_all(2)
+
+    assert_difference 'IssueRecurrence.count', -1 do
+      destroy_issue(@issue1)
+    end
+    assert_raises(ActiveRecord::RecordNotFound) { recurrence.reload }
+
+    [r1, r2].map(&:reload)
+    assert_nil r1.recurrence_of
+    assert_nil r2.recurrence_of
+  end
+
+  def test_deleting_last_issue_sets_new_or_nullifies_last_issue
+  end
+
+  def test_deleting_not_first_nor_last_issue_keeps_recurrence_and_reference_of_unchanged
+  end
 end
