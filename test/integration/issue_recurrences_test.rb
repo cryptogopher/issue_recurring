@@ -1089,61 +1089,68 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_deleting_first_issue_destroys_recurrence_and_nullifies_recurrence_of
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    IssueRecurrence::FIXED_MODES.each do |am|
+      @issue1 = Issue.first
+      @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    recurrence = create_recurrence(anchor_mode: :first_issue_fixed)
-    travel_to(Date.new(2018,9,22))
-    r1, r2 = renew_all(2)
+      recurrence = create_recurrence(@issue1, anchor_mode: am)
+      travel_to(Date.new(2018,9,22))
+      r1, r2 = renew_all(2)
 
-    assert_difference 'IssueRecurrence.count', -1 do
-      destroy_issue(@issue1)
+      assert_difference 'IssueRecurrence.count', -1 do
+        destroy_issue(@issue1)
+      end
+      assert_raises(ActiveRecord::RecordNotFound) { recurrence.reload }
+
+      [r1, r2].map(&:reload)
+      assert_nil r1.recurrence_of
+      assert_nil r2.recurrence_of
     end
-    assert_raises(ActiveRecord::RecordNotFound) { recurrence.reload }
-
-    [r1, r2].map(&:reload)
-    assert_nil r1.recurrence_of
-    assert_nil r2.recurrence_of
   end
 
   def test_deleting_last_issue_sets_previous_or_nullifies_last_issue
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    recurrence = create_recurrence(anchor_mode: :first_issue_fixed)
-    travel_to(Date.new(2018,9,22))
-    r1, r2 = renew_all(2)
-    recurrence.reload
-    assert_equal r2, recurrence.last_issue
+    IssueRecurrence::FIXED_MODES.each do |am|
+      recurrence = create_recurrence(anchor_mode: am)
+      travel_to(Date.new(2018,9,22))
+      r1, r2 = renew_all(2)
+      recurrence.reload
+      assert_equal r2, recurrence.last_issue
 
-    # Create extra recurrences with higher ids
-    @issue2.update!(start_date: Date.new(2018,8,15), due_date: Date.new(2018,8,20))
-    create_recurrence(@issue2, anchor_mode: :first_issue_fixed)
-    renew_all(6)
+      # Create extra recurrences with higher ids
+      @issue2.update!(start_date: Date.new(2018,8,15), due_date: Date.new(2018,8,20))
+      create_recurrence(@issue2, anchor_mode: am)
+      renew_all(6)
 
-    assert_no_difference 'IssueRecurrence.count' do
-      destroy_issue(r2)
+      assert_no_difference 'IssueRecurrence.count' do
+        destroy_issue(r2)
+      end
+      [recurrence, r1].map(&:reload)
+      assert_equal r1, recurrence.last_issue
+
+      assert_no_difference 'IssueRecurrence.count' do
+        destroy_issue(r1)
+      end
+      recurrence.reload
+      assert_nil recurrence.last_issue
     end
-    [recurrence, r1].map(&:reload)
-    assert_equal r1, recurrence.last_issue
-
-    assert_no_difference 'IssueRecurrence.count' do
-      destroy_issue(r1)
-    end
-    recurrence.reload
-    assert_nil recurrence.last_issue
   end
 
   def test_deleting_not_first_nor_last_issue_keeps_recurrence_and_reference_of_unchanged
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    recurrence = create_recurrence(anchor_mode: :first_issue_fixed)
-    travel_to(Date.new(2018,9,22))
-    r1, r2 = renew_all(2)
+    IssueRecurrence::FIXED_MODES.each do |am|
+      recurrence = create_recurrence(anchor_mode: am)
+      travel_to(Date.new(2018,9,22))
+      r1, r2 = renew_all(2)
 
-    assert_no_difference 'IssueRecurrence.count' do
-      destroy_issue(r1)
+      assert_no_difference 'IssueRecurrence.count' do
+        destroy_issue(r1)
+      end
+      [recurrence, r2].map(&:reload)
+      assert_equal recurrence.last_issue, r2
+      assert_equal recurrence.issue, r2.recurrence_of
     end
-    [recurrence, r2].map(&:reload)
-    assert_equal recurrence.last_issue, r2
-    assert_equal recurrence.issue, r2.recurrence_of
   end
 end
