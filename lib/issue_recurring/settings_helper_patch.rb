@@ -5,7 +5,7 @@ module IssueRecurring
         unchanged = options_for_select(
           {t('settings.issue_recurrences.author_unchanged') => 0}, default
         )
-        unchanged << options_from_collection_for_select(User.all, :id, :name, default)
+        unchanged << options_from_collection_for_select(User.active, :id, :name, default)
       end
     end
   end
