@@ -1133,5 +1133,17 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_deleting_not_first_nor_last_issue_keeps_recurrence_and_reference_of_unchanged
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    recurrence = create_recurrence(anchor_mode: :first_issue_fixed)
+    travel_to(Date.new(2018,9,22))
+    r1, r2 = renew_all(2)
+
+    assert_no_difference 'IssueRecurrence.count' do
+      destroy_issue(r1)
+    end
+    [recurrence, r2].map(&:reload)
+    assert_equal recurrence.last_issue, r2
+    assert_equal recurrence.issue, r2.recurrence_of
   end
 end
