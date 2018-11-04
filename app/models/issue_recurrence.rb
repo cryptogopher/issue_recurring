@@ -131,8 +131,7 @@ class IssueRecurrence < ActiveRecord::Base
 
     ref_dates = self.next_dates
     ref_description = ''
-    if ref_dates.nil?
-      # FIXME: || FLEXIBLE_MODES.include?(self.mode)
+    if ref_dates.nil? || FLEXIBLE_MODES.include?(self.anchor_mode)
       ref_description = " #{l("#{s}.mode_descriptions.#{self.mode}")}"
     elsif MONTHLY_MODES.include?(self.mode)
       label = START_MODES.include?(self.mode) ? :start : :due
