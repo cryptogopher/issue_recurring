@@ -132,6 +132,7 @@ class IssueRecurrence < ActiveRecord::Base
     ref_dates = self.next_dates
     ref_description = ''
     if ref_dates.nil?
+      # FIXME: || FLEXIBLE_MODES.include?(self.mode)
       ref_description = " #{l("#{s}.mode_descriptions.#{self.mode}")}"
     elsif MONTHLY_MODES.include?(self.mode)
       label = START_MODES.include?(self.mode) ? :start : :due
@@ -407,7 +408,11 @@ class IssueRecurrence < ActiveRecord::Base
         if (ref_dates[:start] || ref_dates[:due]).present?
           unless (self.anchor_mode == 'last_issue_flexible_on_delay') &&
               ((ref_dates[:due] || ref_dates[:start]) >= closed_date)
-            ref_label = ref_issue.due_date.present? ? :due : :start
+            ref_label = if MONTHLY_MODES.include?(self.mode)
+                          START_MODES.include?(self.mode) ? :start : :due
+                        else
+                          ref_issue.due_date.present? ? :due : :start
+                        end
             offset_dates = self.offset(closed_date, ref_label, ref_dates) 
             return nil if offset_dates.nil?
             ref_dates = offset_dates

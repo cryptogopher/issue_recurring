@@ -1153,4 +1153,20 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       assert_equal recurrence.issue, r2.recurrence_of
     end
   end
+
+  def test_renew_anchor_mode_flexible_with_due_date_and_start_mode
+    @issue1.update!(start_date: Date.new(2018,9,13), due_date: Date.new(2018,10,2))
+    travel_to(Date.new(2018,9,15))
+    close_issue(@issue1)
+
+    create_recurrence(anchor_mode: :last_issue_flexible, mode: :monthly_start_day_from_first)
+    travel_to(Date.new(2018,11,4))
+    r1 = renew_all(1)
+
+    # defaulting to :due in flexible reference date choice is against defaulting
+    # to :start in offsetting due to start mode
+    # reference should be :start for start modes
+    assert_equal Date.new(2018,10,15), r1.start_date
+    assert_equal Date.new(2018,11,3), r1.due_date
+  end
 end
