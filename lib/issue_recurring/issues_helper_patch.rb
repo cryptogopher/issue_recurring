@@ -11,16 +11,20 @@ module IssueRecurring
       def mode_options
         intervals = t('.mode_intervals')
         descriptions = t('.mode_descriptions')
-        options = IssueRecurrence.modes.map do |k,v|
+        IssueRecurrence.modes.map do |k,v|
           mode = intervals[k.to_sym].pluralize
           mode += ", #{descriptions[k.to_sym]}" unless descriptions[k.to_sym].empty?
           [sanitize(mode, tags:{}), k]
         end
+      end
+
+      def anchor_to_start_options
+        options = ['start', 'due'].map do |k|
+          [sanitize(t(".anchor_to.#{k}"), tags:{}), k]
+        end
         disabled = []
-        disabled += IssueRecurrence::START_MODES if @issue.start_date.blank? &&
-          @issue.due_date.present?
-        disabled += IssueRecurrence::DUE_MODES if @issue.due_date.blank? &&
-          @issue.start_date.present?
+        disabled += 'start' if @issue.start_date.blank? && @issue.due_date.present?
+        disabled += 'due' if @issue.due_date.blank? && @issue.start_date.present?
         [options, disabled]
       end
 

@@ -91,7 +91,7 @@ class IssueRecurrence < ActiveRecord::Base
       self.count = 0
       self.creation_mode ||= :copy_first
       self.anchor_mode ||= :first_issue_fixed
-      self.mode ||= :monthly_start_day_from_first
+      self.mode ||= :monthly_day_from_first
       self.anchor_to_start = false if self.anchor_to_start.nil?
       self.multiplier ||= 1
       self.delay_mode ||= :day

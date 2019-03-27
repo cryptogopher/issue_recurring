@@ -9,8 +9,7 @@
       [[t('.including_subtasks'), true], [t('.excluding_subtasks'), false]] %>
     <%= t '.every' %>
     <%= f.number_field :multiplier, min: 1, step: 1, value: 1 %>
-    <% options, disabled = mode_options %>
-    <%= f.select :mode, options, disabled: disabled %>
+    <%= f.select :mode, mode_options %>
     <%= t '.based_on' %>
     <%= f.select :anchor_mode, anchor_mode_options %>
     <%= t '.delayed_by' %>
