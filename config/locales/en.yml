@@ -17,7 +17,7 @@ en:
                 be created for issue with both (start and due) dates blank'
               in_place_flexible_only: 'only recurrences based on issue close date can
                 modify issue in-place'
-            mode:
+            anchor_to_start:
               start_mode_requires_date: 'recurrence based on start date cannot be created for
                 issue without start date'
               due_mode_requires_date: 'recurrence based on due date cannot be created for

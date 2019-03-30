@@ -20,6 +20,9 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     super
 
     Setting.non_working_week_days = [6, 7]
+    Setting.plugin_issue_recurring['author_id'] = 0
+    Setting.plugin_issue_recurring['keep_assignee'] = false
+    Setting.plugin_issue_recurring['add_journal'] = false
 
     @issue1 = issues(:issue_01)
     @issue2 = issues(:issue_02)
@@ -34,7 +37,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_create_recurrence
-    @issue1.update!(start_date: Date.new(2018, 10, 1))
+    @issue1.update!(due_date: Date.new(2018, 10, 1))
     create_recurrence
   end
 
@@ -284,7 +287,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,3,22))
       create_recurrence(anchor_mode: am,
-                        mode: :monthly_due_day_to_last,
+                        mode: :monthly_day_to_last,
                         multiplier: 3)
       renew_all(0)
       travel_to(Date.new(2018,5,21))
@@ -343,7 +346,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,6,3))
       create_recurrence(anchor_mode: am,
-                        mode: :monthly_due_dow_to_last,
+                        mode: :monthly_dow_to_last,
                         multiplier: 1)
       renew_all(0)
       travel_to(Date.new(2018,8,3))
@@ -372,7 +375,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     IssueRecurrence::FIXED_MODES.each do |am|
       travel_to(Date.new(2018,4,1))
       create_recurrence(anchor_mode: am,
-                        mode: :monthly_due_wday_from_first,
+                        mode: :monthly_wday_from_first,
                         multiplier: 1)
       renew_all(0)
       travel_to(Date.new(2018,6,1))
@@ -854,7 +857,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     set_parent_issue(@issue1, @issue3)
     @issue1.reload
 
-    create_recurrence(include_subtasks: true, mode: :monthly_due_wday_to_last)
+    create_recurrence(include_subtasks: true, mode: :monthly_wday_to_last)
     travel_to(@issue1.start_date-1)
     renew_all(0)
     travel_to(@issue1.start_date)
@@ -1090,7 +1093,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   def test_renew_mode_monthly_due_after_anchor_date_removed_should_fail_and_log_error
     @issue1.update!(start_date: nil, due_date: Date.new(2018,9,20))
 
-    create_recurrence(anchor_mode: :first_issue_fixed, mode: :monthly_due_day_from_first)
+    create_recurrence(anchor_mode: :first_issue_fixed, mode: :monthly_day_from_first)
     travel_to(Date.new(2018,9,20))
     r1 = renew_all(1)
 
