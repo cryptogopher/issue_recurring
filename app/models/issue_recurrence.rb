@@ -63,7 +63,6 @@ class IssueRecurrence < ActiveRecord::Base
     if: "creation_mode == 'in_place'",
     message: :in_place_flexible_only
   }
-  validates :mode, inclusion: modes.keys
   validates :anchor_to_start, inclusion: [true, false]
   validates :anchor_to_start, inclusion: {
     in: [false],
@@ -75,6 +74,7 @@ class IssueRecurrence < ActiveRecord::Base
     if: "issue.due_date.blank? && issue.start_date.present?",
     message: :due_mode_requires_date
   }
+  validates :mode, inclusion: modes.keys
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
   validates :delay_mode, inclusion: delay_modes.keys
   validates :delay_multiplier, numericality: {greater_than_or_equal_to: 0, only_integer: true}
@@ -91,8 +91,8 @@ class IssueRecurrence < ActiveRecord::Base
       self.count = 0
       self.creation_mode ||= :copy_first
       self.anchor_mode ||= :first_issue_fixed
-      self.mode ||= :monthly_day_from_first
       self.anchor_to_start = false if self.anchor_to_start.nil?
+      self.mode ||= :monthly_day_from_first
       self.multiplier ||= 1
       self.delay_mode ||= :day
       self.delay_multiplier ||= 0

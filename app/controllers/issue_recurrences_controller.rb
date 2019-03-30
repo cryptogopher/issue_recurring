@@ -30,6 +30,7 @@ class IssueRecurrencesController < ApplicationController
       :creation_mode,
       :include_subtasks,
       :anchor_mode,
+      :anchor_to_start,
       :mode,
       :multiplier,
       :delay_mode,
