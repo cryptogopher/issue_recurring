@@ -1185,4 +1185,10 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal Date.new(2018,10,15), r1.start_date
     assert_equal Date.new(2018,11,3), r1.due_date
   end
+
+  def test_renew_different_anchor_to_start_over_one_year_period_during_leap_year
+  end
+
+  def test_renew_different_anchor_to_start_anchor_mode_flexible
+  end
 end
