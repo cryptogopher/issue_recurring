@@ -1182,9 +1182,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     travel_to(Date.new(2018,11,4))
     r1 = renew_all(1)
 
-    # defaulting to :due in flexible reference date choice is against defaulting
-    # to :start in offsetting due to start mode
-    # reference should be :start for start modes
     assert_equal Date.new(2018,10,15), r1.start_date
     assert_equal Date.new(2018,11,3), r1.due_date
   end

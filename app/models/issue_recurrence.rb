@@ -270,7 +270,7 @@ class IssueRecurrence < ActiveRecord::Base
 
   # Offset 'dates' so date with 'label' is equal 'target'.
   # Return offset 'dates' or nil if 'dates' does not include 'label'.
-  def offset(target_date, target_label=:due, dates)
+  def offset(target_date, target_label, dates)
     nil if dates[target_label].nil?
     dates.each do |label, date|
       next if (label == target_label) || date.nil?
