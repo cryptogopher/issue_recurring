@@ -508,26 +508,26 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     travel_to(Date.new(2018,10,7))
     # closed after due
     close_issue(@issue1)
-    issue1 = renew_all(1)
-    assert_equal Date.new(2018,10,13), issue1.start_date
-    assert_equal Date.new(2018,10,17), issue1.due_date
+    r1 = renew_all(1)
+    assert_equal Date.new(2018,10,13), r1.start_date
+    assert_equal Date.new(2018,10,17), r1.due_date
     travel_to(Date.new(2018,10,15))
     renew_all(0)
     # closed between start and due
-    close_issue(issue1)
-    issue2 = renew_all(1)
-    assert_equal Date.new(2018,10,23), issue2.start_date
-    assert_equal Date.new(2018,10,27), issue2.due_date
+    close_issue(r1)
+    r2 = renew_all(1)
+    assert_equal Date.new(2018,10,23), r2.start_date
+    assert_equal Date.new(2018,10,27), r2.due_date
     travel_to(Date.new(2018,10,21))
     renew_all(0)
     # closed before start
-    close_issue(issue2)
+    close_issue(r2)
     travel_to(Date.new(2018,10,25))
-    issue3 = renew_all(1)
-    assert_equal Date.new(2018,11,2), issue3.start_date
-    assert_equal Date.new(2018,11,6), issue3.due_date
+    r3 = renew_all(1)
+    assert_equal Date.new(2018,11,2), r3.start_date
+    assert_equal Date.new(2018,11,6), r3.due_date
     travel_to(Date.new(2018,11,18))
-    close_issue(issue3)
+    close_issue(r3)
     travel_to(Date.new(2018,12,31))
     renew_all(1)
     renew_all(0)
@@ -593,7 +593,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal Date.new(2019,1,25), r5.due_date
   end
 
-  def test_renew_anchor_mode_fixed_issue_one_date_not_set
+  def test_renew_anchor_mode_fixed_one_issue_date_not_set
     dates = {
       {start: Date.new(2018,10,10), due: nil} =>
       [
@@ -642,7 +642,22 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_renew_anchor_mode_flexible_issue_one_date_not_set
+  def test_renew_anchor_mode_flexible_both_issue_dates_set
+    @issue1.update!(start_date: Date.new(2018,9,13), due_date: Date.new(2018,10,2))
+    travel_to(Date.new(2018,9,15))
+    close_issue(@issue1)
+
+    create_recurrence(anchor_mode: :last_issue_flexible,
+                      anchor_to_start: true,
+                      mode: :monthly_day_from_first)
+    travel_to(Date.new(2018,11,4))
+    r1 = renew_all(1)
+
+    assert_equal Date.new(2018,10,15), r1.start_date
+    assert_equal Date.new(2018,11,3), r1.due_date
+  end
+
+  def test_renew_anchor_mode_flexible_one_issue_date_not_set
     dates = {
       {start: Date.new(2018,10,10), due: nil} =>
       [
@@ -691,7 +706,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_renew_anchor_mode_flexible_issue_dates_not_set
+  def test_renew_anchor_mode_flexible_both_issue_dates_not_set
     dates = [
       [Date.new(2018,10,12), false, nil],
       [Date.new(2018,10,15), true, {start: nil, due: Date.new(2018,10,22)}],
@@ -757,6 +772,26 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       @issue1.update!(start_date: start, due_date: due)
 
       ir = create_recurrence(anchor_to_start: anchor_to_start, mode: mode)
+
+      r = renew_all(1)
+      assert_equal r_start, r.start_date
+      assert_equal r_due, r.due_date
+    end
+  end
+
+  def test_renew_mode_yearly_should_honor_anchor_to_start_during_leap_year
+    dates = [
+      [Date.new(2019,2,20), Date.new(2019,3,10), true,
+       Date.new(2020,2,20), Date.new(2020,3,9)],
+      [Date.new(2019,2,20), Date.new(2019,3,10), false,
+       Date.new(2020,2,21), Date.new(2020,3,10)],
+    ]
+
+    dates.each do |start, due, anchor_to_start, r_start, r_due|
+      travel_to(start)
+      @issue1.update!(start_date: start, due_date: due)
+
+      ir = create_recurrence(anchor_to_start: anchor_to_start, mode: :yearly)
 
       r = renew_all(1)
       assert_equal r_start, r.start_date
@@ -1043,66 +1078,66 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal Date.new(2018,7,22), r3.due_date
   end
 
-  def test_renew_anchor_mode_first_issue_fixed_after_dates_removed_should_fail_and_log_error
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+  def test_renew_anchor_mode_fixed_after_dates_removed_should_log_error
+    IssueRecurrence::FIXED_MODES.each do |am|
+      @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    create_recurrence(anchor_mode: :first_issue_fixed)
-    travel_to(Date.new(2018,9,15))
-    r1 = renew_all(1)
+      ir = create_recurrence(anchor_mode: am)
+      travel_to(Date.new(2018,9,15))
+      r1 = renew_all(1)
 
-    @issue1.update!(start_date: nil, due_date: nil)
-    travel_to(Date.new(2018,11,22))
-    assert_difference 'Journal.count', 1 do
-      renew_all(0)
+      ref_issue = (am == 'first_issue_fixed') ? @issue1 : r1
+      ref_issue.update!(start_date: nil, due_date: nil)
+      travel_to(Date.new(2018,11,22))
+      assert_difference 'Journal.count', 1 do
+        renew_all(0)
+      end
+      assert Journal.last.notes.include?('start and due dates are blank')
+      @issue1.reload
+
+      destroy_recurrence(ir)
     end
-    assert Journal.last.notes.include?('start and due dates are blank')
   end
 
-  def test_renew_anchor_mode_last_issue_fixed_after_dates_removed_should_fail_and_log_error
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+  def test_renew_anchor_mode_fixed_after_anchor_date_removed_should_log_error
+    IssueRecurrence::FIXED_MODES.each do |am|
+      @issue1.update!(start_date: Date.new(2018,9,15), due_date: nil)
+      ir = create_recurrence(anchor_mode: am,
+                        anchor_to_start: true,
+                        mode: :monthly_day_from_first)
+      travel_to(Date.new(2018,9,15))
+      r1 = renew_all(1)
 
-    create_recurrence(anchor_mode: :last_issue_fixed)
-    travel_to(Date.new(2018,9,15))
-    r1 = renew_all(1)
+      ref_issue = (am == 'first_issue_fixed') ? @issue1 : r1
+      ref_issue.update!(start_date: nil, due_date: Date.new(2018,9,20))
+      travel_to(Date.new(2018,12,22))
+      assert_difference 'Journal.count', 1 do
+        renew_all(0)
+      end
+      assert Journal.last.notes.include?('start date is blank')
+      @issue1.reload
 
-    r1.update!(start_date: nil, due_date: nil)
-    travel_to(Date.new(2018,11,22))
-    assert_difference 'Journal.count', 1 do
-      renew_all(0)
+      destroy_recurrence(ir)
+
+
+      @issue1.update!(start_date: nil, due_date: Date.new(2018,9,20))
+      ir = create_recurrence(anchor_mode: am,
+                        anchor_to_start: false,
+                        mode: :monthly_day_from_first)
+      travel_to(Date.new(2018,9,20))
+      r1 = renew_all(1)
+      @issue1.reload
+
+      ref_issue = (am == 'first_issue_fixed') ? @issue1 : r1
+      ref_issue.update!(start_date: Date.new(2018,9,15), due_date: nil)
+      travel_to(Date.new(2018,12,22))
+      assert_difference 'Journal.count', 1 do
+        renew_all(0)
+      end
+      assert Journal.last.notes.include?('due date is blank')
+
+      destroy_recurrence(ir)
     end
-    assert Journal.last.notes.include?('start and due dates are blank')
-  end
-
-  def test_renew_mode_monthly_start_after_anchor_date_removed_should_fail_and_log_error
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: nil)
-
-    create_recurrence(anchor_mode: :first_issue_fixed,
-                      anchor_to_start: true,
-                      mode: :monthly_day_from_first)
-    travel_to(Date.new(2018,9,15))
-    r1 = renew_all(1)
-
-    @issue1.update!(start_date: nil, due_date: Date.new(2018,9,20))
-    travel_to(Date.new(2018,12,22))
-    assert_difference 'Journal.count', 1 do
-      renew_all(0)
-    end
-    assert Journal.last.notes.include?('start date is blank')
-  end
-
-  def test_renew_mode_monthly_due_after_anchor_date_removed_should_fail_and_log_error
-    @issue1.update!(start_date: nil, due_date: Date.new(2018,9,20))
-
-    create_recurrence(anchor_mode: :first_issue_fixed, mode: :monthly_day_from_first)
-    travel_to(Date.new(2018,9,20))
-    r1 = renew_all(1)
-
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: nil)
-    travel_to(Date.new(2018,12,22))
-    assert_difference 'Journal.count', 1 do
-      renew_all(0)
-    end
-    assert Journal.last.notes.include?('due date is blank')
   end
 
   def test_deleting_first_issue_destroys_recurrence_and_nullifies_recurrence_of
@@ -1169,26 +1204,5 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       assert_equal recurrence.last_issue, r2
       assert_equal recurrence.issue, r2.recurrence_of
     end
-  end
-
-  def test_renew_anchor_mode_flexible_with_due_date_and_start_mode
-    @issue1.update!(start_date: Date.new(2018,9,13), due_date: Date.new(2018,10,2))
-    travel_to(Date.new(2018,9,15))
-    close_issue(@issue1)
-
-    create_recurrence(anchor_mode: :last_issue_flexible,
-                      anchor_to_start: true,
-                      mode: :monthly_day_from_first)
-    travel_to(Date.new(2018,11,4))
-    r1 = renew_all(1)
-
-    assert_equal Date.new(2018,10,15), r1.start_date
-    assert_equal Date.new(2018,11,3), r1.due_date
-  end
-
-  def test_renew_different_anchor_to_start_over_one_year_period_during_leap_year
-  end
-
-  def test_renew_different_anchor_to_start_anchor_mode_flexible
   end
 end
