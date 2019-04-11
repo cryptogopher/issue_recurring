@@ -145,13 +145,14 @@ class IssueRecurrence < ActiveRecord::Base
         " #{l("#{s}.recurrence").pluralize(self.count_limit)}</b>."}" : ''
 
     "#{l("#{s}.creation_modes.#{self.creation_mode}")}" \
-      " <b>#{l("#{s}.including_subtasks") if self.include_subtasks}</b>" \
+    " <b>#{l("#{s}.include_subtasks.true") if self.include_subtasks}</b>" \
       " #{l("#{s}.every")}" \
       " <b>#{self.multiplier}" \
       " #{l("#{s}.mode_intervals.#{self.mode}").pluralize(self.multiplier)}</b>," \
       "#{ref_description}" \
       " #{l("#{s}.based_on")}" \
       " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
+      " #{l("#{s}.anchor_to_start.#{self.anchor_to_start}")}" \
       "#{delay_info}" \
       "#{"." if self.date_limit.nil? && self.count_limit.nil?}" \
       " #{l("#{s}.until") if self.date_limit.present? || self.count_limit.present?}" \

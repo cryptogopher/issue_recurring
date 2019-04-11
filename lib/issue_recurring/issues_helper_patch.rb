@@ -8,6 +8,12 @@ module IssueRecurring
         end
       end
 
+      def include_subtasks_options
+        [true, false].map do |v|
+          [sanitize(t(".include_subtasks.#{v}"), tags:{}), v]
+        end
+      end
+
       def mode_options
         intervals = t('.mode_intervals')
         descriptions = t('.mode_descriptions')
@@ -18,20 +24,21 @@ module IssueRecurring
         end
       end
 
-      def anchor_to_start_options
-        options = ['start', 'due'].map do |k|
-          [sanitize(t(".anchor_to.#{k}"), tags:{}), k]
-        end
-        disabled = []
-        disabled += 'start' if @issue.start_date.blank? && @issue.due_date.present?
-        disabled += 'due' if @issue.due_date.blank? && @issue.start_date.present?
-        [options, disabled]
-      end
-
       def anchor_mode_options
         IssueRecurrence.anchor_modes.map do |k,v|
           [sanitize(t(".anchor_modes.#{k}"), tags:{}), k]
         end
+      end
+
+      def anchor_to_start_options
+        [true, false].map do |v|
+          [sanitize(t(".anchor_to_start.#{v}"), tags:{}), v]
+        end
+        # TODO: dodac to czy w js _form?
+        #disabled = []
+        #disabled += true if @issue.start_date.blank? && @issue.due_date.present?
+        #disabled += false if @issue.due_date.blank? && @issue.start_date.present?
+        #[options, disabled]
       end
 
       def delay_mode_options

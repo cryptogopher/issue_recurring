@@ -46,6 +46,11 @@ en:
       anchor_mode: 'Based on'
       limit: 'Limit'
       count: '#'
+      anchor_modes:
+        first_issue_fixed: 'first issue'
+        last_issue_fixed: 'last issue'
+        last_issue_flexible: 'last issue close as'
+        last_issue_flexible_on_delay: 'last issue close if delayed as'
   issues:
     issue_recurrences_hook:
       recurrences: 'Recurrences'
@@ -61,8 +66,9 @@ en:
           copy_first: 'Copy <b>issue</b>'
           copy_last: 'Copy <b>last recurrence</b> of issue'
           in_place: 'Modify issue <b>in-place</b>'
-        including_subtasks: 'including subtasks'
-        excluding_subtasks: 'excluding subtasks'
+        include_subtasks:
+          :true: 'including subtasks'
+          :false: 'excluding subtasks'
         subtasks: 'subtasks'
         every: 'every'
         mode_intervals:
@@ -76,9 +82,6 @@ en:
           monthly_wday_from_first: 'month'
           monthly_wday_to_last: 'month'
           yearly: 'year'
-        anchor_to:
-          start: 'start'
-          due: 'due'
         mode_descriptions:
           daily: ''
           daily_wday: ''
@@ -103,12 +106,15 @@ en:
           yearly: ''
         based_on: 'based on'
         anchor_modes:
-          first_issue_fixed: 'this <b>issue date</b>'
-          last_issue_fixed: '<b>last recurrence date</b>'
+          first_issue_fixed: 'this <b>issue</b>'
+          last_issue_fixed: '<b>last recurrence</b>'
           last_issue_flexible: '<b>last recurrence close date</b>
-            (next recurrence is created only after closing previous one)'
-          last_issue_flexible_on_delay: '<b>last recurrence date if closed on time</b>,
-            close date otherwise'
+            - next is created only after closing previous one - as'
+          last_issue_flexible_on_delay: '<b>last recurrence date if closed on time</b>
+            - close date otherwise - as'
+        anchor_to_start:
+          :true: '<b>start date</b>'
+          :false: '<b>due date</b>'
         delayed_by: 'delayed by'
         delay_modes:
           day: 'day(s)'

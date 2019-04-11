@@ -13,20 +13,11 @@ module IssueRecurrencesHelper
   end
 
   def anchor_mode(r)
-    s = 'issues.recurrences.form.delay_intervals'
-    t = r.anchor_to_start ? "start of " : "due of "
-    t += case r.anchor_mode.to_sym
-    when :first_issue_fixed
-      "first issue"
-    when :last_issue_fixed
-      "last issue"
-    when :last_issue_flexible
-      "last issue close"
-    when :last_issue_flexible_on_delay
-      "last issue close if delayed"
-    end
+    s = 'issues.recurrences.form'
+    t = "#{l("issue_recurrences.index.anchor_modes.#{r.anchor_mode}")}" \
+      " #{sanitize(l("#{s}.anchor_to_start.#{r.anchor_to_start}"), tags:{})}"
     t += r.delay_multiplier > 0 ? " + #{r.delay_multiplier}" \
-      " #{l("#{s}.#{r.delay_mode}").pluralize(r.delay_multiplier)}" : ''
+      " #{l("#{s}.delay_intervals.#{r.delay_mode}").pluralize(r.delay_multiplier)}" : ''
     t
   end
 
