@@ -4,6 +4,8 @@ class IssueRecurrence < ActiveRecord::Base
   belongs_to :issue
   belongs_to :last_issue, class_name: 'Issue'
 
+  @@log_problems = false
+
   enum creation_mode: {
     copy_first: 0,
     copy_last: 1,
@@ -23,12 +25,12 @@ class IssueRecurrence < ActiveRecord::Base
     daily: 0,
     daily_wday: 1,
     weekly: 100,
-    monthly_day_from_first: 200,
-    monthly_day_to_last: 210,
-    monthly_dow_from_first: 220,
-    monthly_dow_to_last: 230,
-    monthly_wday_from_first: 240,
-    monthly_wday_to_last: 250,
+    monthly_day_from_first: 202,
+    monthly_day_to_last: 212,
+    monthly_dow_from_first: 222,
+    monthly_dow_to_last: 232,
+    monthly_wday_from_first: 242,
+    monthly_wday_to_last: 252,
     yearly: 300
   }
   WDAY_MODES = modes.keys.select { |m| m.include?('_wday') }
