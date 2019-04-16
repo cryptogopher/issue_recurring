@@ -31,14 +31,13 @@ module IssueRecurring
       end
 
       def anchor_to_start_options
-        [true, false].map do |v|
+        options = [true, false].map do |v|
           [sanitize(t(".anchor_to_start.#{v}"), tags:{}), v]
         end
-        # TODO: dodac to czy w js _form?
-        #disabled = []
-        #disabled += true if @issue.start_date.blank? && @issue.due_date.present?
-        #disabled += false if @issue.due_date.blank? && @issue.start_date.present?
-        #[options, disabled]
+        disabled = []
+        disabled << :true if @issue.start_date.blank? && @issue.due_date.present?
+        disabled << :false if @issue.start_date.present? && @issue.due_date.blank?
+        [options, disabled]
       end
 
       def delay_mode_options

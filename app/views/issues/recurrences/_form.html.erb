@@ -11,7 +11,8 @@
     <%= f.select :mode, mode_options %>
     <%= t '.based_on' %>
     <%= f.select :anchor_mode, anchor_mode_options %>
-    <%= f.select :anchor_to_start, anchor_to_start_options %>
+    <% options, disabled = anchor_to_start_options %>
+    <%= f.select :anchor_to_start, options, disabled: disabled %>
     <%= t '.delayed_by' %>
     <%= f.number_field :delay_multiplier, min: 0, step: 1, value: 0 %>
     <%= f.select :delay_mode, delay_mode_options %>
