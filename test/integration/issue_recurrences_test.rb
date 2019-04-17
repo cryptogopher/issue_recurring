@@ -739,6 +739,42 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
+  def test_renew_anchor_mode_flexible_anchor_to_start_varies
+    dates = [
+      # issue start date, issue due date, anchor_mode, anchor_to_start, close date,
+      # recurrence start date, recurrence due date
+      [Date.new(2019,4,25), Date.new(2019,5,3), :last_issue_flexible, true,
+       Date.new(2019,4,29), Date.new(2019,5,29), Date.new(2019,6,6)],
+      [Date.new(2019,4,25), Date.new(2019,5,3), :last_issue_flexible, false,
+       Date.new(2019,5,6), Date.new(2019,5,29), Date.new(2019,6,6)],
+      [Date.new(2019,4,25), Date.new(2019,5,3), :last_issue_flexible_on_delay, true,
+       Date.new(2019,5,1), Date.new(2019,5,25), Date.new(2019,6,2)],
+      [Date.new(2019,4,25), Date.new(2019,5,3), :last_issue_flexible_on_delay, false,
+       Date.new(2019,5,1), Date.new(2019,5,26), Date.new(2019,6,3)],
+      [Date.new(2019,4,25), Date.new(2019,5,3), :last_issue_flexible_on_delay, true,
+       Date.new(2019,5,26), Date.new(2019,6,26), Date.new(2019,7,4)],
+      [Date.new(2019,4,25), Date.new(2019,5,3), :last_issue_flexible_on_delay, false,
+       Date.new(2019,5,6), Date.new(2019,5,29), Date.new(2019,6,6)],
+    ]
+
+    dates.each do |i_start, i_due, am, ats, close_date, r_start, r_due|
+      @issue1.update!(start_date: i_start, due_date: i_due)
+      reopen_issue(@issue1) if @issue1.closed?
+
+      ir = create_recurrence(mode: :monthly_day_from_first,
+                             anchor_mode: am,
+                             anchor_to_start: ats)
+
+      travel_to(close_date)
+      close_issue(@issue1)
+      r1 = renew_all(1)
+      assert_equal r_start, r1.start_date
+      assert_equal r_due, r1.due_date
+
+      destroy_recurrence(ir)
+    end
+  end
+
   def test_renew_mode_monthly_should_not_overflow_in_shorter_month
     dates = [
       [Date.new(2019,1,29), Date.new(2019,1,31), true, :monthly_day_from_first,
