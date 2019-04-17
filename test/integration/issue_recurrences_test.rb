@@ -1128,7 +1128,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       assert_difference 'Journal.count', 1 do
         renew_all(0)
       end
-      assert Journal.last.notes.include?('start and due dates are blank')
+      assert Journal.last.notes.include?('both (start and due) dates blank')
       @issue1.reload
 
       destroy_recurrence(ir)
@@ -1150,7 +1150,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       assert_difference 'Journal.count', 1 do
         renew_all(0)
       end
-      assert Journal.last.notes.include?('start date is blank')
+      assert Journal.last.notes.include?('created for issue without start date')
       @issue1.reload
 
       destroy_recurrence(ir)
@@ -1170,7 +1170,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       assert_difference 'Journal.count', 1 do
         renew_all(0)
       end
-      assert Journal.last.notes.include?('due date is blank')
+      assert Journal.last.notes.include?('created for issue without due date')
 
       destroy_recurrence(ir)
     end

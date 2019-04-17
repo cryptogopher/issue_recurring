@@ -61,9 +61,18 @@ class IssueRecurrence < ActiveRecord::Base
     message: :in_place_flexible_only
   }
   validates :anchor_to_start, inclusion: [true, false]
-  validate on: :create do
-    field, validity = self.reference_dates(validate_only: true)
-    errors.add(field, validity) unless validity == :ok
+  validate :validate_base_dates
+  def validate_base_dates
+    issue, base = self.base_dates
+    if FLEXIBLE_MODES.exclude?(self.anchor_mode) && (base[:start] || base[:due]).blank?
+      errors.add(:anchor_mode, :blank_dates_flexible_only)
+    end
+    if self.anchor_to_start && base[:start].blank? && base[:due].present?
+      errors.add(:anchor_to_start, :start_mode_requires_date)
+    end
+    if !self.anchor_to_start && base[:start].present? && base[:due].blank?
+      errors.add(:anchor_to_start, :due_mode_requires_date)
+    end
   end
   validates :mode, inclusion: modes.keys
   validates :multiplier, numericality: {greater_than: 0, only_integer: true}
@@ -372,46 +381,29 @@ class IssueRecurrence < ActiveRecord::Base
     User.current = prev_user
   end
 
-  # Return reference dates for next recrrence or nil if no suitable dates found.
-  def reference_dates(validate_only=false)
-    ref_issue = nil
-    base_dates = nil
-    ref_dates = nil
-
+  # Return reference issue and base dates for used for calculation of reference dates.
+  def base_dates
     case self.anchor_mode.to_sym
     when :first_issue_fixed, :last_issue_fixed
       ref_issue = self.last_issue if self.anchor_mode == 'last_issue_fixed'
       ref_issue ||= self.issue
       base_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
-
-      if (base_dates[:start] || base_dates[:due]).nil?
-        if validate_only
-          return [:anchor_mode, :blank_dates_flexible_only]
-        else
-          log("issue ##{ref_issue.id} start and due dates are blank")
-          return nil
-        end
-      end
     when :last_issue_flexible, :last_issue_flexible_on_delay
       ref_issue = self.last_issue || self.issue
       base_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
     end
+    [ref_issue, base_dates]
+  end
 
-    if base_dates[:start].blank? && base_dates[:due].present? && self.anchor_to_start
-      if validate_only
-        return [:anchor_to_start, :start_mode_requires_date]
-      else
-        log("issue ##{ref_issue.id} start date is blank")
-        return nil
-      end
-    end
-    if base_dates[:start].present? && base_dates[:due].blank? && !self.anchor_to_start
-      if validate_only
-        return [:anchor_to_start, :due_mode_requires_date]
-      else
-        log("issue ##{ref_issue.id} due date is blank")
-        return nil
-      end
+  # Return reference dates for next recrrence or nil if no suitable dates found.
+  def reference_dates
+    ref_issue, base_dates = self.base_dates
+    ref_dates = nil
+
+    self.validate_base_dates
+    unless self.errors.empty?
+      log("issue ##{ref_issue.id}: #{self.errors.messages.values.to_sentence}")
+      return nil
     end
 
     case self.anchor_mode.to_sym
@@ -433,7 +425,7 @@ class IssueRecurrence < ActiveRecord::Base
       end
     end
 
-    validate_only ? [nil, :ok] : ref_dates
+    ref_dates
   end
 
   # Return predicted next recurrence dates or nil.
