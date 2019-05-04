@@ -12,7 +12,7 @@ This plugin has been inspired and based on [nutso's](https://github.com/nutso/) 
 
 ## Purpose
 
-Plugin for Redmine to configure issue recurring according to a schedule. The plugin creates a new issue in Redmine for each new recurrence.
+Plugin for Redmine to configure issue recurring according to a schedule. The plugin creates a new issue in Redmine for each new recurrence. Because some boring things have to be done on-time after all.
 
 ## Features
 
@@ -29,17 +29,21 @@ The most notable features of this plugin include:
   * years,
 * creation of next issue recurrence as a copy of: first issue; last recurrence; without copying, by in-place modification,
 * next recurrence scheduling based on: original issue dates; last recurrence dates; close date of last recurrence; last recurrence dates if closed on time or close date otherwise,
-* ability to specify recurrence based on start or due date of issue (in cases where that matters),
+* ability to specify recurrence based on start or due date; for recurrence based on close date: ability to specify which of these dates is inferred from close date,
 * updating both start and due dates according to schedule (if specified),
 * ability to recur with or without subtasks,
 * ability to delay recurrence against base date to create multiple recurrences of the same frequency with different time offset (e.g. monthly recurrence on 10th, 20th and 30th day of month),
 * ability to limit recurrence by final date or recurrence count,
 * showing dates of last/next recurrence and history of recurrences,
-* logging errors when renewing issue recurrences as an issue note (no logging into web-inaccessible log file),
+* logging errors as an issue note when unable to renew issue recurrences (instead of logging into web-inaccessible log file),
 * permissions to view/manage recurrences managed by Redmine roles,
 * per project enabling of issue recurring plugin,
 * specification of user account under which issue recurrences will be created: any Redmine user or last recurrence author,
 * specification of recurrence issue assignment: assignee can be kept unchanged from previous recurrence or set to Redmine's default.
+
+## Changelog
+
+### 1.1
 
 ## Installation
 
