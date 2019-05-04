@@ -46,8 +46,8 @@ The most notable features of this plugin include:
 ### 1.1
 
 * from now on it is possible to explicitly specify if recurrence will be based on start or due date, for every recurrence type. Previously it was only possible for monthly recurrences. All other recurrences were treated automatically, depending on start/due date availability. You can use this feature to e.g. decide how recurrences based on close date will be treated: you can have either start or due date of next recurrence based on close date of the previous one. Upon upgrading all existing recurrences will be migrated according to previous rules, which were as follows:
-   * for monthly recurrences things will be kept unchanged,
-   * for all of the rest: if due date is available for issue - recurrence will be based on due date regardless if start date is defined as well; otherwise recurrence will be based on start date (that is true also for recurrences based on close date, which may have both start and due dates missing; such recurrence will be based on start date).
+   * for monthly recurrences things will be kept unchanged (monthly recurrences already had distinct start/due options),
+   * for all of the rest: if start date is available and due date is empty for reference issue - recurrence will be based on start date; otherwise recurrence will be based on due date (that is also true for recurrences based on close date, which may have both start and due dates missing; such recurrence will be based on due date as well).
 
 ## Installation
 
