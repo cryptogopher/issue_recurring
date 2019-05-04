@@ -88,3 +88,7 @@ The most notable features of this plugin include:
 7. Go to Redmine, create/open issue, add issue recurrence.
 
 8. Have fun!
+
+## Upgrade
+
+Will be here shortly!
