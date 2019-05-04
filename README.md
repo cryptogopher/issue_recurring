@@ -91,4 +91,34 @@ The most notable features of this plugin include:
 
 ## Upgrade
 
-Will be here shortly!
+1. Read _Changelog_ section in this file to know what to expect from upgrade. Sometimes upgrade may require additional steps to be taken. Exact information will be given tere.
+
+2. Create backup of current plugin installation. Upgrade process should be reversible in case you only do it between released versions (as opposed to upgrading to some particular git commit). But it's better to be safe than sorry, so make a copy of plugin directory and database. It should go like that (but the exact steps can vary depending on your installation, e.g. database backup step is given for MySQL only):
+   ```
+   cd /var/lib/redmine
+   # stop Redmine instance
+   tar czvf /backup/issue_recurring-$(date +%Y%m%d).tar.gz -C plugins/issue_recurring/ .
+   mysqldump --host <DB hostname> --user <DB username> -p <DB name> > /backup/issue_recurring-$(date +%Y%m%d).sql
+   # start Redmine instance
+   
+   ```
+   
+3. Using redmine user update plugin code to desired version (version number is at the end of ```git checkout``` command) , check gem requirements and migrate database:
+
+   ```
+   su - redmine
+   cd /var/lib/redmine/plugins/issue_recurring/
+   git fetch --tags --prune
+   # doing checkout this way you can get "You are in 'detached HEAD' state." warning; it's ok to ignore it
+   git checkout tags/1.1
+   bundle update
+   RAILS_ENV=production rake redmine:plugins:migrate
+   ```
+
+4. Restart Redmine. Exact steps depend on your installation of Redmine.
+
+5. Check for new plugin settings and set if necessary. (Administration -> Plugins -> Issue recurring plugin -> Configure)
+
+## Downgrade
+
+Upgrade steps should work for downgrade also, given that you do them in reverse - except for backup, which should be done first ;) (e.g. backup, downgrade database, then pull older plugin code version). Keep in mind though, that downgrading database might cause some information to be lost irreversibly. This is because some downgrades may require deletion of tables/columns that were introduced in higher version. Also structure of the data may not be compatible between versions, so the automatic conversion can be lossy.
