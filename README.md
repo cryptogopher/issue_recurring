@@ -108,7 +108,9 @@ The most notable features of this plugin include:
    ```
    su - redmine
    cd /var/lib/redmine/plugins/issue_recurring/
-   git fetch --tags --prune
+   git fetch --prune --prune-tags
+   # choose version from this list
+   git tag
    # doing checkout this way you can get "You are in 'detached HEAD' state." warning; it's ok to ignore it
    git checkout tags/1.1
    bundle update
