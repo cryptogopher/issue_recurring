@@ -72,6 +72,24 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
+  def test_create_multiple_anchor_mode_flexible_creation_mode_in_place_should_fail
+    # issue: https://it.michalczyk.pro/issues/14
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    IssueRecurrence::FLEXIBLE_MODES.each do |first_mode|
+      r = create_recurrence(creation_mode: :in_place,
+                            anchor_mode: first_mode)
+
+      IssueRecurrence::FLEXIBLE_MODES.each do |second_mode|
+        errors = create_recurrence_should_fail(creation_mode: :in_place,
+                                               anchor_mode: second_mode)
+        assert errors.added?(:anchor_mode, :in_place_only_one_flexible)
+      end
+
+      destroy_recurrence(r)
+    end
+  end
+
   def test_create_only_when_manage_permission_granted
     logout_user
     log_user 'bob', 'foo'
