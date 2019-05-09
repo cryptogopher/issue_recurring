@@ -12,7 +12,7 @@ This plugin has been inspired and based on [nutso's](https://github.com/nutso/) 
 
 ## Purpose
 
-Plugin for Redmine to configure issue recurring according to a schedule. The plugin creates a new issue in Redmine for each new recurrence. Because some boring things have to be done on-time after all.
+Plugin for Redmine to configure issue recurring according to a schedule. The plugin creates a new issue or reopens closed issue in Redmine for each new recurrence. Because some boring things have to be done on-time after all.
 
 ## Features
 
@@ -91,15 +91,15 @@ The most notable features of this plugin include:
 
 ## Upgrade
 
-1. Read _Changelog_ section in this file to know what to expect from upgrade. Sometimes upgrade may require additional steps to be taken. Exact information will be given tere.
+1. Read _Changelog_ section in this file to know what to expect from upgrade. Sometimes upgrade may require additional steps to be taken. Exact information will be given there.
 
 2. Create backup of current plugin installation. Upgrade process should be reversible in case you only do it between released versions (as opposed to upgrading to some particular git commit). But it's better to be safe than sorry, so make a copy of plugin directory and database. It should go like that (but the exact steps can vary depending on your installation, e.g. database backup step is given for MySQL only):
    ```
    cd /var/lib/redmine
-   # stop Redmine instance
+   # stop Redmine instance before continuing
    tar czvf /backup/issue_recurring-$(date +%Y%m%d).tar.gz -C plugins/issue_recurring/ .
    mysqldump --host <DB hostname> --user <DB username> -p <DB name> > /backup/issue_recurring-$(date +%Y%m%d).sql
-   # start Redmine instance
+   # start Redmine instance before continuing
    
    ```
    
