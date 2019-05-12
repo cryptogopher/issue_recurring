@@ -83,10 +83,31 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       IssueRecurrence::FLEXIBLE_MODES.each do |second_mode|
         errors = create_recurrence_should_fail(creation_mode: :in_place,
                                                anchor_mode: second_mode)
-        assert errors.added?(:anchor_mode, :in_place_only_one_flexible)
+        assert errors.added?(:creation_mode, :in_place_single_flexible)
       end
 
       destroy_recurrence(r)
+    end
+  end
+
+  def test_create_multiple_recurrences
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    modes = [
+      [:copy_first, :first_issue_fixed],
+      [:copy_first, :last_issue_fixed],
+      [:copy_first, :last_issue_flexible],
+      [:copy_first, :last_issue_flexible_on_delay],
+      [:copy_last, :first_issue_fixed],
+      [:copy_last, :last_issue_fixed],
+      [:copy_last, :last_issue_flexible],
+      [:copy_last, :last_issue_flexible_on_delay],
+      # only one in-place allowed
+      [:in_place, :last_issue_flexible]
+    ]
+
+    modes.each do |cm, am|
+      create_recurrence(creation_mode: cm, anchor_mode: am)
     end
   end
 

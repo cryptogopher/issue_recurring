@@ -49,6 +49,18 @@ class IssueRecurrence < ActiveRecord::Base
   validates :last_issue, associated: true
   validates :count, numericality: {greater_than_or_equal: 0, only_integer: true}
   validates :creation_mode, inclusion: creation_modes.keys
+  # Locking inside validator is an app level solution to ensuring partial
+  # uniqueness of creation_mode. Partial indexes are currently not
+  # supported by MySQL, so uniqueness cannot be assured by adding
+  # unique index:
+  #   add_index :issue_recurrences, [:issue_id, :creation_mode], unique: true,
+  #     where: "creation_mode = 2"
+  # Should work as long as validation and saving is in one transaction.
+  validates :creation_mode, uniqueness: {
+    scope: :issue_id,
+    conditions: ->{ lock.in_place },
+    message: :in_place_single_flexible
+  }
   validates :anchor_mode, inclusion: anchor_modes.keys
   validates :anchor_mode, inclusion: {
     in: FIXED_MODES,
