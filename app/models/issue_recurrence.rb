@@ -59,7 +59,7 @@ class IssueRecurrence < ActiveRecord::Base
   validates :creation_mode, uniqueness: {
     scope: :issue_id,
     conditions: ->{ lock.in_place },
-    message: :in_place_single_flexible
+    message: :only_one_in_place
   }
   validates :anchor_mode, inclusion: anchor_modes.keys
   validates :anchor_mode, inclusion: {

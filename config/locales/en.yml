@@ -18,8 +18,7 @@ en:
               in_place_flexible_only: 'only recurrences based on close date can
                 modify issue in-place'
             creation_mode:
-              in_place_single_flexible: 'only one recurrence based on close date can
-                be scheduled'
+              only_one_in_place: 'only one in-place recurrence can be scheduled'
             anchor_to_start:
               start_mode_requires_date: 'recurrence based on start date cannot be created for
                 issue without start date'

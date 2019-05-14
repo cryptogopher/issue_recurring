@@ -83,7 +83,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       IssueRecurrence::FLEXIBLE_MODES.each do |second_mode|
         errors = create_recurrence_should_fail(creation_mode: :in_place,
                                                anchor_mode: second_mode)
-        assert errors.added?(:creation_mode, :in_place_single_flexible)
+        assert errors.added?(:creation_mode, :only_one_in_place)
       end
 
       destroy_recurrence(r)
