@@ -128,7 +128,6 @@ en:
           month: 'month'
         until: 'and repeat <b>until</b>'
         forever: 'forever'
-        user_date: 'user provided date'
         recurrences: 'recurrence(s)'
         recurrence: 'recurrence'
 
