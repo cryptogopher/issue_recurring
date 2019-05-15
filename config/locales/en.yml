@@ -53,6 +53,8 @@ en:
         last_issue_fixed: 'last issue'
         last_issue_flexible: 'last issue close as'
         last_issue_flexible_on_delay: 'last issue close if delayed as'
+        last_issue_fixed_after_closing: 'last issue (after closing)'
+        date_fixed_after_closing: 'fixed date (after closing issue) as'
   issues:
     issue_recurrences_hook:
       recurrences: 'Recurrences'
@@ -110,10 +112,13 @@ en:
         anchor_modes:
           first_issue_fixed: 'this <b>issue</b>'
           last_issue_fixed: '<b>last recurrence</b>'
-          last_issue_flexible: '<b>last recurrence close date</b>
-            - next is created only after closing previous one - as'
+          last_issue_flexible: '<b>last recurrence close date</b> as'
           last_issue_flexible_on_delay: '<b>last recurrence date if closed on time,</b>
             otherwise close date as'
+          last_issue_fixed_after_closing: '<b>last recurrence - after it has been closed</b>
+            -'
+          date_fixed_after_closing: '<b>fixed date - after last recurrence has been closed</b>
+            - as'
         anchor_to_start:
           :true: '<b>start date</b>'
           :false: '<b>due date</b>'
