@@ -18,7 +18,7 @@ module IssueRecurring
         intervals = t('.mode_intervals')
         descriptions = t('.mode_descriptions')
         IssueRecurrence.modes.map do |k,v|
-          mode = intervals[k.to_sym].pluralize
+          mode = "#{intervals[k.to_sym]}(s)"
           mode += ", #{descriptions[k.to_sym]}" unless descriptions[k.to_sym].empty?
           [sanitize(mode, tags:{}), k]
         end
