@@ -17,8 +17,8 @@ class IssueRecurrence < ActiveRecord::Base
     last_issue_fixed: 1,
     last_issue_flexible: 2,
     last_issue_flexible_on_delay: 3,
-    last_issue_fixed_after_closing: 4,
-    date_fixed_after_closing: 5,
+    last_issue_fixed_after_close: 4,
+    date_fixed_after_close: 5,
   }
   FIXED_MODES = anchor_modes.keys.select { |m| m.include?('_fixed') }
   FLEXIBLE_MODES = anchor_modes.keys.select { |m| m.include?('_flexible') }
