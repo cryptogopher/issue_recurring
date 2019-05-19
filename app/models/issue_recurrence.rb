@@ -78,7 +78,7 @@ class IssueRecurrence < ActiveRecord::Base
   validate :validate_base_dates
   def validate_base_dates
     issue, base = self.base_dates
-    if FLEXIBLE_MODES.exclude?(self.anchor_mode) && (base[:start] || base[:due]).blank?
+    if !self.flexible? && (base[:start] || base[:due]).blank?
       errors.add(:anchor_mode, :blank_dates_flexible_only)
     end
     if self.anchor_to_start && base[:start].blank? && base[:due].present?
@@ -139,7 +139,7 @@ class IssueRecurrence < ActiveRecord::Base
 
     ref_dates = self.next_dates
     ref_description = ''
-    if ref_dates.nil? || FLEXIBLE_MODES.include?(self.anchor_mode)
+    if ref_dates.nil? || self.flexible?
       ref_description = " #{l("#{s}.mode_descriptions.#{self.mode}")}"
     elsif MONTHLY_MODES.include?(self.mode)
       label = self.anchor_to_start ? :start : :due
