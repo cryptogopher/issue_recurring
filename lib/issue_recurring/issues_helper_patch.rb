@@ -47,6 +47,11 @@ module IssueRecurring
         end
       end
 
+      def limit_mode_options
+        translations = t('.limit_modes')
+        options_for_select(translations.map { |k,v| [sanitize(v, tags:{}), k] })
+      end
+
       def last_recurrence(r, intro=true)
         s = intro ? "#{t '.last_recurrence'} " : ""
         if r.last_issue.present?
