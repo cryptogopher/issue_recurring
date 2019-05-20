@@ -75,6 +75,8 @@ class IssueRecurrence < ActiveRecord::Base
     message: :in_place_flexible_only
   }
   validates :anchor_to_start, inclusion: [true, false]
+  validates :anchor_date, absence: {unless: "anchor_mode == 'date_fixed_after_close'"},
+    presence: {if: "anchor_mode == 'date_fixed_after_close'"}
   validate :validate_base_dates
   def validate_base_dates
     issue, base = self.base_dates
