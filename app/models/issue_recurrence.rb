@@ -174,8 +174,8 @@ class IssueRecurrence < ActiveRecord::Base
       " #{l("#{s}.mode_intervals.#{self.mode}").pluralize(self.multiplier)}</b>," \
       "#{ref_description}" \
       " #{l("#{s}.based_on")}" \
-      " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
       " #{l("#{s}.anchor_to_start.#{self.anchor_to_start}")}" \
+      " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
       "#{delay_info}" \
       "#{"." if self.date_limit.nil? && self.count_limit.nil?}" \
       " #{l("#{s}.until") if self.date_limit.present? || self.count_limit.present?}" \
