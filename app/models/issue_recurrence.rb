@@ -191,7 +191,7 @@ class IssueRecurrence < ActiveRecord::Base
   def advance(adj=0, **dates)
     return nil if self.count_limit.present? && self.count >= self.count_limit
 
-    shift = if self.anchor_mode == 'first_issue_fixed'
+    shift = if self.first_issue_fixed? || self.date_fixed_after_close?
               self.delay(dates) if self.count + adj >= 0
               self.multiplier*(self.count + 1 + adj)
             else
@@ -403,11 +403,15 @@ class IssueRecurrence < ActiveRecord::Base
     case self.anchor_mode.to_sym
     when :first_issue_fixed
       ref_issue = self.issue
+      base_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
     when :last_issue_fixed, :last_issue_flexible, :last_issue_flexible_on_delay,
-         :last_issue_fixed_after_close, :date_fixed_after_close
+         :last_issue_fixed_after_close
       ref_issue = self.last_issue || self.issue
+      base_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
+    when :date_fixed_after_close
+      ref_issue = self.last_issue || self.issue
+      base_dates = {start: self.issue.start_date, due: self.issue.due_date}
     end
-    base_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
     [ref_issue, base_dates]
   end
 
@@ -445,18 +449,27 @@ class IssueRecurrence < ActiveRecord::Base
           ref_dates = base_dates
         end
       end
-    when :last_issue_fixed_after_close, :date_fixed_after_close
+    when :last_issue_fixed_after_close
       if ref_issue.closed?
         ref_dates = base_dates
       end
+    when :date_fixed_after_close
+      if ref_issue.closed?
+        ref_label = self.anchor_to_start ? :start : :due
+        if (base_dates[:start] || base_dates[:due]).present?
+          ref_dates = self.offset(self.anchor_date, ref_label, base_dates)
+        else
+          ref_dates = base_dates.update(ref_label: self.anchor_date)
+        end
+      end
     end
 
-    ref_dates
+    [ref_issue, ref_dates]
   end
 
   # Return predicted next recurrence dates or nil.
   def next_dates
-    ref_dates = self.reference_dates
+    ref_issue, ref_dates = self.reference_dates
     return nil if ref_dates.nil?
     self.advance(ref_dates)
   end
@@ -479,20 +492,18 @@ class IssueRecurrence < ActiveRecord::Base
   #end
 
   def renew
+    ref_issue, ref_dates = self.reference_dates
+    return if ref_dates.nil?
+
     case self.anchor_mode.to_sym
     when :first_issue_fixed
-      ref_dates = self.reference_dates
-      return if ref_dates.nil?
-      prev_dates = self.advance(-1, ref_dates)
-      while (prev_dates[:start] || prev_dates[:due]) < Date.tomorrow
+      new_dates = self.advance(-1, ref_dates)
+      while (new_dates[:start] || new_dates[:due]) < Date.tomorrow
         new_dates = self.advance(ref_dates)
         break if new_dates.nil?
         self.create(new_dates)
-        prev_dates = new_dates
       end
     when :last_issue_fixed
-      ref_dates = self.reference_dates
-      return if ref_dates.nil?
       while (ref_dates[:start] || ref_dates[:due]) < Date.tomorrow
         new_dates = self.advance(ref_dates)
         break if new_dates.nil?
@@ -500,11 +511,29 @@ class IssueRecurrence < ActiveRecord::Base
         ref_dates = new_dates
       end
     when :last_issue_flexible, :last_issue_flexible_on_delay
-      ref_dates = self.reference_dates
-      return if ref_dates.nil?
       new_dates = self.advance(ref_dates)
       return if new_dates.nil?
       self.create(new_dates)
+    when :last_issue_fixed_after_close
+      closed_date = ref_issue.closed_on.to_date
+      barrier_date = max(closed_date, ref_dates[:start] || ref_dates[:due])
+      while (ref_dates[:start] || ref_dates[:due]) <= barrier_date
+        new_dates = self.advance(ref_dates)
+        break if new_dates.nil?
+        ref_dates = new_dates
+      end
+      self.create(ref_dates) unless ref_dates.nil?
+    when :date_fixed_after_close
+      adj = 0
+      closed_date = ref_issue.closed_on.to_date
+      barrier_date = max(closed_date, ref_issue.start_date || ref_issue.due_date)
+      new_dates = self.advance(-1, ref_dates)
+      while (new_dates[:start] || new_dates[:due]) <= barrier_date
+        new_dates = self.advance(adj, ref_dates)
+        break if new_dates.nil?
+        adj += 1
+      end
+      self.create(new_dates) unless new_dates.nil?
     end
   end
 
