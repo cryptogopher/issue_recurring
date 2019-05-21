@@ -13,8 +13,8 @@ en:
             anchor_mode:
               delay_fixed_only: 'delay cannot be specified for recurrences based on close
                 date'
-              blank_dates_flexible_only: 'only recurrences based on close date can
-                be created for issue with both (start and due) dates blank'
+              fixed_anchor_blank_dates: 'recurrences based on issue or last recurrence
+                dates cannot be created when both dates (start and due) are blank'
               in_place_flexible_only: 'only recurrences based on close date can
                 modify issue in-place'
             creation_mode:

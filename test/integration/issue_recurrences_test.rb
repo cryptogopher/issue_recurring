@@ -46,7 +46,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
     IssueRecurrence::FIXED_MODES.each do |am|
       errors = create_recurrence_should_fail(anchor_mode: am)
-      assert errors.added?(:anchor_mode, :blank_dates_flexible_only)
+      assert errors.added?(:anchor_mode, :fixed_anchor_blank_dates)
     end
   end
 

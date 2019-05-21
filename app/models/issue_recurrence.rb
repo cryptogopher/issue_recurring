@@ -80,8 +80,9 @@ class IssueRecurrence < ActiveRecord::Base
   validate :validate_base_dates
   def validate_base_dates
     issue, base = self.base_dates
-    if !self.flexible? && (base[:start] || base[:due]).blank?
-      errors.add(:anchor_mode, :blank_dates_flexible_only)
+    if !(self.last_issue_flexible? || self.date_fixed_after_close?) &&
+        (base[:start] || base[:due]).blank?
+      errors.add(:anchor_mode, :fixed_anchor_blank_dates)
     end
     if self.anchor_to_start && base[:start].blank? && base[:due].present?
       errors.add(:anchor_to_start, :start_mode_requires_date)
@@ -400,14 +401,13 @@ class IssueRecurrence < ActiveRecord::Base
   # Return reference issue and base dates for used for calculation of reference dates.
   def base_dates
     case self.anchor_mode.to_sym
-    when :first_issue_fixed, :last_issue_fixed
-      ref_issue = self.last_issue if self.anchor_mode == 'last_issue_fixed'
-      ref_issue ||= self.issue
-      base_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
-    when :last_issue_flexible, :last_issue_flexible_on_delay
+    when :first_issue_fixed
+      ref_issue = self.issue
+    when :last_issue_fixed, :last_issue_flexible, :last_issue_flexible_on_delay,
+         :last_issue_fixed_after_close, :date_fixed_after_close
       ref_issue = self.last_issue || self.issue
-      base_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
     end
+    base_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
     [ref_issue, base_dates]
   end
 
@@ -425,19 +425,29 @@ class IssueRecurrence < ActiveRecord::Base
     case self.anchor_mode.to_sym
     when :first_issue_fixed, :last_issue_fixed
       ref_dates = base_dates
-    when :last_issue_flexible, :last_issue_flexible_on_delay
+    when :last_issue_flexible
       if ref_issue.closed?
         closed_date = ref_issue.closed_on.to_date
         ref_label = self.anchor_to_start ? :start : :due
-        ref_dates = base_dates
         if (base_dates[:start] || base_dates[:due]).present?
-          unless (self.anchor_mode == 'last_issue_flexible_on_delay') &&
-              ((base_dates[:due] || base_dates[:start]) >= closed_date)
-            ref_dates = self.offset(closed_date, ref_label, base_dates)
-          end
+          ref_dates = self.offset(closed_date, ref_label, base_dates)
         else
-          ref_dates[ref_label] = closed_date
+          ref_dates = base_dates.update(ref_label: closed_date)
         end
+      end
+    when :last_issue_flexible_on_delay
+      if ref_issue.closed?
+        closed_date = ref_issue.closed_on.to_date
+        if (base_dates[:due] || base_dates[:start]) < closed_date
+          ref_label = self.anchor_to_start ? :start : :due
+          ref_dates = self.offset(closed_date, ref_label, base_dates)
+        else
+          ref_dates = base_dates
+        end
+      end
+    when :last_issue_fixed_after_close, :date_fixed_after_close
+      if ref_issue.closed?
+        ref_dates = base_dates
       end
     end
 
