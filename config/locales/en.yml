@@ -11,12 +11,14 @@ en:
               insufficient_privileges: 'you have insufficient privileges to edit recurrences
                 for this issue'
             anchor_mode:
-              delay_fixed_only: 'delay cannot be specified for recurrences based on close
+              close_anchor_no_delay: 'delay cannot be specified for recurrences based on close
                 date'
-              fixed_anchor_blank_dates: 'recurrences based on issue or last recurrence
+              issue_anchor_no_blank_dates: 'recurrences based on issue or last recurrence
                 dates cannot be created when both dates (start and due) are blank'
-              in_place_flexible_only: 'only recurrences based on close date can
+              in_place_closed_only: 'only recurrences dependent on close date can
                 modify issue in-place'
+              date_anchor_in_place_only: 'recurrences based on fixed date can be used for
+                in-place modification only'
             creation_mode:
               only_one_in_place: 'only one in-place recurrence can be scheduled'
             anchor_to_start:

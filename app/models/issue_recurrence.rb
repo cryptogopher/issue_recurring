@@ -67,13 +67,18 @@ class IssueRecurrence < ActiveRecord::Base
     in: [:first_issue_fixed, :last_issue_fixed, :last_issue_fixed_after_close,
          :date_fixed_after_close],
     if: "delay_multiplier > 0",
-    message: :delay_fixed_only
+    message: :close_anchor_no_delay
   }
   validates :anchor_mode, inclusion: {
     in: [:last_issue_flexible, :last_issue_flexible_on_delay, :last_issue_fixed_after_close,
          :date_fixed_after_close],
     if: "creation_mode == 'in_place'",
-    message: :in_place_flexible_only
+    message: :in_place_closed_only
+  }
+  validates :anchor_mode, exclusion: {
+    in: [:date_fixed_after_close],
+    if: "creation_mode != 'in_place'",
+    message: :date_anchor_in_place_only
   }
   validates :anchor_to_start, inclusion: [true, false]
   validates :anchor_date, absence: {unless: "anchor_mode == 'date_fixed_after_close'"},
@@ -83,7 +88,7 @@ class IssueRecurrence < ActiveRecord::Base
     issue, base = self.base_dates
     if !(self.last_issue_flexible? || self.date_fixed_after_close?) &&
         (base[:start] || base[:due]).blank?
-      errors.add(:anchor_mode, :fixed_anchor_blank_dates)
+      errors.add(:anchor_mode, :issue_anchor_no_blank_dates)
     end
     if self.anchor_to_start && base[:start].blank? && base[:due].present?
       errors.add(:anchor_to_start, :start_mode_requires_date)
