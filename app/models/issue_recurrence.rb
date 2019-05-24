@@ -64,19 +64,20 @@ class IssueRecurrence < ActiveRecord::Base
   }
   validates :anchor_mode, inclusion: anchor_modes.keys
   validates :anchor_mode, inclusion: {
-    in: [:first_issue_fixed, :last_issue_fixed, :last_issue_fixed_after_close,
-         :date_fixed_after_close],
+    in: ['first_issue_fixed', 'last_issue_fixed', 'last_issue_fixed_after_close',
+         'date_fixed_after_close'],
     if: "delay_multiplier > 0",
     message: :close_anchor_no_delay
   }
+  # in-place only allowed for schemes that disallow multiple open recurrences
   validates :anchor_mode, inclusion: {
-    in: [:last_issue_flexible, :last_issue_flexible_on_delay, :last_issue_fixed_after_close,
-         :date_fixed_after_close],
+    in: ['last_issue_flexible', 'last_issue_flexible_on_delay',
+         'last_issue_fixed_after_close', 'date_fixed_after_close'],
     if: "creation_mode == 'in_place'",
     message: :in_place_closed_only
   }
   validates :anchor_mode, exclusion: {
-    in: [:date_fixed_after_close],
+    in: ['date_fixed_after_close'],
     if: "creation_mode != 'in_place'",
     message: :date_anchor_in_place_only
   }

@@ -46,10 +46,10 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     create_recurrence
   end
 
-  def test_create_when_issue_dates_not_set
+  def test_create_anchor_modes_when_issue_dates_not_set
     @issue1.update!(start_date: nil, due_date: nil)
 
-    # anchor_mode, blank_dates_allowed?
+    # params, blank_dates_allowed?
     anchor_modes = [
       {anchor_mode: :first_issue_fixed}, false,
       {anchor_mode: :last_issue_fixed}, false,
@@ -69,12 +69,28 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_create_anchor_mode_fixed_with_creation_mode_in_place_should_fail
+  def test_create_anchor_modes_with_creation_mode_in_place
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    IssueRecurrence::FIXED_MODES.each do |am|
-      errors = create_recurrence_should_fail(creation_mode: :in_place, anchor_mode: am)
-      assert errors.added?(:anchor_mode, :in_place_closed_only)
+    # params, in_place_allowed?
+    anchor_modes = [
+      {anchor_mode: :first_issue_fixed}, false,
+      {anchor_mode: :last_issue_fixed}, false,
+      {anchor_mode: :last_issue_flexible}, true,
+      {anchor_mode: :last_issue_flexible_on_delay}, true,
+      {anchor_mode: :last_issue_fixed_after_close}, true,
+      {anchor_mode: :date_fixed_after_close, anchor_date: Date.current}, true
+    ]
+
+    anchor_modes.each_slice(2) do |params, in_place_allowed|
+      params.update(creation_mode: :in_place)
+      if in_place_allowed
+        r = create_recurrence(params)
+        destroy_recurrence(r)
+      else
+        errors = create_recurrence_should_fail(params)
+        assert errors.added?(:anchor_mode, :in_place_closed_only)
+      end
     end
   end
 
