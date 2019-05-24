@@ -20,8 +20,7 @@ class IssueRecurrence < ActiveRecord::Base
     last_issue_fixed_after_close: 4,
     date_fixed_after_close: 5,
   }
-  FIXED_MODES = anchor_modes.keys.select { |m| m.include?('_fixed') }
-  FLEXIBLE_MODES = anchor_modes.keys.select { |m| m.include?('_flexible') }
+  FLEXIBLE_ANCHORS = anchor_modes.keys.select { |m| m.include?('_flexible') }
 
   enum mode: {
     daily: 0,
@@ -65,12 +64,14 @@ class IssueRecurrence < ActiveRecord::Base
   }
   validates :anchor_mode, inclusion: anchor_modes.keys
   validates :anchor_mode, inclusion: {
-    in: FIXED_MODES,
+    in: [:first_issue_fixed, :last_issue_fixed, :last_issue_fixed_after_close,
+         :date_fixed_after_close],
     if: "delay_multiplier > 0",
     message: :delay_fixed_only
   }
   validates :anchor_mode, inclusion: {
-    in: FLEXIBLE_MODES,
+    in: [:last_issue_flexible, :last_issue_flexible_on_delay, :last_issue_fixed_after_close,
+         :date_fixed_after_close],
     if: "creation_mode == 'in_place'",
     message: :in_place_flexible_only
   }
@@ -118,14 +119,6 @@ class IssueRecurrence < ActiveRecord::Base
   end
   before_destroy :editable?
 
-  def fixed?
-    FIXED_MODES.include?(self.anchor_mode)
-  end
-
-  def flexible?
-    FLEXIBLE_MODES.include?(self.anchor_mode)
-  end
-
   def visible?
     self.issue.visible? &&
       User.current.allowed_to?(:view_issue_recurrences, self.issue.project)
@@ -142,7 +135,7 @@ class IssueRecurrence < ActiveRecord::Base
 
     ref_dates = self.next_dates
     ref_description = ''
-    if ref_dates.nil? || self.flexible?
+    if ref_dates.nil? || FLEXIBLE_ANCHORS.include?(self.anchor_mode)
       ref_description = " #{l("#{s}.mode_descriptions.#{self.mode}")}"
     elsif MONTHLY_MODES.include?(self.mode)
       label = self.anchor_to_start ? :start : :due
