@@ -95,6 +95,28 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
+  def test_create_multiple_creation_mode_in_place_should_fail
+    # issue: https://it.michalczyk.pro/issues/14
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    anchor_modes = [
+      {anchor_mode: :last_issue_flexible},
+      {anchor_mode: :last_issue_flexible_on_delay},
+      {anchor_mode: :last_issue_fixed_after_close},
+      {anchor_mode: :date_fixed_after_close, anchor_date: Date.current}
+    ]
+    anchor_modes.each do |first_params|
+      first_params.update(creation_mode: :in_place)
+      r = create_recurrence(first_params)
+      anchor_modes.each do |second_params|
+        second_params.update(creation_mode: :in_place)
+        errors = create_recurrence_should_fail(second_params)
+        assert errors.added?(:creation_mode, :only_one_in_place)
+      end
+      destroy_recurrence(r)
+    end
+  end
+
   def test_create_anchor_modes_with_delay
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
@@ -119,24 +141,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
         errors = create_recurrence_should_fail(params)
         assert errors.added?(:anchor_mode, :close_anchor_no_delay)
       end
-    end
-  end
-
-  def test_create_multiple_anchor_mode_flexible_creation_mode_in_place_should_fail
-    # issue: https://it.michalczyk.pro/issues/14
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
-
-    IssueRecurrence::FLEXIBLE_MODES.each do |first_mode|
-      r = create_recurrence(creation_mode: :in_place,
-                            anchor_mode: first_mode)
-
-      IssueRecurrence::FLEXIBLE_MODES.each do |second_mode|
-        errors = create_recurrence_should_fail(creation_mode: :in_place,
-                                               anchor_mode: second_mode)
-        assert errors.added?(:creation_mode, :only_one_in_place)
-      end
-
-      destroy_recurrence(r)
     end
   end
 
