@@ -56,7 +56,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       {anchor_mode: :last_issue_flexible}, true,
       {anchor_mode: :last_issue_flexible_on_delay}, false,
       {anchor_mode: :last_issue_fixed_after_close}, false,
-      {anchor_mode: :date_fixed_after_close, anchor_date: Date.current}, true
+      {anchor_mode: :date_fixed_after_close, creation_mode: :in_place,
+       anchor_date: Date.current}, true
     ]
 
     anchor_modes.each_slice(2) do |params, blank_dates_allowed|
@@ -94,16 +95,30 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_create_anchor_mode_flexible_with_delay_should_fail
+  def test_create_anchor_modes_with_delay
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    IssueRecurrence::FLEXIBLE_MODES.each do |am|
-      errors = create_recurrence_should_fail(anchor_mode: am,
-                                             anchor_to_start: true,
-                                             mode: :monthly_day_from_first,
-                                             delay_mode: :day,
-                                             delay_multiplier: 10)
-      assert errors.added?(:anchor_mode, :close_anchor_no_delay)
+    # params, delay_allowed?
+    anchor_modes = [
+      {anchor_mode: :first_issue_fixed}, true,
+      {anchor_mode: :last_issue_fixed}, true,
+      {anchor_mode: :last_issue_flexible}, false,
+      {anchor_mode: :last_issue_flexible_on_delay}, false,
+      {anchor_mode: :last_issue_fixed_after_close}, true,
+      {anchor_mode: :date_fixed_after_close, creation_mode: :in_place,
+       anchor_date: Date.current}, true
+    ]
+    anchor_modes.each_slice(2) do |params, delay_allowed|
+      params.update(anchor_to_start: true,
+                    mode: :monthly_day_from_first,
+                    delay_mode: :day,
+                    delay_multiplier: 10)
+      if delay_allowed
+        create_recurrence(params)
+      else
+        errors = create_recurrence_should_fail(params)
+        assert errors.added?(:anchor_mode, :close_anchor_no_delay)
+      end
     end
   end
 
