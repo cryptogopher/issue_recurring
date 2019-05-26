@@ -435,7 +435,7 @@ class IssueRecurrence < ActiveRecord::Base
         if (base_dates[:start] || base_dates[:due]).present?
           ref_dates = self.offset(closed_date, ref_label, base_dates)
         else
-          ref_dates = base_dates.update(ref_label: closed_date)
+          ref_dates = base_dates.update(ref_label => closed_date)
         end
       end
     when :last_issue_flexible_on_delay

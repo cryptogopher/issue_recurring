@@ -545,7 +545,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_flexible_mode_daily
-    @issue1.update(start_date: Date.new(2018,10,1), due_date: Date.new(2018,10,5))
+    @issue1.update!(start_date: Date.new(2018,10,1), due_date: Date.new(2018,10,5))
 
     travel_to(Date.new(2018,9,21))
     create_recurrence(anchor_mode: :last_issue_flexible,
@@ -681,29 +681,29 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_one_issue_date_not_set
-    configs = {
-      {start: Date.new(2018,10,10), due: nil} =>
+    configs = [
+      {start_date: Date.new(2018,10,10), due_date: nil},
       [
         [Date.new(2018,10,9), nil],
         [Date.new(2018,10,10), {start: Date.new(2018,11,14), due: nil}],
         [Date.new(2018,11,13), nil],
         [Date.new(2018,11,14), {start: Date.new(2018,12,12), due: nil}]
       ],
-      {start: nil, due: Date.new(2018,10,15)} =>
+      {start_date: nil, due_date: Date.new(2018,10,15)},
       [
         [Date.new(2018,10,14), nil],
         [Date.new(2018,10,15), {start: nil, due: Date.new(2018,11,19)}],
         [Date.new(2018,11,18), nil],
         [Date.new(2018,11,19), {start: nil, due: Date.new(2018,12,17)}]
       ]
-    }
+    ]
 
     [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
-      configs.each do |issue_dates, recurrence_dates|
+      configs.each_slice(2) do |issue_dates, recurrence_dates|
         @issue1.reload
-        @issue1.update!(start_date: issue_dates[:start], due_date: issue_dates[:due])
+        @issue1.update!(issue_dates)
 
-        anchor_to_start = issue_dates[:start].present? ? true : false
+        anchor_to_start = issue_dates[:start_date].present? ? true : false
         create_recurrence(anchor_mode: anchor_mode,
                           anchor_to_start: anchor_to_start,
                           mode: :monthly_dow_from_first,
@@ -729,98 +729,82 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_renew_anchor_mode_flexible_both_issue_dates_set
-    @issue1.update!(start_date: Date.new(2018,9,13), due_date: Date.new(2018,10,2))
-    travel_to(Date.new(2018,9,15))
-    close_issue(@issue1)
-
-    create_recurrence(anchor_mode: :last_issue_flexible,
-                      anchor_to_start: true,
-                      mode: :monthly_day_from_first)
-    travel_to(Date.new(2018,11,4))
-    r1 = renew_all(1)
-
-    assert_equal Date.new(2018,10,15), r1.start_date
-    assert_equal Date.new(2018,11,3), r1.due_date
-  end
-
-  def test_renew_anchor_mode_flexible_one_issue_date_not_set
-    dates = {
-      {start: Date.new(2018,10,10), due: nil} =>
+  def test_renew_anchor_mode_flexible_with_issue_dates_set_and_not_set
+    # anchor_mode, mode, anchor_to_start,
+    # issue_dates,
+    # recurrence_dates
+    configs = [
+      # both dates set
+      :last_issue_flexible, :monthly_day_from_first, true,
+      {start_date: Date.new(2018,9,13), due_date: Date.new(2018,10,2)},
       [
-        [Date.new(2018,10,12), false, nil],
-        [Date.new(2018,10,15), true, {start: Date.new(2018,11,19), due: nil}],
-        [Date.new(2018,11,25), false, nil],
-        [Date.new(2018,11,30), true, {start: Date.new(2018,12,28), due: nil}]
+        [Date.new(2018,9,15), true, Date.new(2018,11,4),
+         {start: Date.new(2018,10,15), due: Date.new(2018,11,3)}],
+        [Date.new(2018,11,15), true, Date.new(2018,11,16),
+         {start: Date.new(2018,12,15), due: Date.new(2019,1,3)}],
       ],
-      {start: nil, due: Date.new(2018,10,15)} =>
+
+      # only one date set
+      :last_issue_flexible, :monthly_dow_from_first, true,
+      {start_date: Date.new(2018,10,10), due_date: nil},
       [
-        [Date.new(2018,10,19), false, nil],
-        [Date.new(2018,10,26), true, {start: nil, due: Date.new(2018,11,23)}],
-        [Date.new(2018,12,6), false, nil],
-        [Date.new(2018,12,8), true, {start: nil, due: Date.new(2019,1,12)}]
+        [Date.new(2018,10,12), false, Date.new(2018,10,12), nil],
+        [Date.new(2018,10,15), true, Date.new(2018,10,15),
+         {start: Date.new(2018,11,19), due: nil}],
+        [Date.new(2018,11,25), false, Date.new(2018,11,25), nil],
+        [Date.new(2018,11,30), true, Date.new(2018,11,30),
+         {start: Date.new(2018,12,28), due: nil}]
+      ],
+      :last_issue_flexible, :monthly_dow_from_first, false,
+      {start_date: nil, due_date: Date.new(2018,10,15)},
+      [
+        [Date.new(2018,10,19), false, Date.new(2018,10,19), nil],
+        [Date.new(2018,10,26), true, Date.new(2018,10,26),
+         {start: nil, due: Date.new(2018,11,23)}],
+        [Date.new(2018,12,6), false, Date.new(2018,12,6), nil],
+        [Date.new(2018,12,8), true, Date.new(2018,12,8),
+         {start: nil, due: Date.new(2019,1,12)}]
+      ],
+
+      # both dates not set
+      :last_issue_flexible, :weekly, false,
+      {start_date: nil, due_date: nil},
+      [
+        [Date.new(2018,10,12), false, Date.new(2018,10,12), nil],
+        [Date.new(2018,10,15), true, Date.new(2018,10,15),
+         {start: nil, due: Date.new(2018,10,22)}],
+        [Date.new(2018,11,25), false, Date.new(2018,11,25), nil],
+        [Date.new(2018,11,30), true, Date.new(2018,11,30),
+         {start: nil, due: Date.new(2018,12,7)}]
       ]
-    }
-
-    dates.each do |issue_dates, setup_dates|
-      @issue1.update!(start_date: issue_dates[:start], due_date: issue_dates[:due])
-      reopen_issue(@issue1) if @issue1.closed?
-
-      anchor_to_start = issue_dates[:start].present? ? true : false
-      ir = create_recurrence(anchor_mode: :last_issue_flexible,
-                             anchor_to_start: anchor_to_start,
-                             mode: :monthly_dow_from_first,
-                             multiplier: 1)
-
-      setup_dates.each do |t, close, r_dates|
-        travel_to(t)
-        close_issue(ir.last_issue || @issue1) if close
-        ir.reload
-        r = renew_all(r_dates.present? ? 1 : 0)
-        if r_dates.present?
-          if r_dates[:start].present?
-            assert_equal r_dates[:start], r.start_date
-          else
-            assert_nil r.start_date
-          end
-          if r_dates[:due].present?
-            assert_equal r_dates[:due], r.due_date
-          else
-            assert_nil r.due_date
-          end
-        end
-      end
-    end
-  end
-
-  def test_renew_anchor_mode_flexible_both_issue_dates_not_set
-    dates = [
-      [Date.new(2018,10,12), false, nil],
-      [Date.new(2018,10,15), true, {start: nil, due: Date.new(2018,10,22)}],
-      [Date.new(2018,11,25), false, nil],
-      [Date.new(2018,11,30), true, {start: nil, due: Date.new(2018,12,7)}]
     ]
 
-    @issue1.update!(start_date: nil, due_date: nil)
-    assert !@issue1.closed?
+    configs.each_slice(5) do |anchor_mode, mode, ats, issue_dates, recurrence_dates|
+      @issue1.reload
+      @issue1.update!(issue_dates)
+      reopen_issue(@issue1) if @issue1.closed?
 
-    ir = create_recurrence(anchor_mode: :last_issue_flexible)
+      r = create_recurrence(anchor_mode: anchor_mode,
+                        anchor_to_start: ats,
+                        mode: mode)
 
-    dates.each do |t, close, r_dates|
-      travel_to(t)
-      close_issue(ir.last_issue || @issue1) if close
-      ir.reload
-      r = renew_all(r_dates.present? ? 1 : 0)
-      if r_dates.present?
-        if r_dates[:start].present?
-          assert_equal r_dates[:start], r.start_date
-        else
-          assert_nil r.start_date
-        end
-        if r_dates[:due].present?
-          assert_equal r_dates[:due], r.due_date
-        else
-          assert_nil r.due_date
+      recurrence_dates.each do |travel_close, close, travel_renew, dates|
+        travel_to(travel_close)
+        r.reload
+        close_issue(r.last_issue || @issue1) if close
+        travel_to(travel_renew)
+        r1 = renew_all(dates.present? ? 1 : 0)
+        if dates.present?
+          if dates[:start].present?
+            assert_equal dates[:start], r1.start_date
+          else
+            assert_nil r1.start_date
+          end
+          if dates[:due].present?
+            assert_equal dates[:due], r1.due_date
+          else
+            assert_nil r1.due_date
+          end
         end
       end
     end
