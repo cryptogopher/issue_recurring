@@ -70,6 +70,16 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
+  def test_create_anchor_to_start_set_to_nil_date_when_other_date_set_should_fail
+    @issue1.update!(start_date: Date.current, due_date: nil)
+    errors = create_recurrence_should_fail(anchor_to_start: false)
+    assert errors.added?(:anchor_to_start, :due_mode_requires_date)
+
+    @issue1.update!(start_date: nil, due_date: Date.current)
+    errors = create_recurrence_should_fail(anchor_to_start: true)
+    assert errors.added?(:anchor_to_start, :start_mode_requires_date)
+  end
+
   def test_create_anchor_modes_with_creation_mode_in_place
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
@@ -729,53 +739,53 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_renew_anchor_mode_flexible_with_issue_dates_set_and_not_set
+  def test_renew_anchor_mode_flexible_with_issue_dates_set_and_unset
     # anchor_mode, mode, anchor_to_start,
     # issue_dates,
-    # recurrence_dates
+    # recurrence_dates: travel_close, close, travel_renew, dates
     configs = [
       # both dates set
       :last_issue_flexible, :monthly_day_from_first, true,
       {start_date: Date.new(2018,9,13), due_date: Date.new(2018,10,2)},
       [
-        [Date.new(2018,9,15), true, Date.new(2018,11,4),
-         {start: Date.new(2018,10,15), due: Date.new(2018,11,3)}],
-        [Date.new(2018,11,15), true, Date.new(2018,11,16),
-         {start: Date.new(2018,12,15), due: Date.new(2019,1,3)}],
+        Date.new(2018,9,15), true, Date.new(2018,11,4),
+         {start: Date.new(2018,10,15), due: Date.new(2018,11,3)},
+        Date.new(2018,11,15), true, Date.new(2018,11,16),
+         {start: Date.new(2018,12,15), due: Date.new(2019,1,3)},
       ],
 
       # only one date set
       :last_issue_flexible, :monthly_dow_from_first, true,
       {start_date: Date.new(2018,10,10), due_date: nil},
       [
-        [Date.new(2018,10,12), false, Date.new(2018,10,12), nil],
-        [Date.new(2018,10,15), true, Date.new(2018,10,15),
-         {start: Date.new(2018,11,19), due: nil}],
-        [Date.new(2018,11,25), false, Date.new(2018,11,25), nil],
-        [Date.new(2018,11,30), true, Date.new(2018,11,30),
-         {start: Date.new(2018,12,28), due: nil}]
+        Date.new(2018,10,12), false, Date.new(2018,10,12), nil,
+        Date.new(2018,10,15), true, Date.new(2018,10,15),
+         {start: Date.new(2018,11,19), due: nil},
+        Date.new(2018,11,25), false, Date.new(2018,11,25), nil,
+        Date.new(2018,11,30), true, Date.new(2018,11,30),
+         {start: Date.new(2018,12,28), due: nil}
       ],
       :last_issue_flexible, :monthly_dow_from_first, false,
       {start_date: nil, due_date: Date.new(2018,10,15)},
       [
-        [Date.new(2018,10,19), false, Date.new(2018,10,19), nil],
-        [Date.new(2018,10,26), true, Date.new(2018,10,26),
-         {start: nil, due: Date.new(2018,11,23)}],
-        [Date.new(2018,12,6), false, Date.new(2018,12,6), nil],
-        [Date.new(2018,12,8), true, Date.new(2018,12,8),
-         {start: nil, due: Date.new(2019,1,12)}]
+        Date.new(2018,10,19), false, Date.new(2018,10,19), nil,
+        Date.new(2018,10,26), true, Date.new(2018,10,26),
+         {start: nil, due: Date.new(2018,11,23)},
+        Date.new(2018,12,6), false, Date.new(2018,12,6), nil,
+        Date.new(2018,12,8), true, Date.new(2018,12,8),
+         {start: nil, due: Date.new(2019,1,12)}
       ],
 
-      # both dates not set
+      # both dates unset
       :last_issue_flexible, :weekly, false,
       {start_date: nil, due_date: nil},
       [
-        [Date.new(2018,10,12), false, Date.new(2018,10,12), nil],
-        [Date.new(2018,10,15), true, Date.new(2018,10,15),
-         {start: nil, due: Date.new(2018,10,22)}],
-        [Date.new(2018,11,25), false, Date.new(2018,11,25), nil],
-        [Date.new(2018,11,30), true, Date.new(2018,11,30),
-         {start: nil, due: Date.new(2018,12,7)}]
+        Date.new(2018,10,12), false, Date.new(2018,10,12), nil,
+        Date.new(2018,10,15), true, Date.new(2018,10,15),
+         {start: nil, due: Date.new(2018,10,22)},
+        Date.new(2018,11,25), false, Date.new(2018,11,25), nil,
+        Date.new(2018,11,30), true, Date.new(2018,11,30),
+         {start: nil, due: Date.new(2018,12,7)}
       ]
     ]
 
@@ -788,7 +798,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
                         anchor_to_start: ats,
                         mode: mode)
 
-      recurrence_dates.each do |travel_close, close, travel_renew, dates|
+      recurrence_dates.each_slice(4) do |travel_close, close, travel_renew, dates|
         travel_to(travel_close)
         r.reload
         close_issue(r.last_issue || @issue1) if close
@@ -811,38 +821,45 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_flexible_anchor_to_start_varies
-    dates = [
-      # issue start date, issue due date, anchor_mode, anchor_to_start, close date,
-      # recurrence start date, recurrence due date
-      [Date.new(2019,4,25), Date.new(2019,5,3), :last_issue_flexible, true,
-       Date.new(2019,4,29), Date.new(2019,5,29), Date.new(2019,6,6)],
-      [Date.new(2019,4,25), Date.new(2019,5,3), :last_issue_flexible, false,
-       Date.new(2019,5,6), Date.new(2019,5,29), Date.new(2019,6,6)],
-      [Date.new(2019,4,25), Date.new(2019,5,3), :last_issue_flexible_on_delay, true,
-       Date.new(2019,5,1), Date.new(2019,5,25), Date.new(2019,6,2)],
-      [Date.new(2019,4,25), Date.new(2019,5,3), :last_issue_flexible_on_delay, false,
-       Date.new(2019,5,1), Date.new(2019,5,26), Date.new(2019,6,3)],
-      [Date.new(2019,4,25), Date.new(2019,5,3), :last_issue_flexible_on_delay, true,
-       Date.new(2019,5,26), Date.new(2019,6,26), Date.new(2019,7,4)],
-      [Date.new(2019,4,25), Date.new(2019,5,3), :last_issue_flexible_on_delay, false,
-       Date.new(2019,5,6), Date.new(2019,5,29), Date.new(2019,6,6)],
+    # issue_dates,
+    # anchor_mode, anchor_to_start, close date,
+    # recurrence dates
+    configs = [
+      {start_date: Date.new(2019,4,25), due_date: Date.new(2019,5,3)},
+        :last_issue_flexible, true, Date.new(2019,4,29),
+        {start: Date.new(2019,5,29), due: Date.new(2019,6,6)},
+      {start_date: Date.new(2019,4,25), due_date: Date.new(2019,5,3)},
+        :last_issue_flexible, false, Date.new(2019,5,6),
+        {start: Date.new(2019,5,29), due: Date.new(2019,6,6)},
+      {start_date: Date.new(2019,4,25), due_date: Date.new(2019,5,3)},
+        :last_issue_flexible_on_delay, true, Date.new(2019,5,1),
+        {start: Date.new(2019,5,25), due: Date.new(2019,6,2)},
+      {start_date: Date.new(2019,4,25), due_date: Date.new(2019,5,3)},
+        :last_issue_flexible_on_delay, false, Date.new(2019,5,1),
+        {start: Date.new(2019,5,26), due: Date.new(2019,6,3)},
+      {start_date: Date.new(2019,4,25), due_date: Date.new(2019,5,3)},
+        :last_issue_flexible_on_delay, true, Date.new(2019,5,26),
+        {start: Date.new(2019,6,26), due: Date.new(2019,7,4)},
+      {start_date: Date.new(2019,4,25), due_date: Date.new(2019,5,3)},
+        :last_issue_flexible_on_delay, false, Date.new(2019,5,6),
+        {start: Date.new(2019,5,29), due: Date.new(2019,6,6)},
     ]
 
-    dates.each do |i_start, i_due, am, ats, close_date, r_start, r_due|
-      @issue1.update!(start_date: i_start, due_date: i_due)
+    configs.each_slice(5) do |issue_dates, anchor_mode, anchor_to_start, close_date, r_dates|
+      @issue1.update!(issue_dates)
       reopen_issue(@issue1) if @issue1.closed?
 
-      ir = create_recurrence(mode: :monthly_day_from_first,
-                             anchor_mode: am,
-                             anchor_to_start: ats)
+      r = create_recurrence(mode: :monthly_day_from_first,
+                             anchor_mode: anchor_mode,
+                             anchor_to_start: anchor_to_start)
 
       travel_to(close_date)
       close_issue(@issue1)
       r1 = renew_all(1)
-      assert_equal r_start, r1.start_date
-      assert_equal r_due, r1.due_date
+      assert_equal r_dates[:start], r1.start_date
+      assert_equal r_dates[:due], r1.due_date
 
-      destroy_recurrence(ir)
+      destroy_recurrence(r)
     end
   end
 
