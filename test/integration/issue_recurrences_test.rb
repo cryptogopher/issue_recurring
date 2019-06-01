@@ -993,72 +993,56 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal @issue1, r2.recurrence_of
   end
 
-  def test_renew_subtasks_mode_weekly
-    @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5))
-    @issue3.update!(start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30))
+  def test_renew_subtasks
+    configs = [
+      {start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5)},
+      {start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30)},
+      {mode: :weekly},
+      {start: Date.new(2018,9,27), due: Date.new(2018,10,12)},
+      {start: Date.new(2018,10,2), due: Date.new(2018,10,12)},
+      {start: Date.new(2018,9,27), due: Date.new(2018,10,7)},
+
+      {start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5)},
+      {start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30)},
+      {mode: :monthly_dow_from_first, anchor_to_start: true},
+      {start: Date.new(2018,10,18), due: Date.new(2018,11,2)},
+      {start: Date.new(2018,10,23), due: Date.new(2018,11,2)},
+      {start: Date.new(2018,10,18), due: Date.new(2018,10,28)},
+
+      {start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5)},
+      {start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30)},
+      {mode: :monthly_wday_to_last, anchor_to_start: false},
+      {start: Date.new(2018,10,22), due: Date.new(2018,11,6)},
+      {start: Date.new(2018,10,25), due: Date.new(2018,11,6)},
+      {start: Date.new(2018,10,22), due: Date.new(2018,10,31)},
+    ]
+
     set_parent_issue(@issue1, @issue2)
     set_parent_issue(@issue1, @issue3)
-    @issue1.reload
 
-    create_recurrence(include_subtasks: true, mode: :weekly)
-    travel_to(@issue1.start_date-1)
-    renew_all(0)
-    travel_to(@issue1.start_date)
-    r1, * = renew_all(3)
-    assert_equal Date.new(2018,9,27), r1.start_date
-    assert_equal Date.new(2018,10,12), r1.due_date
-    r2 = IssueRelation.find_by(issue_from: @issue2, relation_type: 'copied_to').issue_to
-    assert_equal Date.new(2018,10,2), r2.start_date
-    assert_equal Date.new(2018,10,12), r2.due_date
-    r3 = IssueRelation.find_by(issue_from: @issue3, relation_type: 'copied_to').issue_to
-    assert_equal Date.new(2018,9,27), r3.start_date
-    assert_equal Date.new(2018,10,7), r3.due_date
-  end
+    configs.each_slice(6) do |issue2_dates, issue3_dates, r_params,
+                              r1_dates, r2_dates, r3_dates|
+      @issue2.update!(issue2_dates)
+      @issue3.update!(issue3_dates)
+      @issue1.reload
 
-  def test_renew_subtasks_mode_monthly
-    @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5))
-    @issue3.update!(start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30))
-    set_parent_issue(@issue1, @issue2)
-    set_parent_issue(@issue1, @issue3)
-    @issue1.reload
+      create_recurrence(r_params.update(include_subtasks: true))
+      travel_to(@issue1.start_date-1)
+      renew_all(0)
 
-    create_recurrence(include_subtasks: true,
-                      anchor_to_start: true,
-                      mode: :monthly_dow_from_first)
-    travel_to(@issue1.start_date-1)
-    renew_all(0)
-    travel_to(@issue1.start_date)
-    r1, * = renew_all(3)
-    assert_equal Date.new(2018,10,18), r1.start_date
-    assert_equal Date.new(2018,11,2), r1.due_date
-    r2 = IssueRelation.find_by(issue_from: @issue2, relation_type: 'copied_to').issue_to
-    assert_equal Date.new(2018,10,23), r2.start_date
-    assert_equal Date.new(2018,11,2), r2.due_date
-    r3 = IssueRelation.find_by(issue_from: @issue3, relation_type: 'copied_to').issue_to
-    assert_equal Date.new(2018,10,18), r3.start_date
-    assert_equal Date.new(2018,10,28), r3.due_date
-  end
+      travel_to(@issue1.start_date)
+      r1, * = renew_all(3)
+      assert_equal r1_dates[:start], r1.start_date
+      assert_equal r1_dates[:due], r1.due_date
 
-  def test_renew_subtasks_mode_monthly_due
-    @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5))
-    @issue3.update!(start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30))
-    set_parent_issue(@issue1, @issue2)
-    set_parent_issue(@issue1, @issue3)
-    @issue1.reload
+      r2 = IssueRelation.where(issue_from: @issue2, relation_type: 'copied_to').last.issue_to
+      assert_equal r2_dates[:start], r2.start_date
+      assert_equal r2_dates[:due], r2.due_date
 
-    create_recurrence(include_subtasks: true, mode: :monthly_wday_to_last)
-    travel_to(@issue1.start_date-1)
-    renew_all(0)
-    travel_to(@issue1.start_date)
-    r1, * = renew_all(3)
-    assert_equal Date.new(2018,10,22), r1.start_date
-    assert_equal Date.new(2018,11,6), r1.due_date
-    r2 = IssueRelation.find_by(issue_from: @issue2, relation_type: 'copied_to').issue_to
-    assert_equal Date.new(2018,10,25), r2.start_date
-    assert_equal Date.new(2018,11,6), r2.due_date
-    r3 = IssueRelation.find_by(issue_from: @issue3, relation_type: 'copied_to').issue_to
-    assert_equal Date.new(2018,10,22), r3.start_date
-    assert_equal Date.new(2018,10,31), r3.due_date
+      r3 = IssueRelation.where(issue_from: @issue3, relation_type: 'copied_to').last.issue_to
+      assert_equal r3_dates[:start], r3.start_date
+      assert_equal r3_dates[:due], r3.due_date
+    end
   end
 
   def test_renew_creation_mode_copy_first
@@ -1097,11 +1081,13 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   def test_renew_creation_mode_in_place
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    create_recurrence(creation_mode: :in_place, anchor_mode: :last_issue_flexible)
+    r = create_recurrence(creation_mode: :in_place, anchor_mode: :last_issue_flexible)
     travel_to(Date.new(2018,9,18))
     renew_all(0)
     @issue1.reload
     assert_equal Date.new(2018,9,15), @issue1.start_date
+    r.reload
+    assert_nil r.last_issue
 
     close_issue(@issue1)
     renew_all(0)
@@ -1109,6 +1095,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal Date.new(2018,9,20), @issue1.start_date
     assert_equal Date.new(2018,9,25), @issue1.due_date
     assert !@issue1.closed?
+    r.reload
+    assert_equal r.last_issue, @issue1
   end
 
   def test_renew_applies_author_id_configuration_setting
