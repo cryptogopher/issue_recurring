@@ -1221,20 +1221,20 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_after_dates_removed_should_log_error
-    IssueRecurrence::FIXED_MODES.each do |am|
+    [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
       @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-      ir = create_recurrence(anchor_mode: am)
+      ir = create_recurrence(anchor_mode: anchor_mode)
       travel_to(Date.new(2018,9,15))
       r1 = renew_all(1)
 
-      ref_issue = (am == 'first_issue_fixed') ? @issue1 : r1
+      ref_issue = (anchor_mode == :first_issue_fixed) ? @issue1 : r1
       ref_issue.update!(start_date: nil, due_date: nil)
       travel_to(Date.new(2018,11,22))
       assert_difference 'Journal.count', 1 do
         renew_all(0)
       end
-      assert Journal.last.notes.include?('both (start and due) dates blank')
+      assert Journal.last.notes.include?('both dates (start and due) are blank')
       @issue1.reload
 
       destroy_recurrence(ir)
@@ -1242,15 +1242,15 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_fixed_after_anchor_date_removed_should_log_error
-    IssueRecurrence::FIXED_MODES.each do |am|
+    [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
       @issue1.update!(start_date: Date.new(2018,9,15), due_date: nil)
-      ir = create_recurrence(anchor_mode: am,
+      ir = create_recurrence(anchor_mode: anchor_mode,
                         anchor_to_start: true,
                         mode: :monthly_day_from_first)
       travel_to(Date.new(2018,9,15))
       r1 = renew_all(1)
 
-      ref_issue = (am == 'first_issue_fixed') ? @issue1 : r1
+      ref_issue = (anchor_mode == :first_issue_fixed) ? @issue1 : r1
       ref_issue.update!(start_date: nil, due_date: Date.new(2018,9,20))
       travel_to(Date.new(2018,12,22))
       assert_difference 'Journal.count', 1 do
@@ -1263,14 +1263,14 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
 
       @issue1.update!(start_date: nil, due_date: Date.new(2018,9,20))
-      ir = create_recurrence(anchor_mode: am,
+      ir = create_recurrence(anchor_mode: anchor_mode,
                         anchor_to_start: false,
                         mode: :monthly_day_from_first)
       travel_to(Date.new(2018,9,20))
       r1 = renew_all(1)
       @issue1.reload
 
-      ref_issue = (am == 'first_issue_fixed') ? @issue1 : r1
+      ref_issue = (anchor_mode == :first_issue_fixed) ? @issue1 : r1
       ref_issue.update!(start_date: Date.new(2018,9,15), due_date: nil)
       travel_to(Date.new(2018,12,22))
       assert_difference 'Journal.count', 1 do
@@ -1283,11 +1283,11 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_deleting_first_issue_destroys_recurrence_and_nullifies_recurrence_of
-    IssueRecurrence::FIXED_MODES.each do |am|
+    [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
       @issue1 = Issue.first
       @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-      recurrence = create_recurrence(@issue1, anchor_mode: am)
+      recurrence = create_recurrence(@issue1, anchor_mode: anchor_mode)
       travel_to(Date.new(2018,9,22))
       r1, r2 = renew_all(2)
 
@@ -1305,8 +1305,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   def test_deleting_last_issue_sets_previous_or_nullifies_last_issue
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    IssueRecurrence::FIXED_MODES.each do |am|
-      recurrence = create_recurrence(anchor_mode: am)
+    [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
+      recurrence = create_recurrence(anchor_mode: anchor_mode)
       travel_to(Date.new(2018,9,22))
       r1, r2 = renew_all(2)
       recurrence.reload
@@ -1314,7 +1314,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
       # Create extra recurrences with higher ids
       @issue2.update!(start_date: Date.new(2018,8,15), due_date: Date.new(2018,8,20))
-      create_recurrence(@issue2, anchor_mode: am)
+      create_recurrence(@issue2, anchor_mode: anchor_mode)
       renew_all(6)
 
       assert_no_difference 'IssueRecurrence.count' do
@@ -1334,8 +1334,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   def test_deleting_not_first_nor_last_issue_keeps_recurrence_and_reference_of_unchanged
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    IssueRecurrence::FIXED_MODES.each do |am|
-      recurrence = create_recurrence(anchor_mode: am)
+    [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
+      recurrence = create_recurrence(anchor_mode: anchor_mode)
       travel_to(Date.new(2018,9,22))
       r1, r2 = renew_all(2)
 
