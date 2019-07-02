@@ -64,10 +64,18 @@ The most notable features of this plugin include:
      
      You may try and find this plugin working on other versions too, but be prepared to get error messages. In case it works let everyone know that through issue tracker (send _support_ issue). If it doesn't work, you are welcome to send _feature_ request to make plugin compatible with other version. Keep in mind though, that for more exotic versions there will be more vote power needed to complete such feature request.
 
-2. Login to shell, change to redmine user, clone plugin to your plugins directory, install gemfiles and migrate database:
+2. Login to shell, change to redmine user, clone plugin to your plugins directory, list and choose which plugin version to install, install gemfiles and migrate database:
    ```
    su - redmine
-   git -C /var/lib/redmine/plugins/ clone https://github.com/cryptogopher/issue_recurring.git
+   cd /var/lib/redmine/plugins/
+   git clone https://github.com/cryptogopher/issue_recurring.git
+   
+   # Following 2 steps allow you to run particular version of plugin. Generally it is advised to go with the highest
+   # available version, as it is most stable. But you can omit those 2 commands ang go with latest code as well.
+   git -C issue_recurring/ tag
+   # Doing checkout this way you can get "You are in 'detached HEAD' state." warning; it's ok to ignore it
+   git -C issue_recurring/ checkout tags/1.1
+   
    cd /var/lib/redmine
    bundle install
    RAILS_ENV=production rake redmine:plugins:migrate
