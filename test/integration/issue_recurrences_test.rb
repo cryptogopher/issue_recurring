@@ -55,7 +55,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
     IssueRecurrence::FIXED_MODES.each do |am|
       errors = create_recurrence_should_fail(creation_mode: :in_place, anchor_mode: am)
-      assert errors.added?(:anchor_mode, :in_place_flexible_only)
+      assert errors.added?(:anchor_mode,
+                           errors.generate_message(:anchor_mode, :in_place_flexible_only))
     end
   end
 
@@ -68,7 +69,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
                                              mode: :monthly_day_from_first,
                                              delay_mode: :day,
                                              delay_multiplier: 10)
-      assert errors.added?(:anchor_mode, :delay_fixed_only)
+      assert errors.added?(:anchor_mode,
+                           errors.generate_message(:anchor_mode, :delay_fixed_only))
     end
   end
 
@@ -83,7 +85,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       IssueRecurrence::FLEXIBLE_MODES.each do |second_mode|
         errors = create_recurrence_should_fail(creation_mode: :in_place,
                                                anchor_mode: second_mode)
-        assert errors.added?(:creation_mode, :only_one_in_place)
+        assert errors.added?(:creation_mode,
+                             errors.generate_message(:creation_mode, :only_one_in_place))
       end
 
       destroy_recurrence(r)

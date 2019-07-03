@@ -1,7 +1,7 @@
 module IssueRecurring
   module IssuesControllerPatch
     IssuesController.class_eval do
-      before_filter :prepare_recurrences, :only => [:show]
+      before_action :prepare_recurrences, :only => [:show]
 
       private
 

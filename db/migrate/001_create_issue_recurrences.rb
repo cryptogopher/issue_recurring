@@ -1,4 +1,4 @@
-class CreateIssueRecurrences < ActiveRecord::Migration
+class CreateIssueRecurrences < ActiveRecord::Migration[4.2]
   def change
     create_table :issue_recurrences do |t|
       t.references :issue, foreign: true, index: true

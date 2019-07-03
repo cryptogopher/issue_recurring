@@ -1,6 +1,6 @@
 require_dependency 'issue_recurring/issue_recurrences_view_listener'
 
-ActionDispatch::Reloader.to_prepare do
+(Rails::VERSION::MAJOR < 5 ? ActionDispatch : ActiveSupport)::Reloader.to_prepare do
   Issue.include IssueRecurring::IssuePatch
   IssuesController.include IssueRecurring::IssuesControllerPatch
   IssuesHelper.include IssueRecurring::IssuesHelperPatch

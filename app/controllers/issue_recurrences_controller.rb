@@ -1,8 +1,8 @@
 class IssueRecurrencesController < ApplicationController
-  before_filter :find_project, only: [:index]
-  before_filter :find_issue, only: [:create]
-  before_filter :find_recurrence, only: [:destroy]
-  before_filter :authorize
+  before_action :find_project, only: [:index]
+  before_action :find_issue, only: [:create]
+  before_action :find_recurrence, only: [:destroy]
+  before_action :authorize
 
   helper :issues
 

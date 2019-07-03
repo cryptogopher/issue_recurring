@@ -58,18 +58,18 @@ class IssueRecurrence < ActiveRecord::Base
   # Should work as long as validation and saving is in one transaction.
   validates :creation_mode, uniqueness: {
     scope: :issue_id,
-    conditions: ->{ lock.in_place },
+    conditions: -> { lock.in_place },
     message: :only_one_in_place
   }
   validates :anchor_mode, inclusion: anchor_modes.keys
   validates :anchor_mode, inclusion: {
     in: FIXED_MODES,
-    if: "delay_multiplier > 0",
+    if: -> { delay_multiplier > 0 },
     message: :delay_fixed_only
   }
   validates :anchor_mode, inclusion: {
     in: FLEXIBLE_MODES,
-    if: "creation_mode == 'in_place'",
+    if: -> { creation_mode == 'in_place' },
     message: :in_place_flexible_only
   }
   validates :anchor_to_start, inclusion: [true, false]
@@ -91,11 +91,11 @@ class IssueRecurrence < ActiveRecord::Base
   validates :delay_mode, inclusion: delay_modes.keys
   validates :delay_multiplier, numericality: {greater_than_or_equal_to: 0, only_integer: true}
   validates :include_subtasks, inclusion: [true, false]
-  validates :date_limit, absence: {if: "count_limit.present?"}
-  validate on: :create, if: "date_limit.present?" do
+  validates :date_limit, absence: {if: -> { count_limit.present? } }
+  validate on: :create, if: -> { date_limit.present? } do
     errors.add(:date_limit, :not_in_future) unless Date.current < date_limit
   end
-  validates :count_limit, absence: {if: "date_limit.present?"},
+  validates :count_limit, absence: {if: -> { date_limit.present? } },
     numericality: {allow_nil: true, only_integer: true}
 
   after_initialize do
