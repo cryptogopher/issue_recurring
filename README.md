@@ -18,7 +18,7 @@ Plugin for Redmine to configure issue recurring according to a schedule. The plu
 
 The most notable features of this plugin include:
 * recurrence creation/deletion directly from form on issue page (no separate page, no page reloading when creating/deleting recurrences),
-* multiple recurrence schedules per issue possible,
+* multiple recurrence schedules per issue possible (except for in-place modification),
 * specification of recurrence frequency by means of:
   * days,
   * working days (according to non-working week days specified in Redmine settings),
@@ -43,8 +43,9 @@ The most notable features of this plugin include:
 
 ## Changelog
 
-### 1.2 (unreleased)
+### 1.2
 
+* plugin is now compatible with Redmine 4.0/Rails 5.2,
 * it is now disallowed to create multiple in-place recurrence schedules for single issue. No real world scenario could justify such configuration and it might cause problems for the unwary.
 
 ### 1.1
@@ -58,9 +59,10 @@ The most notable features of this plugin include:
 1. Check prerequisites. To use this plugin you need to have:
    * Redmine (https://www.redmine.org) installed. Check that your Redmine version is compatible with plugin. Currently supported are following versions of software:
 
-     |Redmine |Tested with                                |
-     |--------|-------------------------------------------|
-     |3.4.x   |Redmine 3.4.5, Ruby 2.3.8p459, Rails 4.2.11|
+     |Redmine |Compatible plugin versions|Tested with                                |
+     |--------|--------------------------|-------------------------------------------|
+     |3.4.x   |1.0 - current             |Redmine 3.4.5, Ruby 2.3.8p459, Rails 4.2.11|
+     |4.0.x   |1.2 - current             |Redmine 4.0.4, Ruby 2.4.6p354, Rails 5.2.3 |
      
      You may try and find this plugin working on other versions too, but be prepared to get error messages. In case it works let everyone know that through issue tracker (send _support_ issue). If it doesn't work, you are welcome to send _feature_ request to make plugin compatible with other version. Keep in mind though, that for more exotic versions there will be more vote power needed to complete such feature request.
 
