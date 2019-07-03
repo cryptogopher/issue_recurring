@@ -816,9 +816,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_anchor_mode_flexible_anchor_to_start_varies
-    # issue_dates,
-    # anchor_mode, anchor_to_start, close date,
-    # recurrence dates
     configs = [
       {start_date: Date.new(2019,4,25), due_date: Date.new(2019,5,3)},
       {anchor_mode: :last_issue_flexible, anchor_to_start: true},
