@@ -521,7 +521,7 @@ class IssueRecurrence < ActiveRecord::Base
       self.create(new_dates)
     when :last_issue_fixed_after_close
       closed_date = ref_issue.closed_on.to_date
-      barrier_date = max(closed_date, ref_dates[:start] || ref_dates[:due])
+      barrier_date = [closed_date, ref_dates[:start] || ref_dates[:due]].max
       while (ref_dates[:start] || ref_dates[:due]) <= barrier_date
         new_dates = self.advance(ref_dates)
         break if new_dates.nil?
@@ -531,7 +531,7 @@ class IssueRecurrence < ActiveRecord::Base
     when :date_fixed_after_close
       adj = 0
       closed_date = ref_issue.closed_on.to_date
-      barrier_date = max(closed_date, ref_issue.start_date || ref_issue.due_date)
+      barrier_date = [closed_date, ref_issue.start_date || ref_issue.due_date].max
       new_dates = self.advance(-1, ref_dates)
       while (new_dates[:start] || new_dates[:due]) <= barrier_date
         new_dates = self.advance(adj, ref_dates)

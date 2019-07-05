@@ -625,6 +625,113 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     renew_all(0)
   end
 
+  def test_renew_anchor_mode_fixed_after_close_mode_weekly
+    @issue1.update!(start_date: Date.new(2019,7,5), due_date: Date.new(2019,7,10))
+
+    travel_to(Date.new(2019,7,1))
+    create_recurrence(anchor_mode: :last_issue_fixed_after_close,
+                      mode: :weekly,
+                      multiplier: 2)
+    renew_all(0)
+    travel_to(Date.new(2019,7,13))
+    renew_all(0)
+    # closed after due, before recurrence period
+    close_issue(@issue1)
+    r1 = renew_all(1)
+    assert_equal Date.new(2019,7,19), r1.start_date
+    assert_equal Date.new(2019,7,24), r1.due_date
+    travel_to(Date.new(2019,7,21))
+    renew_all(0)
+    # closed between start and due
+    close_issue(r1)
+    r2 = renew_all(1)
+    assert_equal Date.new(2019,8,2), r2.start_date
+    assert_equal Date.new(2019,8,7), r2.due_date
+    travel_to(Date.new(2019,8,1))
+    renew_all(0)
+    # closed before start
+    close_issue(r2)
+    r3 = renew_all(1)
+    assert_equal Date.new(2019,8,16), r3.start_date
+    assert_equal Date.new(2019,8,21), r3.due_date
+    travel_to(Date.new(2019,9,18))
+    # closed after due, after 2 full recurrence periods + few days
+    close_issue(r3)
+    r4 = renew_all(1)
+    assert_equal Date.new(2019,9,27), r4.start_date
+    assert_equal Date.new(2019,10,2), r4.due_date
+
+    travel_to(Date.new(2019,11,30))
+    close_issue(r4)
+    travel_to(Date.new(2019,12,31))
+    renew_all(1)
+    renew_all(0)
+  end
+
+  def test_renew_anchor_mode_date_fixed_after_close_mode_weekly
+    @issue1.update!(start_date: Date.new(2019,7,8), due_date: Date.new(2019,7,13))
+
+    travel_to(Date.new(2019,7,1))
+    create_recurrence(anchor_mode: :date_fixed_after_close,
+                      anchor_to_start: true,
+                      mode: :weekly,
+                      multiplier: 2,
+                      creation_mode: :in_place,
+                      anchor_date: Date.new(2019,7,5))
+    renew_all(0)
+    @issue1.reload
+    assert_equal Date.new(2019,7,8), @issue1.start_date
+    assert_equal Date.new(2019,7,13), @issue1.due_date
+
+    travel_to(Date.new(2019,7,14))
+    renew_all(0)
+    @issue1.reload
+    assert_equal Date.new(2019,7,8), @issue1.start_date
+    assert_equal Date.new(2019,7,13), @issue1.due_date
+    # closed after due, before recurrence period
+    close_issue(@issue1)
+    renew_all(0)
+    @issue1.reload
+    assert_equal Date.new(2019,7,19), @issue1.start_date
+    assert_equal Date.new(2019,7,24), @issue1.due_date
+
+    travel_to(Date.new(2019,7,18))
+    renew_all(0)
+    @issue1.reload
+    assert_equal Date.new(2019,7,19), @issue1.start_date
+    assert_equal Date.new(2019,7,24), @issue1.due_date
+    # closed before start
+    close_issue(@issue1)
+    renew_all(0)
+    @issue1.reload
+    assert_equal Date.new(2019,8,2), @issue1.start_date
+    assert_equal Date.new(2019,8,7), @issue1.due_date
+
+    travel_to(Date.new(2019,7,27))
+    renew_all(0)
+    @issue1.reload
+    assert_equal Date.new(2019,8,2), @issue1.start_date
+    assert_equal Date.new(2019,8,7), @issue1.due_date
+    # closed before anchor date multiple
+    close_issue(@issue1)
+    renew_all(0)
+    @issue1.reload
+    assert_equal Date.new(2019,8,16), @issue1.start_date
+    assert_equal Date.new(2019,8,21), @issue1.due_date
+
+    travel_to(Date.new(2019,9,18))
+    renew_all(0)
+    @issue1.reload
+    assert_equal Date.new(2019,8,16), @issue1.start_date
+    assert_equal Date.new(2019,8,21), @issue1.due_date
+    # closed after due, after 2 full recurrence periods + few days
+    close_issue(@issue1)
+    renew_all(0)
+    @issue1.reload
+    assert_equal Date.new(2019,9,27), @issue1.start_date
+    assert_equal Date.new(2019,10,2), @issue1.due_date
+  end
+
   def test_renew_huge_multiplier
     @issue1.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,4))
 
@@ -734,7 +841,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_renew_anchor_mode_flexible_with_issue_dates_set_and_unset
+  def test_renew_anchor_mode_flexible_and_after_close_with_issue_dates_set_and_unset
     configs = [
       # last_issue_flexible, both dates set
       {start_date: Date.new(2018,9,13), due_date: Date.new(2018,10,2)},
