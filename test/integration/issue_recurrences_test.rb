@@ -49,7 +49,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       {anchor_mode: :first_issue_fixed}, false,
       {anchor_mode: :last_issue_fixed}, false,
       {anchor_mode: :last_issue_flexible}, true,
-      {anchor_mode: :last_issue_flexible_on_delay}, false,
+      {anchor_mode: :last_issue_flexible_on_delay}, true,
       {anchor_mode: :last_issue_fixed_after_close}, false,
       {anchor_mode: :date_fixed_after_close, creation_mode: :in_place,
        anchor_date: Date.current}, true
