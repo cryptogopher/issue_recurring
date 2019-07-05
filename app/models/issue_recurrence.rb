@@ -87,8 +87,9 @@ class IssueRecurrence < ActiveRecord::Base
   validate :validate_base_dates
   def validate_base_dates
     issue, base = self.base_dates
-    if !(self.last_issue_flexible? || self.date_fixed_after_close?) &&
-        (base[:start] || base[:due]).blank?
+    date_required = [:last_issue_flexible, :last_issue_flexible_on_delay,
+                     :date_fixed_after_close].exclude?(self.anchor_mode.to_sym)
+    if date_required && (base[:start] || base[:due]).blank?
       errors.add(:anchor_mode, :issue_anchor_no_blank_dates)
     end
     if self.anchor_to_start && base[:start].blank? && base[:due].present?
@@ -441,11 +442,16 @@ class IssueRecurrence < ActiveRecord::Base
     when :last_issue_flexible_on_delay
       if ref_issue.closed?
         closed_date = ref_issue.closed_on.to_date
-        if (base_dates[:due] || base_dates[:start]) < closed_date
-          ref_label = self.anchor_to_start ? :start : :due
-          ref_dates = self.offset(closed_date, ref_label, base_dates)
+        boundary_date = base_dates[:due] || base_dates[:start]
+        ref_label = self.anchor_to_start ? :start : :due
+        if boundary_date.present?
+          if boundary_date < closed_date
+            ref_dates = self.offset(closed_date, ref_label, base_dates)
+          else
+            ref_dates = base_dates
+          end
         else
-          ref_dates = base_dates
+          ref_dates = base_dates.update(ref_label => closed_date)
         end
       end
     when :last_issue_fixed_after_close
