@@ -100,25 +100,32 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_create_multiple_creation_mode_in_place_should_fail
+  def test_create_multiple_creation_mode_in_place_if_not_date_fixed_should_fail
     # issue: https://it.michalczyk.pro/issues/14
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     anchor_modes = [
-      {anchor_mode: :last_issue_flexible},
-      {anchor_mode: :last_issue_flexible_on_delay},
-      {anchor_mode: :last_issue_fixed_after_close},
-      {anchor_mode: :date_fixed_after_close, anchor_date: Date.current}
+      {anchor_mode: :last_issue_flexible}, false,
+      {anchor_mode: :last_issue_flexible_on_delay}, false,
+      {anchor_mode: :last_issue_fixed_after_close}, false,
+      {anchor_mode: :date_fixed_after_close, anchor_date: Date.current}, true
     ]
-    anchor_modes.each do |first_params|
+    anchor_modes.each_slice(2) do |first_params, first_allow_multiple|
       first_params.update(creation_mode: :in_place)
-      r = create_recurrence(first_params)
-      anchor_modes.each do |second_params|
+      r1st = create_recurrence(first_params)
+
+      anchor_modes.each_slice(2) do |second_params, second_allow_multiple|
         second_params.update(creation_mode: :in_place)
-        errors = create_recurrence_should_fail(second_params)
-        assert errors.added?(:creation_mode, :only_one_in_place)
+        if first_allow_multiple || second_allow_multiple
+          r2nd = create_recurrence(second_params)
+          destroy_recurrence(r2nd)
+        else
+          errors = create_recurrence_should_fail(second_params)
+          assert errors.added?(:creation_mode, :only_one_in_place)
+        end
       end
-      destroy_recurrence(r)
+
+      destroy_recurrence(r1st)
     end
   end
 

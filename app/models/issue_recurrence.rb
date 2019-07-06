@@ -59,7 +59,16 @@ class IssueRecurrence < ActiveRecord::Base
   # Should work as long as validation and saving is in one transaction.
   validates :creation_mode, uniqueness: {
     scope: :issue_id,
-    conditions: ->{ lock.in_place },
+    conditions: -> {
+      lock.in_place.where.not(
+        anchor_mode: IssueRecurrence.anchor_modes[:date_fixed_after_close]
+      )
+    },
+    if: -> {
+      [:last_issue_flexible,
+       :last_issue_flexible_on_delay,
+       :last_issue_fixed_after_close].include?(self.anchor_mode.to_sym)
+    },
     message: :only_one_in_place
   }
   validates :anchor_mode, inclusion: anchor_modes.keys
