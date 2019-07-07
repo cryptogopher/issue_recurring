@@ -473,7 +473,7 @@ class IssueRecurrence < ActiveRecord::Base
         if (base_dates[:start] || base_dates[:due]).present?
           ref_dates = self.offset(self.anchor_date, ref_label, base_dates)
         else
-          ref_dates = base_dates.update(ref_label: self.anchor_date)
+          ref_dates = base_dates.update(ref_label => self.anchor_date)
         end
       end
     end
@@ -540,7 +540,10 @@ class IssueRecurrence < ActiveRecord::Base
     when :date_fixed_after_close
       adj = 0
       closed_date = ref_issue.closed_on.to_date
-      barrier_date = [closed_date, ref_issue.start_date || ref_issue.due_date].max
+      barrier_date = [
+        closed_date,
+        ref_issue.start_date || ref_issue.due_date || ref_dates[:start] || ref_dates[:due]
+      ].max
       new_dates = self.advance(-1, ref_dates)
       while (new_dates[:start] || new_dates[:due]) <= barrier_date
         new_dates = self.advance(adj, ref_dates)
