@@ -14,9 +14,9 @@ en:
               blank_dates_flexible_only: 'solo recurrencias basadas en fecha de cierre
                 pueden ser creadas para peticiones con ambas fechas (inicio y fin) en blanco'
               in_place_flexible_only: 'solo recurrencias basadas en fechas de cierre pueden
-                modificar una petición en su lugar'
+                modificar una petición in situ'
             creation_mode:
-              only_one_in_place: 'solamente una recurrencia puede ser programada en su lugar'
+              only_one_in_place: 'solamente una recurrencia puede ser programada in situ'
             anchor_to_start:
               start_mode_requires_date: 'recurrencias basadas en fecha de inicio no pueden ser creadas para
                 peticiones sin fecha de inicio'
@@ -63,9 +63,9 @@ en:
       details:
       form:
         creation_modes:
-          copy_first: 'Copia <b>petición</b>'
-          copy_last: 'Copia <b>última recurrencia</b> de petición'
-          in_place: 'Modificar petición <b>en el lugar</b>'
+          copy_first: 'Copiar <b>petición</b>'
+          copy_last: 'Copiar <b>última recurrencia</b> de petición'
+          in_place: 'Modificar petición <b>in situ</b>'
         include_subtasks:
           :true: 'incluyendo subtareas'
           :false: 'excluyendo subtareas'
@@ -104,14 +104,14 @@ en:
           monthly_wday_from_first: 'en %{wdays_from_bom} día laboral'
           monthly_wday_to_last: 'en %{wdays_to_eom} hasta el último día laboral'
           yearly: ''
-        based_on: 'basado en'
+        based_on: 'basada en'
         anchor_modes:
           first_issue_fixed: 'esta <b>petición</b>'
           last_issue_fixed: '<b>última recurrencia</b>'
           last_issue_flexible: '<b>fecha de fin de la última recurrencia</b>
-            - la próxima será creada solo después que se cierre la anterior - por'
-          last_issue_flexible_on_delay: '<b>última fecha de recurrencia si se cierra en tiempo,</b>
-            de otro modo se cierra por fecha'
+            - la próxima se creará solo cuando cierre la anterior - por'
+          last_issue_flexible_on_delay: '<b>última fecha de recurrencia si se cierra a tiempo,</b>
+            de otro modo por fecha de fin'
         anchor_to_start:
           :true: '<b>fecha inicio</b>'
           :false: '<b>fecha fin</b>'
