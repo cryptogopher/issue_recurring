@@ -848,42 +848,44 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def process_close_based_recurrences(configs)
-    configs.each_slice(3) do |issue_dates, r_params, r_details|
-      @issue1.reload
-      @issue1.update!(issue_dates)
-      reopen_issue(@issue1) if @issue1.closed?
+  def process_close_based_recurrences(configs, creation_modes)
+    creation_modes.each do |creation_mode|
+      configs.each_slice(3) do |issue_dates, r_params, r_details|
+        @issue1.reload
+        @issue1.update!(issue_dates)
+        reopen_issue(@issue1) if @issue1.closed?
 
-      r = create_recurrence(r_params)
+        r = create_recurrence(r_params.update(creation_mode: creation_mode))
 
-      r_details.each_slice(3) do |travel_close, travel_renew, r_dates|
-        r.reload
-        if travel_close
-          travel_to(travel_close) if travel_close
-          close_issue(r.last_issue || @issue1)
-        end
-        travel_to(travel_renew)
-        r1 = if r.creation_mode == 'in_place'
-               renew_all(0)
-               @issue1.reload
-             else
-               renew_all(r_dates.present? ? 1 : 0)
-             end
-        if r_dates.present?
-          if r_dates[:start].present?
-            assert_equal r_dates[:start], r1.start_date
-          else
-            assert_nil r1.start_date
+        r_details.each_slice(3) do |travel_close, travel_renew, r_dates|
+          r.reload
+          if travel_close
+            travel_to(travel_close) if travel_close
+            close_issue(r.last_issue || @issue1)
           end
-          if r_dates[:due].present?
-            assert_equal r_dates[:due], r1.due_date
-          else
-            assert_nil r1.due_date
+          travel_to(travel_renew)
+          r1 = if r.creation_mode == 'in_place'
+                 renew_all(0)
+                 @issue1.reload
+               else
+                 renew_all(r_dates.present? ? 1 : 0)
+               end
+          if r_dates.present?
+            if r_dates[:start].present?
+              assert_equal r_dates[:start], r1.start_date
+            else
+              assert_nil r1.start_date
+            end
+            if r_dates[:due].present?
+              assert_equal r_dates[:due], r1.due_date
+            else
+              assert_nil r1.due_date
+            end
           end
         end
+
+        destroy_recurrence(r)
       end
-
-      destroy_recurrence(r)
     end
   end
 
@@ -937,7 +939,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       ]
     ]
 
-    process_close_based_recurrences(configs)
+    process_close_based_recurrences(configs, [:copy_first, :in_place])
   end
 
   def test_renew_anchor_mode_last_issue_flexible_on_delay_with_issue_dates_set_and_unset
@@ -994,7 +996,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       ]
     ]
 
-    process_close_based_recurrences(configs)
+    process_close_based_recurrences(configs, [:copy_first, :in_place])
   end
 
   def test_renew_anchor_mode_last_issue_fixed_after_close_with_issue_dates_set_and_unset
@@ -1035,7 +1037,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       # last_issue_fixed_after_close, both dates unset disallowed
     ]
 
-    process_close_based_recurrences(configs)
+    process_close_based_recurrences(configs, [:copy_first, :in_place])
   end
 
   def test_renew_anchor_mode_date_fixed_after_close_with_issue_dates_set_and_unset
@@ -1088,7 +1090,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       ]
     ]
 
-    process_close_based_recurrences(configs)
+    process_close_based_recurrences(configs, [:in_place])
   end
 
   def test_renew_anchor_mode_flexible_anchor_to_start_varies
