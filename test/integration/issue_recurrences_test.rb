@@ -1581,6 +1581,47 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_equal Date.new(2019,9,11), @issue1.due_date
   end
 
+  def test_renew_multiple_anchor_mode_date_fixed_after_close_with_additional_in_place
+    @issue1.update!(start_date: Date.new(2019,7,12), due_date: Date.new(2019,7,13))
+
+    # Recur every 15th and last day of month, but not less often than every 10 days.
+    create_recurrence(anchor_mode: :date_fixed_after_close,
+                     anchor_to_start: true,
+                     anchor_date: Date.new(2019,6,30),
+                     mode: :monthly_day_to_last,
+                     multiplier: 1,
+                     creation_mode: :in_place)
+    create_recurrence(anchor_mode: :date_fixed_after_close,
+                     anchor_to_start: true,
+                     anchor_date: Date.new(2019,6,15),
+                     mode: :monthly_day_from_first,
+                     multiplier: 1,
+                     creation_mode: :in_place)
+    create_recurrence(anchor_mode: :last_issue_flexible,
+                     anchor_to_start: true,
+                     mode: :daily,
+                     multiplier: 10,
+                     creation_mode: :in_place)
+
+    dates = [
+      Date.new(2019,7,14), {start: Date.new(2019,7,15), due: Date.new(2019,7,16)},
+      Date.new(2019,7,15), {start: Date.new(2019,7,25), due: Date.new(2019,7,26)},
+      Date.new(2019,7,29), {start: Date.new(2019,7,31), due: Date.new(2019,8,1)},
+      Date.new(2019,8,22), {start: Date.new(2019,8,31), due: Date.new(2019,9,1)},
+      Date.new(2019,9,2), {start: Date.new(2019,9,12), due: Date.new(2019,9,13)},
+      Date.new(2019,9,8), {start: Date.new(2019,9,15), due: Date.new(2019,9,16)}
+    ]
+
+    dates.each_slice(2) do |close_date, r_dates|
+      travel_to(close_date)
+      close_issue(@issue1)
+      renew_all(0)
+      @issue1.reload
+      assert_equal r_dates[:start], @issue1.start_date
+      assert_equal r_dates[:due], @issue1.due_date
+    end
+  end
+
   def test_renew_anchor_mode_fixed_after_dates_removed_should_log_error
     [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
       @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
