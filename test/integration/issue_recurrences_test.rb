@@ -771,20 +771,73 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_renew_closed_on_date_cleared_for_new_recurrences_of_closed_issue
-    @issue1.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,4))
+  def test_renew_new_recurrences_of_closed_issue_should_not_be_closed
+    IssueRecurrence::creation_modes.each do |creation_mode|
+      @issue1.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,4))
+      # Issue can be open and have not nil closed_on time if it has been
+      # closed+reopened in the past.
+      # Issue status should be checked by closed?, not closed_on.
+      assert !@issue1.closed?
 
-    assert_nil @issue1.closed_on
-    travel_to(Date.new(2018,10,22))
-    create_recurrence(anchor_mode: :first_issue_fixed,
-                      mode: :weekly,
-                      multiplier: 2)
-    close_issue(@issue1)
-    @issue1.reload
-    assert_not_nil @issue1.closed_on
-    r1, r2 = renew_all(2)
-    assert_nil r1.closed_on
-    assert_nil r2.closed_on
+      travel_to(Date.new(2018,10,4))
+      r = create_recurrence(anchor_mode: :last_issue_flexible,
+                            creation_mode: creation_mode,
+                            mode: :weekly,
+                            multiplier: 2)
+
+      close_issue(@issue1)
+      assert @issue1.reload.closed?
+      r1 = renew_all(1)
+      assert !r1.closed?
+
+      destroy_recurrence(r)
+      reopen_issue(@issue1)
+      @issue1.reload
+    end
+  end
+
+  def test_renew_creation_mode_in_place_if_issue_not_closed_should_not_recur
+    anchor_modes = [
+      {anchor_mode: :last_issue_flexible},
+      {anchor_mode: :last_issue_flexible_on_delay},
+      {anchor_mode: :last_issue_fixed_after_close},
+      {anchor_mode: :date_fixed_after_close, anchor_date: Date.new(2018,11,12)},
+    ]
+
+    anchor_modes.each do |r_params|
+      @issue1.update!(start_date: Date.new(2018,9,15),
+                      due_date: Date.new(2018,9,20),
+                      closed_on: nil)
+      r = create_recurrence(r_params.update(creation_mode: :in_place))
+      travel_to(Date.new(2018,11,12))
+
+      assert_equal 0, r.count
+      assert !@issue1.closed?
+      assert_nil @issue1.closed_on
+      renew_all(0)
+      assert 0, r.reload.count
+      assert !@issue1.reload.closed?
+
+      # closed_on set to non-nil value while issue status is not closed should
+      # not cause recurrence as well.
+      @issue1.update!(closed_on: Date.new(2018,9,17))
+      assert !@issue1.closed?
+      assert_not_nil @issue1.closed_on
+      renew_all(0)
+      assert 0, r.reload.count
+      assert !@issue1.reload.closed?
+
+      assert_equal Date.new(2018,9,15), @issue1.start_date
+      assert_equal Date.new(2018,9,20), @issue1.due_date
+
+      close_issue(@issue1)
+      assert @issue1.reload.closed?
+      renew_all(0)
+      assert 1, r.reload.count
+      assert !@issue1.reload.closed?
+
+      destroy_recurrence(r)
+    end
   end
 
   def test_renew_issue_with_timespan_much_larger_than_recurrence_period
@@ -1493,6 +1546,39 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     r3 = renew_all(1)
     assert_equal Date.new(2018,7,11), r3.start_date
     assert_equal Date.new(2018,7,22), r3.due_date
+  end
+
+  def test_renew_anchor_mode_date_fixed_after_close_after_issue_date_change
+    @issue1.update!(start_date: Date.new(2019,7,18), due_date: Date.new(2019,7,22))
+
+    create_recurrence(anchor_mode: :date_fixed_after_close, anchor_date: Date.new(2019,7,8),
+                      anchor_to_start: true, creation_mode: :in_place,
+                      mode: :daily_wday, multiplier: 10)
+
+    travel_to(Date.new(2019,7,18))
+    close_issue(@issue1)
+    renew_all(0)
+    assert !@issue1.reload.closed?
+    assert_equal Date.new(2019,7,22), @issue1.start_date
+    assert_equal Date.new(2019,7,24), @issue1.due_date
+
+    # only dates changed, same timespan
+    @issue1.update!(start_date: Date.new(2019,6,19), due_date: Date.new(2019,6,21))
+    travel_to(Date.new(2019,8,5))
+    close_issue(@issue1)
+    renew_all(0)
+    assert !@issue1.reload.closed?
+    assert_equal Date.new(2019,8,19), @issue1.start_date
+    assert_equal Date.new(2019,8,21), @issue1.due_date
+
+    # changed both dates and timespan
+    @issue1.update!(start_date: Date.new(2019,7,1), due_date: Date.new(2019,7,10))
+    travel_to(Date.new(2019,9,1))
+    close_issue(@issue1)
+    renew_all(0)
+    assert !@issue1.reload.closed?
+    assert_equal Date.new(2019,9,2), @issue1.start_date
+    assert_equal Date.new(2019,9,11), @issue1.due_date
   end
 
   def test_renew_anchor_mode_fixed_after_dates_removed_should_log_error
