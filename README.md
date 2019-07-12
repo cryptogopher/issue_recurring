@@ -127,6 +127,8 @@ The most notable features of this plugin include:
    git tag
    # doing checkout this way you can get "You are in 'detached HEAD' state." warning; it's ok to ignore it
    git checkout tags/1.1
+   
+   cd /var/lib/redmine
    bundle update
    RAILS_ENV=production rake redmine:plugins:migrate
    ```
@@ -137,4 +139,10 @@ The most notable features of this plugin include:
 
 ## Downgrade
 
-Upgrade steps should work for downgrade also, given that you do them in reverse - except for backup, which should be done first ;) (e.g. backup, downgrade database, then pull older plugin code version). Keep in mind though, that downgrading database might cause some information to be lost irreversibly. This is because some downgrades may require deletion of tables/columns that were introduced in higher version. Also structure of the data may not be compatible between versions, so the automatic conversion can be lossy.
+Upgrade steps should work for downgrade also, given that you do them in reverse - except for backup, which should be done first ;) (e.g. backup, downgrade database, then pull older plugin code version).
+Database downgrade (```VERSION``` number ```<NNN>``` is a number taken from migration file name in _issue_recurring/db/migrate_):
+   ```
+   ca /var/lib/redmine
+   RAILS_ENV=production rake redmine:plugins:migrate VERSION=<NNN> NAME=issue_recurring
+   ```
+Keep in mind though, that downgrading database might cause some information to be lost irreversibly. This is because some downgrades may require deletion of tables/columns that were introduced in higher version. Also structure of the data may not be compatible between versions, so the automatic conversion can be lossy.
