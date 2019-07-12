@@ -140,6 +140,7 @@ The most notable features of this plugin include:
 ## Downgrade
 
 Upgrade steps should work for downgrade also, given that you do them in reverse - except for backup, which should be done first ;) (e.g. backup, downgrade database, then pull older plugin code version).
+
 Database downgrade (```VERSION``` number ```<NNN>``` is a number taken from migration file name in _issue_recurring/db/migrate_):
    ```
    ca /var/lib/redmine
