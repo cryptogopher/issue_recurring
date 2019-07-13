@@ -55,7 +55,7 @@ en:
         last_issue_fixed: 'last issue'
         last_issue_flexible: 'last issue close as'
         last_issue_flexible_on_delay: 'last issue close if delayed as'
-        last_issue_fixed_after_close: 'last issue (after close date)'
+        last_issue_fixed_after_close: 'last issue (after close date) as'
         date_fixed_after_close: 'fixed date (after close date) as'
   issues:
     issue_recurrences_hook:
