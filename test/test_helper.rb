@@ -21,6 +21,7 @@ ActiveRecord::FixtureSet.create_fixtures(
 
 def logout_user
   post signout_path
+  assert_nil session[:user_id]
 end
 
 def create_recurrence(issue=issues(:issue_01), **attributes)
