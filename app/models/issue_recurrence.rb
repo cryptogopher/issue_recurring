@@ -65,9 +65,9 @@ class IssueRecurrence < ActiveRecord::Base
       )
     },
     if: -> {
-      [:last_issue_flexible,
-       :last_issue_flexible_on_delay,
-       :last_issue_fixed_after_close].include?(self.anchor_mode.to_sym)
+      ['last_issue_flexible',
+       'last_issue_flexible_on_delay',
+       'last_issue_fixed_after_close'].include?(self.anchor_mode)
     },
     message: :only_one_in_place
   }
@@ -96,8 +96,9 @@ class IssueRecurrence < ActiveRecord::Base
   validate :validate_base_dates
   def validate_base_dates
     issue, base = self.base_dates
-    date_required = [:last_issue_flexible, :last_issue_flexible_on_delay,
-                     :date_fixed_after_close].exclude?(self.anchor_mode.to_sym)
+    date_required = ['last_issue_flexible',
+                     'last_issue_flexible_on_delay',
+                     'date_fixed_after_close'].exclude?(self.anchor_mode)
     if date_required && (base[:start] || base[:due]).blank?
       errors.add(:anchor_mode, :issue_anchor_no_blank_dates)
     end
@@ -515,19 +516,18 @@ class IssueRecurrence < ActiveRecord::Base
       while (new_dates[:start] || new_dates[:due]) < Date.tomorrow
         new_dates = self.advance(ref_dates)
         break if new_dates.nil?
-        self.create(new_dates)
+        yield(new_dates)
       end
     when :last_issue_fixed
       while (ref_dates[:start] || ref_dates[:due]) < Date.tomorrow
         new_dates = self.advance(ref_dates)
         break if new_dates.nil?
-        self.create(new_dates)
+        yield(new_dates)
         ref_dates = new_dates
       end
     when :last_issue_flexible, :last_issue_flexible_on_delay
       new_dates = self.advance(ref_dates)
-      return if new_dates.nil?
-      self.create(new_dates)
+      yield(new_dates) unless new_dates.nil?
     when :last_issue_fixed_after_close
       closed_date = ref_issue.closed_on.to_date
       barrier_date = [closed_date, ref_dates[:start] || ref_dates[:due]].max
@@ -536,7 +536,7 @@ class IssueRecurrence < ActiveRecord::Base
         break if new_dates.nil?
         ref_dates = new_dates
       end
-      self.create(ref_dates) unless ref_dates.nil?
+      yield(ref_dates) unless ref_dates.nil?
     when :date_fixed_after_close
       adj = 0
       closed_date = ref_issue.closed_on.to_date
@@ -550,13 +550,34 @@ class IssueRecurrence < ActiveRecord::Base
         break if new_dates.nil?
         adj += 1
       end
-      self.create(new_dates) unless new_dates.nil?
+      yield(new_dates) unless new_dates.nil?
     end
   end
 
   def self.renew_all
     @@log_problems = true
-    IssueRecurrence.all.map(&:renew)
+    IssueRecurrence.all.group_by { |r| r.issue_id }.each do |*, rs|
+      inplace = nil
+      rs.select { |r| r.creation_mode == 'in_place' }.map do |r|
+        r.renew do |dates|
+          if inplace.nil? || ((dates[:start] || dates[:due]) <
+                              (inplace[:dates][:start] || inplace[:dates][:due]))
+            inplace = {r: r, dates: dates}
+          end
+        end
+      end
+
+      rs.map do |r|
+        r.reload
+        r.renew do |dates|
+          if r.creation_mode == 'in_place'
+            inplace[:r].create(inplace[:dates])
+          else
+            r.create(dates)
+          end
+        end
+      end
+    end
     @@log_problems = false
   end
 
