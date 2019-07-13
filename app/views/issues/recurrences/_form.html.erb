@@ -33,11 +33,12 @@
 
 <%= javascript_tag do %>
   function creationModeChange() {
-    $('#recurrence_anchor_mode option[value*="_fixed"]').prop(
-      'disabled',
-      $('#recurrence_creation_mode option[value="in_place"]').prop('selected') ||
-      <%= (@issue.start_date || @issue.due_date).blank? ? 'true' : 'false' %>
-    )
+    $('#recurrence_anchor_mode option')
+      .filter('[value="first_issue_fixed"],[value="last_issue_fixed"]')
+      .prop('disabled',
+            $('#recurrence_creation_mode option[value="in_place"]').prop('selected') ||
+            <%= (@issue.start_date || @issue.due_date).blank? ? 'true' : 'false' %>
+           )
     $('#recurrence_anchor_mode option:selected:disabled').prop('selected', false);
     anchorModeChange();
   }

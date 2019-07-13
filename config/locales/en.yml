@@ -119,8 +119,8 @@ en:
             otherwise copied from close date'
           last_issue_fixed_after_close: 'of <b>last recurrence (recurs only after close
             date)</b>'
-          date_fixed_after_close: 'copied from <b>fixed date (recurs only after
-            last recurrence close date):</b>'
+          date_fixed_after_close: 'copied from <b>fixed date</b> (recurs only after
+            last recurrence close date):'
         anchor_to_start:
           :true: '<b>start date</b>'
           :false: '<b>due date</b>'

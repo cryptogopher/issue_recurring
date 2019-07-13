@@ -173,7 +173,7 @@ class IssueRecurrence < ActiveRecord::Base
     end
 
     delay_info = self.delay_multiplier > 0 ?
-      " #{l("#{s}.delayed_by")} <b>#{self.delay_multiplier}" \
+      "#{l("#{s}.delayed_by")} <b>#{self.delay_multiplier}" \
       " #{l("#{s}.delay_intervals.#{self.delay_mode}").pluralize(self.delay_multiplier)}" \
       "</b>" : ''
 
@@ -189,6 +189,7 @@ class IssueRecurrence < ActiveRecord::Base
       " #{l("#{s}.based_on")}" \
       " #{l("#{s}.anchor_to_start.#{self.anchor_to_start}")}" \
       " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
+      "#{" <b>#{self.anchor_date}</b>" if self.anchor_date.present?}" \
       "#{delay_info}" \
       "#{"." if self.date_limit.nil? && self.count_limit.nil?}" \
       " #{l("#{s}.until") if self.date_limit.present? || self.count_limit.present?}" \
