@@ -87,19 +87,23 @@ end
 
 def reopen_issue(issue)
   assert issue.closed?
+  closed_on = issue.closed_on
   status = issue.tracker.default_status
   put "/issues/#{issue.id}", params: {issue: {status_id: status.id}}
   issue.reload
-  assert_equal issue.status_id, status.id
+  assert_equal status.id, issue.status_id
+  assert_equal closed_on, issue.closed_on
   assert !issue.closed?
 end
 
 def close_issue(issue)
   assert !issue.closed?
+  closed_on = issue.closed_on
   status = IssueStatus.all.where(is_closed: true).first
   put "/issues/#{issue.id}", params: {issue: {status_id: status.id}}
   issue.reload
-  assert_equal issue.status_id, status.id
+  assert_equal status.id, issue.status_id
+  assert_not_nil issue.closed_on
   assert issue.closed?
 end
 

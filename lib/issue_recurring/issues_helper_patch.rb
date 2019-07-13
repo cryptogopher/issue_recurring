@@ -18,7 +18,7 @@ module IssueRecurring
         intervals = t('.mode_intervals')
         descriptions = t('.mode_descriptions')
         IssueRecurrence.modes.map do |k,v|
-          mode = intervals[k.to_sym].pluralize
+          mode = "#{intervals[k.to_sym]}(s)"
           mode += ", #{descriptions[k.to_sym]}" unless descriptions[k.to_sym].empty?
           [sanitize(mode, tags:{}), k]
         end
@@ -45,6 +45,11 @@ module IssueRecurring
         IssueRecurrence.delay_modes.map do |k,v|
           [translations[k.to_sym], k]
         end
+      end
+
+      def limit_mode_options
+        translations = t('.limit_modes')
+        options_for_select(translations.map { |k,v| [sanitize(v, tags:{}), k] })
       end
 
       def last_recurrence(r, intro=true)

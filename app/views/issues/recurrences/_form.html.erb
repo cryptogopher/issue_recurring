@@ -4,83 +4,74 @@
   :as => :recurrence do |f| %>
 
   <p>
-    <%= f.select :creation_mode, creation_mode_options %>
-    <%= f.select :include_subtasks, include_subtasks_options %>
-    <%= t '.every' %>
-    <%= f.number_field :multiplier, min: 1, step: 1, value: 1 %>
-    <%= f.select :mode, mode_options %>
-    <%= t '.based_on' %>
-    <%= f.select :anchor_mode, anchor_mode_options %>
+    <%= f.select :creation_mode, creation_mode_options -%>
+    <%= f.select :include_subtasks, include_subtasks_options -%>
+    <%= t '.every' -%>
+    <%= f.number_field :multiplier, min: 1, step: 1, value: 1 -%>
+    <%= f.select :mode, mode_options -%>
+    <%= t '.based_on' -%>
     <% options, disabled = anchor_to_start_options %>
-    <%= f.select :anchor_to_start, options, disabled: disabled %>
-    <%= t '.delayed_by' %>
-    <%= f.number_field :delay_multiplier, min: 0, step: 1, value: 0 %>
-    <%= f.select :delay_mode, delay_mode_options %>
-    <%= "#{sanitize(t('.until'), tags:{})}:" %>
-  </p>
-  <p>
-    <%= label_tag do %>
-      <%= radio_button_tag 'limit_mode', 'never', true %>
-      <%= t '.forever' %>
-    <% end %>
-  </p>
-  <p>
-    <%= label_tag do %>
-      <%= radio_button_tag 'limit_mode', 'user_date', false %>
-      <%= f.date_field :date_limit, disabled: true, min: Date.current,
-        value: Date.current.next_month %>
-    <% end %>
-  </p>
-  <p>
-    <%= label_tag do %>
-      <%= radio_button_tag 'limit_mode', 'user_count', false %>
-      <%= f.number_field :count_limit, disabled: true, min: 1, step: 1, value: 1 %>
-      <%= t '.recurrences' %>
-    <% end %>
+    <%= f.select :anchor_to_start, options, disabled: disabled -%>
+    <%= f.select :anchor_mode, anchor_mode_options -%>
+    <%= f.date_field :anchor_date, value: Date.current -%>
+    <span id='recurrence_delay'><%= t '.delayed_by' -%></span>
+    <%= f.number_field :delay_multiplier, min: 0, step: 1, value: 0 -%>
+    <%= f.select :delay_mode, delay_mode_options -%>
+    <%= t '.until' -%>
+    <%= select_tag :limit_mode, limit_mode_options -%>
+    <%= f.date_field :date_limit, disabled: true, min: Date.current,
+      value: Date.current.next_month -%>
+    <%= f.number_field :count_limit, disabled: true, min: 1, step: 1, value: 1 -%>
+    <%= '.' -%>
   </p>
 
   <p>
-    <%= submit_tag l(:button_add) %>
-    <%= link_to_function l(:button_cancel), '$("#new-recurrence-form").hide();' %>
+    <%= submit_tag l(:button_add) -%>
+    <%= link_to_function l(:button_cancel), '$("#new-recurrence-form").hide();' -%>
   </p>
 <% end %>
 
 <%= javascript_tag do %>
   function creationModeChange() {
-    $('#recurrence_anchor_mode option[value*="_fixed"]').prop(
-      'disabled',
-      $('#recurrence_creation_mode option[value="in_place"]').prop('selected') ||
-      <%= (@issue.start_date || @issue.due_date).blank? ? 'true' : 'false' %>
-    )
+    $('#recurrence_anchor_mode option')
+      .filter('[value="first_issue_fixed"],[value="last_issue_fixed"]')
+      .prop('disabled',
+            $('#recurrence_creation_mode option[value="in_place"]').prop('selected') ||
+            <%= (@issue.start_date || @issue.due_date).blank? ? 'true' : 'false' %>
+           )
     $('#recurrence_anchor_mode option:selected:disabled').prop('selected', false);
     anchorModeChange();
   }
   $('#new-recurrence-form').on('click', '#recurrence_creation_mode', creationModeChange);
 
   function anchorModeChange() {
-    $('#recurrence_delay_mode').prop(
-      'disabled',
-      $('#recurrence_anchor_mode option:selected').val().includes('_flexible')
-    );
-    $('#recurrence_delay_multiplier').prop(
-      'disabled',
-      $('#recurrence_anchor_mode option:selected').val().includes('_flexible')
-    );
-    limitModeChange();
+    if ( $('#recurrence_anchor_mode option:selected').val().includes('_flexible') ) {
+      $('[id^=recurrence_delay]').prop('disabled', true).fadeOut(250);
+    } else {
+      $('[id^=recurrence_delay]').prop('disabled', false).fadeIn(250);
+    }
+    if ( $('#recurrence_anchor_mode option:selected').val() == 'date_fixed_after_close' ) {
+      $('#recurrence_anchor_date').prop('disabled', false).fadeIn(250);
+    } else {
+      $('#recurrence_anchor_date').prop('disabled', true).fadeOut(250);
+    }
   }
   $('#new-recurrence-form').on('click', '#recurrence_anchor_mode', anchorModeChange);
 
   function limitModeChange() {
-    $('#recurrence_date_limit').prop(
-      'disabled',
-      !$('#limit_mode_user_date').prop('checked')
-    );
-    $('#recurrence_count_limit').prop(
-      'disabled',
-      !$('#limit_mode_user_count').prop('checked')
-    );
+    if ( $('#limit_mode option:selected').val() == 'forever' ) {
+      $('[id$=_limit]').prop('disabled', true).fadeOut(250);
+    }
+    if ( $('#limit_mode option:selected').val() == 'fixed_date' ) {
+      $('[id$=_count_limit]').prop('disabled', true).hide();
+      $('[id$=_date_limit]').prop('disabled', false).fadeIn(250);
+    }
+    if ( $('#limit_mode option:selected').val() == 'count' ) {
+      $('[id$=_date_limit]').prop('disabled', true).hide();
+      $('[id$=_count_limit]').prop('disabled', false).fadeIn(250);
+    }
   }
-  $('#new-recurrence-form').on('click', 'label [name="limit_mode"]', limitModeChange);
+  $('#new-recurrence-form').on('click', '#limit_mode', limitModeChange);
 
   $(document).ready(function() {
     creationModeChange();
