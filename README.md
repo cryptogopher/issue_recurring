@@ -18,7 +18,7 @@ Plugin for Redmine to configure issue recurring according to a schedule. The plu
 
 The most notable features of this plugin include:
 * recurrence creation/deletion directly from form on issue page (no separate page, no page reloading when creating/deleting recurrences),
-* multiple recurrence schedules per issue possible (except for in-place modification),
+* multiple recurrence schedules per issue possible (except for in-place recurrences not based on fixed date),
 * specification of recurrence frequency by means of:
   * days,
   * working days (according to non-working week days specified in Redmine settings),
@@ -28,7 +28,7 @@ The most notable features of this plugin include:
   * months with dates keeping the same working day (according to non-working week days specified in Redmine settings) from the beginning or to the end of the month (e.g. 2nd working day of month or 1st to last working day of month),
   * years,
 * creation of next issue recurrence as a copy of: first issue; last recurrence; without copying, by in-place modification,
-* next recurrence scheduling based on: original issue dates; last recurrence dates; close date of last recurrence; last recurrence dates if closed on time or close date otherwise,
+* next recurrence scheduling based on: original issue dates; last recurrence dates; close date of last recurrence; last recurrence dates if closed on time or close date otherwise; last recurrence dates but only after it has been closed; fixed date after last recurrence has been closed,
 * ability to specify recurrence based on start or due date; for recurrence based on close date: ability to specify which of these dates is inferred from close date,
 * updating both start and due dates according to schedule (if specified),
 * ability to recur with or without subtasks,
@@ -43,6 +43,16 @@ The most notable features of this plugin include:
 
 ## Changelog
 
+### 1.3
+
+ * added 2 new scheduling algorithms:
+ ** based on last recurrence dates, but recurs only after last recurrence has been closed (i.e. after its close date),
+ ** based on fixed date configured separately from issue's own start/due dates; recurs only after last recurrence close date; this is the only recurrence scheme that allows multiple in-place recurrence schemes for one issue (and has been introduced exactly to allow that),
+ * changed input form for recurrence creation:
+ ** recurrence limit input has been changed from radio buttons to drop-down list; it makes form more compact/consistent,
+ ** wording and order of some options has been changed to create (hopefully) more natural reading experience,
+ ** inactive form inputs now fade out and hide instead of being visible but disabled for readability.
+ 
 ### 1.2
 
 * plugin is now compatible with Redmine 4.0/Rails 5.2,
