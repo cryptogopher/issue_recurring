@@ -55,7 +55,7 @@ The most notable features of this plugin include:
  
 ### 1.2
 
-* plugin is now compatible with Redmine 4.0/Rails 5.2,
+* plugin is now compatible with Redmine 4.0/Rails 5.2, (2019-07-14: well, actually it is compatible with Redmine 4.0, but due to mistake migrations don't work with Redmine 3.4; either update to v1.3 or copy migration files from there),
 * it is now disallowed to create multiple in-place recurrence schedules for single issue. No real world scenario could justify such configuration and it might cause problems for the unwary.
 
 ### 1.1
