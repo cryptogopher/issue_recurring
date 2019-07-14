@@ -45,13 +45,13 @@ The most notable features of this plugin include:
 
 ### 1.3
 
- * added 2 new scheduling algorithms:
- ** based on last recurrence dates, but recurs only after last recurrence has been closed (i.e. after its close date),
- ** based on fixed date configured separately from issue's own start/due dates; recurs only after last recurrence close date; this is the only recurrence scheme that allows multiple in-place recurrence schemes for one issue (and has been introduced exactly to allow that),
- * changed input form for recurrence creation:
- ** recurrence limit input has been changed from radio buttons to drop-down list; it makes form more compact/consistent,
- ** wording and order of some options has been changed to create (hopefully) more natural reading experience,
- ** inactive form inputs now fade out and hide instead of being visible but disabled for readability.
+* added 2 new scheduling algorithms:
+   * based on last recurrence dates, but recurs only after last recurrence has been closed (i.e. after its close date),
+   * based on fixed date configured separately from issue's own start/due dates; recurs only after last recurrence close date; this is the only recurrence scheme that allows multiple in-place recurrence schemes for one issue (and has been introduced exactly to allow that),
+* changed input form for recurrence creation:
+   * recurrence limit input has been changed from radio buttons to drop-down list; it makes form more compact/consistent,
+   * wording and order of some options has been changed to create (hopefully) more natural reading experience,
+   * inactive form inputs now fade out and hide instead of being visible but disabled for readability.
  
 ### 1.2
 
