@@ -1,4 +1,4 @@
-# Spanish strings go here for Rails i18n
+# Spanish strings go here for Rails i18n, author: https://github.com/lupa18
 es:
   errors:
     format: '%{message}'
@@ -8,22 +8,28 @@ es:
         issue_recurrence:
           attributes:
             issue:
-              insufficient_privileges: 'no tienes permisos suficientes para editar la recurrencia de esta petición'
+              insufficient_privileges: 'no tienes permisos suficientes para editar la
+                recurrencia de esta petición'
             anchor_mode:
-              close_anchor_no_delay: 'el retraso no puede ser especificado para recurrencias basadas en fecha de cierre'
-              issue_anchor_no_blank_dates: 'recurrencias basadas en asunto o fechas de última ocurrencia, no pueden ser creadas cuando ambas fechas (inicio y fin) están en blanco'
+              close_anchor_no_delay: 'el retraso no puede ser especificado para recurrencias
+                basadas en fecha de cierre'
+              issue_anchor_no_blank_dates: 'recurrencias basadas en asunto o fechas de
+                última ocurrencia, no pueden ser creadas cuando ambas fechas (inicio y fin)
+                están en blanco'
               in_place_closed_only: 'solo recurrencias dependientes de fecha de cierre pueden
                 modificar una petición in situ'
-              date_anchor_in_place_only: 'recurrencias basadas en fechas fijas pueden ser utilizadas para modificación in-situ solamente'
+              date_anchor_in_place_only: 'recurrencias basadas en fechas fijas pueden ser
+                utilizadas para modificación in-situ solamente'
             creation_mode:
               only_one_in_place: 'solamente una recurrencia puede ser programada in situ'
             anchor_to_start:
-              start_mode_requires_date: 'recurrencias basadas en fecha de inicio no pueden ser creadas para
-                peticiones sin fecha de inicio'
-              due_mode_requires_date: 'recurrencias basadas en fecha de fin no pueden ser creadas para
-                peticiones sin fecha de fin'
+              start_mode_requires_date: 'recurrencias basadas en fecha de inicio no pueden
+                ser creadas para peticiones sin fecha de inicio'
+              due_mode_requires_date: 'recurrencias basadas en fecha de fin no pueden ser
+                creadas para peticiones sin fecha de fin'
             date_limit:
-              not_in_future: 'el límite de fecha para una recurrencia proporcionada por el usuario debe ser futuro'
+              not_in_future: 'el límite de fecha para una recurrencia proporcionada por el
+                usuario debe ser futuro'
   project_menu_caption: 'Recurrencias'
   journal_warning: "<b>Advertencia</b>: no se puede renovar recurrencia, %{msg}."
   settings:
@@ -31,9 +37,11 @@ es:
       author: 'Establecer autor para nueva recurrencia a'
       author_unchanged: 'el autor de la petición original'
       keep_assignee: 'Conservar asignación de recurrencia anterior'
-      keep_assignee_hint: 'si no está marcado, serán aplicadas las reglas de asignación por defecto'
+      keep_assignee_hint: 'si no está marcado, serán aplicadas las reglas de asignación por
+        defecto'
       add_journal: 'Agregar una entrada de registro cuando se renueve la recurrencia'
-      add_journal_hint: 'el registro solo se agrega en la petición referenciada (no en la nueva copia)'
+      add_journal_hint: 'el registro solo se agrega en la petición referenciada (no en la
+        nueva copia)'
   issue_recurrences:
     index:
       heading: 'Recurrencias de petición'
@@ -111,9 +119,12 @@ es:
           first_issue_fixed: 'de esta <b>petición</b>'
           last_issue_fixed: 'de la <b>última recurrencia</b>'
           last_issue_flexible: 'copiada de la <b>fecha de cierre de la úlimta recurrencia</b>'
-          last_issue_flexible_on_delay: 'copiada de la <b>última recurrencia si se cerró a tiempo</b>, o de la fecha de cierre'
-          last_issue_fixed_after_close: 'de la <b>última recurrencia (se crea solo después de la fecha de cierre)</b>'
-          date_fixed_after_close: 'copiada desde <b>fecha fija</b> (se crea solo después de  la fecha de cierre de la última recurrencia):'
+          last_issue_flexible_on_delay: 'copiada de la <b>última recurrencia si se cerró a
+            tiempo,</b> o de la fecha de cierre'
+          last_issue_fixed_after_close: 'de la <b>última recurrencia (se crea solo después
+            de la fecha de cierre)</b>'
+          date_fixed_after_close: 'copiada desde <b>fecha fija</b> (se crea solo después de
+            la fecha de cierre de la última recurrencia):'
         anchor_to_start:
           :true: '<b>fecha inicio</b>'
           :false: '<b>fecha fin</b>'
@@ -132,3 +143,4 @@ es:
           fixed_date: '<b>fecha fija (incluída):</b>'
           count: '<b>número de recurrencias</b> alcance:'
         recurrence: 'recurrencia'
+
