@@ -1,5 +1,5 @@
-# English strings go here for Rails i18n
-en:
+# Spanish strings go here for Rails i18n
+es:
   errors:
     format: '%{message}'
   activerecord:
@@ -10,11 +10,11 @@ en:
             issue:
               insufficient_privileges: 'no tienes permisos suficientes para editar la recurrencia de esta petición'
             anchor_mode:
-              delay_fixed_only: 'el retraso no puede ser especificado para recurrencias basadas en fecha de cierre'
-              blank_dates_flexible_only: 'solo recurrencias basadas en fecha de cierre
-                pueden ser creadas para peticiones con ambas fechas (inicio y fin) en blanco'
-              in_place_flexible_only: 'solo recurrencias basadas en fechas de cierre pueden
+              close_anchor_no_delay: 'el retraso no puede ser especificado para recurrencias basadas en fecha de cierre'
+              issue_anchor_no_blank_dates: 'recurrencias basadas en asunto o fechas de última ocurrencia, no pueden ser creadas cuando ambas fechas (inicio y fin) están en blanco'
+              in_place_closed_only: 'solo recurrencias dependientes de fecha de cierre pueden
                 modificar una petición in situ'
+              date_anchor_in_place_only: 'recurrencias basadas en fechas fijas pueden ser utilizadas para modificación in-situ solamente'
             creation_mode:
               only_one_in_place: 'solamente una recurrencia puede ser programada in situ'
             anchor_to_start:
@@ -51,6 +51,8 @@ en:
         last_issue_fixed: 'última petición'
         last_issue_flexible: 'última petición cerrada como'
         last_issue_flexible_on_delay: 'última petición si se retrasa como'
+        last_issue_fixed_after_close: 'última petición (después de fecha de cierre) como'
+        date_fixed_after_close: 'fecha fija (después de fecha de cierre) como'
   issues:
     issue_recurrences_hook:
       recurrences: 'Recurrencias'
@@ -106,16 +108,16 @@ en:
           yearly: ''
         based_on: 'basada en'
         anchor_modes:
-          first_issue_fixed: 'esta <b>petición</b>'
-          last_issue_fixed: '<b>última recurrencia</b>'
-          last_issue_flexible: '<b>fecha de fin de la última recurrencia</b>
-            - la próxima se creará solo cuando cierre la anterior - por'
-          last_issue_flexible_on_delay: '<b>última fecha de recurrencia si se cierra a tiempo,</b>
-            de otro modo por fecha de fin'
+          first_issue_fixed: 'de esta <b>petición</b>'
+          last_issue_fixed: 'de la <b>última recurrencia</b>'
+          last_issue_flexible: 'copiada de la <b>fecha de cierre de la úlimta recurrencia</b>'
+          last_issue_flexible_on_delay: 'copiada de la <b>última recurrencia si se cerró a tiempo</b>, o de la fecha de cierre'
+          last_issue_fixed_after_close: 'de la <b>última recurrencia (se crea solo después de la fecha de cierre)</b>'
+          date_fixed_after_close: 'copiada desde <b>fecha fija</b> (se crea solo después de  la fecha de cierre de la última recurrencia):'
         anchor_to_start:
           :true: '<b>fecha inicio</b>'
           :false: '<b>fecha fin</b>'
-        delayed_by: 'restradada por'
+        delayed_by: ', retrasada por'
         delay_modes:
           day: 'día(s)'
           week: 'semana(s)'
@@ -124,7 +126,9 @@ en:
           day: 'día'
           week: 'semana'
           month: 'mes'
-        until: 'y repetir <b>hasta</b>'
-        forever: 'siempre'
-        recurrences: 'recurrencia(s)'
+        until: 'y repetir hasta'
+        limit_modes:
+          forever: '<b>siempre</b>'
+          fixed_date: '<b>fecha fija (incluída):</b>'
+          count: '<b>número de recurrencias</b> alcance:'
         recurrence: 'recurrencia'
