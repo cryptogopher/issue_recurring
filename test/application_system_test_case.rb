@@ -1,6 +1,5 @@
 # Required for Puma to start in test env
 ENV["RACK_ENV"] = "test"
-# FIXME: Check Rails version and exit if system tests not supported
 
 # Load the Redmine helper
 require File.expand_path('../../../../test/application_system_test_case', __FILE__)
@@ -17,6 +16,21 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
   driven_by :selenium, using: :headless_firefox, screen_size: [1280, 1024], options: {
     profile: profile
   }
+
+  fixtures :issues, :issue_statuses, :issue_priorities,
+    :users, :email_addresses, :trackers, :projects, 
+    :roles, :members, :member_roles, :enabled_modules, :workflow_transitions
+
+  class Date < ::Date
+    def self.today
+      # Due to its nature, Date.today may sometimes be equal to Date.yesterday/tomorrow.
+      # https://rails.lighthouseapp.com/projects/8994-ruby-on-rails/tickets
+      # /6410-dateyesterday-datetoday
+      # For this reason WE SHOULD NOT USE Date.today anywhere in the code and use
+      # Date.current instead.
+      raise "Date.today should not be called!"
+    end
+  end
 
   def logout_user
     visit signout_path

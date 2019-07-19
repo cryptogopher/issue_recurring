@@ -1,21 +1,6 @@
 require File.expand_path('../../application_system_test_case', __FILE__)
 
 class IssueRecurrencesTest < IssueRecurringSystemTestCase
-  fixtures :issues, :issue_statuses, :issue_priorities,
-    :users, :email_addresses, :trackers, :projects, 
-    :roles, :members, :member_roles, :enabled_modules, :workflow_transitions
-
-  class Date < ::Date
-    def self.today
-      # Due to its nature, Date.today may sometimes be equal to Date.yesterday/tomorrow.
-      # https://rails.lighthouseapp.com/projects/8994-ruby-on-rails/tickets
-      # /6410-dateyesterday-datetoday
-      # For this reason WE SHOULD NOT USE Date.today anywhere in the code and use
-      # Date.current instead.
-      raise "Date.today should not be called!"
-    end
-  end
-
   def setup
     super
 
