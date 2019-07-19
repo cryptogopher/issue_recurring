@@ -1,23 +1,9 @@
+# Required for Puma to start in test env
+ENV["RACK_ENV"] = "test"
+
 # Load the Redmine helper
 require File.expand_path(File.dirname(__FILE__) + '/../../../test/test_helper')
-
-ActiveRecord::FixtureSet.create_fixtures(
-  File.dirname(__FILE__) + '/fixtures/',
-  [
-    :issues,
-    :issue_statuses,
-    :issue_priorities,
-    :users,
-    :email_addresses,
-    :trackers,
-    :projects,
-    :roles,
-    :members,
-    :member_roles,
-    :enabled_modules,
-    :workflow_transitions
-  ]
-)
+require File.expand_path('../fixture_loader', __FILE__)
 
 def logout_user
   post signout_path
