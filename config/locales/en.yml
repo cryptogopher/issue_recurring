@@ -1,5 +1,6 @@
 # English strings go here for Rails i18n
 en:
+  field_recurrence_of: 'Recurrence of'
   errors:
     format: '%{message}'
   activerecord:
