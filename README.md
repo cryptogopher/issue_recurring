@@ -16,6 +16,8 @@ Plugin for Redmine to configure issue recurring according to a schedule. The plu
 
 ## Features
 
+Greatest emphasis in development is put on reliability. Scheduling algorithms are tested for accuracy. During use unusual situations are reported to user in a visible manner. Avoiding regressions and eliminating bugs is valued over new functionalities.
+
 The most notable features of this plugin include:
 * recurrence creation/deletion directly from form on issue page (no separate page, no page reloading when creating/deleting recurrences),
 * multiple recurrence schedules per issue possible (except for in-place recurrences not based on fixed date),
