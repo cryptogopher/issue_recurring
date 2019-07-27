@@ -569,13 +569,9 @@ class IssueRecurrence < ActiveRecord::Base
       end
 
       rs.map do |r|
-        r.reload
         r.renew do |dates|
-          if r.creation_mode == 'in_place'
-            inplace[:r].create(inplace[:dates])
-          else
-            r.create(dates)
-          end
+          next if (r.creation_mode == 'in_place') && (r != inplace[:r])
+          r.create(dates)
         end
       end
     end
