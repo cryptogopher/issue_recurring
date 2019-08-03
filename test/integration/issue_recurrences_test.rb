@@ -147,7 +147,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     anchor_modes.each_slice(2) do |params, delay_allowed|
       params.update(anchor_to_start: true,
                     mode: :monthly_day_from_first,
-                    delay_mode: :day,
+                    delay_mode: :days,
                     delay_multiplier: 10)
       if delay_allowed
         create_recurrence(params)
@@ -1292,7 +1292,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       create_recurrence(anchor_mode: anchor_mode,
                         anchor_to_start: true,
                         mode: :monthly_day_from_first,
-                        delay_mode: :day,
+                        delay_mode: :days,
                         delay_multiplier: 10)
 
       renew_all(0)

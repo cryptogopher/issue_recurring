@@ -38,9 +38,9 @@ class IssueRecurrence < ActiveRecord::Base
   MONTHLY_MODES = modes.keys.select { |m| m.include?('monthly_') }
 
   enum delay_mode: {
-    day: 0,
-    week: 1,
-    month: 2
+    days: 0,
+    weeks: 1,
+    months: 2
   }
 
   validates :issue, presence: true, associated: true
@@ -129,7 +129,7 @@ class IssueRecurrence < ActiveRecord::Base
       self.anchor_to_start = false if self.anchor_to_start.nil?
       self.mode ||= :monthly_day_from_first
       self.multiplier ||= 1
-      self.delay_mode ||= :day
+      self.delay_mode ||= :days
       self.delay_multiplier ||= 0
       self.include_subtasks = false if self.include_subtasks.nil?
     end
@@ -150,7 +150,7 @@ class IssueRecurrence < ActiveRecord::Base
   def to_s
     s = 'issues.recurrences.form'
 
-    ref_dates = self.next_dates
+    *, ref_dates = self.reference_dates
     ref_description = ''
     if ref_dates.nil? || FLEXIBLE_ANCHORS.include?(self.anchor_mode)
       ref_description = " #{l("#{s}.mode_descriptions.#{self.mode}")}"
@@ -200,13 +200,11 @@ class IssueRecurrence < ActiveRecord::Base
   # Advance 'dates' according to recurrence mode and adjustment (+/- # of periods).
   # Return advanced 'dates' or nil if recurrence limit reached.
   def advance(adj=0, **dates)
-    return nil if self.count_limit.present? && self.count >= self.count_limit
+    return nil if self.count_limit.present? && (self.count + adj) >= self.count_limit
 
     shift = if self.first_issue_fixed? || self.date_fixed_after_close?
-              self.delay(dates) if self.count + adj >= 0
               self.multiplier*(self.count + 1 + adj)
             else
-              self.delay(dates) if self.count == 0
               self.multiplier
             end
 
@@ -292,6 +290,13 @@ class IssueRecurrence < ActiveRecord::Base
       dates = self.offset(target_date, label, dates)
     end
 
+    case self.anchor_mode.to_sym
+    when :first_issue_fixed, :date_fixed_after_close
+      dates = self.delay(dates) if self.count + 1 + adj > 0
+    when :last_issue_fixed, :last_issue_fixed_after_close
+      dates = self.delay(dates) if self.count + adj == 0
+    end
+
     return nil if self.date_limit.present? && (dates[:start] || dates[:due]) > self.date_limit
 
     dates
@@ -340,25 +345,14 @@ class IssueRecurrence < ActiveRecord::Base
     end
   end
 
-  # Delay 'dates' in-place according to delay mode.
+  # Delay 'dates' according to delay mode.
   def delay(dates)
-    dates if self.delay_multiplier == 0
-    dates.each do |label, date|
-      next if date.nil?
-      dates[label] +=
-        case self.delay_mode.to_sym
-        when :day
-          self.delay_multiplier.days
-        when :week
-          self.delay_multiplier.weeks
-        when :month
-          self.delay_multiplier.months
-        end
-    end
+    return dates if self.delay_multiplier == 0
+    delay = self.delay_multiplier.send(self.delay_mode)
+    dates.map { |label, date| [label, date ? date + delay : date] }.to_h
   end
 
-  # Create next recurrence issue. Assumes that 'advance' will return valid date
-  # (so advance must be called first and checked for return value).
+  # Create next recurrence issue at given dates.
   def create(dates)
     ref_issue = self.last_issue if self.creation_mode == 'copy_last'
     ref_issue ||= self.issue
@@ -409,7 +403,8 @@ class IssueRecurrence < ActiveRecord::Base
     User.current = prev_user
   end
 
-  # Return reference issue and base dates for used for calculation of reference dates.
+  # Return reference issue and base dates used for calculation of reference dates.
+  # Base dates are validated for start/due date availability according to anchor_to_start.
   def base_dates
     case self.anchor_mode.to_sym
     when :first_issue_fixed
@@ -426,8 +421,11 @@ class IssueRecurrence < ActiveRecord::Base
     [ref_issue, base_dates]
   end
 
-  # Return reference dates for next recrrence or nil if no suitable dates found.
-  def reference_dates
+  # Return reference dates for next recurrence or nil if no suitable dates found.
+  # Used by 'to_s' to display recurrence characteristics.
+  # assume_closed_at gives you predicted reference_dates assuming issue has been
+  # closed at given date.
+  def reference_dates(assume_closed_at=nil)
     ref_issue, base_dates = self.base_dates
     ref_dates = nil
 
@@ -441,8 +439,8 @@ class IssueRecurrence < ActiveRecord::Base
     when :first_issue_fixed, :last_issue_fixed
       ref_dates = base_dates
     when :last_issue_flexible
-      if ref_issue.closed?
-        closed_date = ref_issue.closed_on.to_date
+      if ref_issue.closed? || assume_closed_at
+        closed_date = assume_closed_at || ref_issue.closed_on.to_date
         ref_label = self.anchor_to_start ? :start : :due
         if (base_dates[:start] || base_dates[:due]).present?
           ref_dates = self.offset(closed_date, ref_label, base_dates)
@@ -451,8 +449,8 @@ class IssueRecurrence < ActiveRecord::Base
         end
       end
     when :last_issue_flexible_on_delay
-      if ref_issue.closed?
-        closed_date = ref_issue.closed_on.to_date
+      if ref_issue.closed? || assume_closed_at
+        closed_date = assume_closed_at || ref_issue.closed_on.to_date
         boundary_date = base_dates[:due] || base_dates[:start]
         ref_label = self.anchor_to_start ? :start : :due
         if boundary_date.present?
@@ -466,11 +464,11 @@ class IssueRecurrence < ActiveRecord::Base
         end
       end
     when :last_issue_fixed_after_close
-      if ref_issue.closed?
+      if ref_issue.closed? || assume_closed_at
         ref_dates = base_dates
       end
     when :date_fixed_after_close
-      if ref_issue.closed?
+      if ref_issue.closed? || assume_closed_at
         ref_label = self.anchor_to_start ? :start : :due
         if (base_dates[:start] || base_dates[:due]).present?
           ref_dates = self.offset(self.anchor_date, ref_label, base_dates)
@@ -481,13 +479,6 @@ class IssueRecurrence < ActiveRecord::Base
     end
 
     [ref_issue, ref_dates]
-  end
-
-  # Return predicted next recurrence dates or nil.
-  def next_dates
-    ref_issue, ref_dates = self.reference_dates
-    return nil if ref_dates.nil?
-    self.advance(ref_dates)
   end
 
   # Estimate future recurrence dates.
@@ -507,40 +498,56 @@ class IssueRecurrence < ActiveRecord::Base
   #  schedule
   #end
 
-  def renew
-    ref_issue, ref_dates = self.reference_dates
+  # Yield next recurrence dates (can yield multiple times for fixed schedules).
+  # Does not yield nil.
+  # Computing dates must assume that yield does not result in a call to 'create',
+  # i.e. IssueRecurrence fields are unchanged after yield.
+  # Dates can only be modified here by the 'advance' method. All other
+  # delays/offsets have to be incorporated in 'reference_dates'.
+  # If 'predict', return at most one future date. For close based recurrences assume
+  # issue closed today if open or return nothing if already closed.
+  def next_dates(predict)
+    ref_issue, ref_dates = self.reference_dates(predict ? Date.current : nil)
     return if ref_dates.nil?
 
     case self.anchor_mode.to_sym
     when :first_issue_fixed
       new_dates = self.advance(-1, ref_dates)
+      adj = 0
       while (new_dates[:start] || new_dates[:due]) < Date.tomorrow
-        new_dates = self.advance(ref_dates)
+        new_dates = self.advance(adj, ref_dates)
         break if new_dates.nil?
-        yield(new_dates)
+        yield(new_dates) unless predict
+        adj += 1
       end
+      predicted_dates = predict ? self.advance(adj, ref_dates) : nil
+      yield(predicted_dates) if predicted_dates
     when :last_issue_fixed
+      adj = 0
       while (ref_dates[:start] || ref_dates[:due]) < Date.tomorrow
-        new_dates = self.advance(ref_dates)
+        new_dates = self.advance(adj, ref_dates)
         break if new_dates.nil?
-        yield(new_dates)
+        yield(new_dates) unless predict
         ref_dates = new_dates
+        adj += 1
       end
+      predicted_dates = predict ? self.advance(adj, ref_dates) : nil
+      yield(predicted_dates) if predicted_dates
     when :last_issue_flexible, :last_issue_flexible_on_delay
       new_dates = self.advance(ref_dates)
-      yield(new_dates) unless new_dates.nil?
+      yield(new_dates) unless new_dates.nil? || (predict && ref_issue.closed?)
     when :last_issue_fixed_after_close
-      closed_date = ref_issue.closed_on.to_date
+      closed_date = predict ? Date.current : ref_issue.closed_on.to_date
       barrier_date = [closed_date, ref_dates[:start] || ref_dates[:due]].max
       while (ref_dates[:start] || ref_dates[:due]) <= barrier_date
         new_dates = self.advance(ref_dates)
         break if new_dates.nil?
         ref_dates = new_dates
       end
-      yield(ref_dates) unless ref_dates.nil?
+      yield(ref_dates) unless ref_dates.nil? || (predict && ref_issue.closed?)
     when :date_fixed_after_close
       adj = 0
-      closed_date = ref_issue.closed_on.to_date
+      closed_date = predict ? Date.current : ref_issue.closed_on.to_date
       barrier_date = [
         closed_date,
         ref_issue.start_date || ref_issue.due_date || ref_dates[:start] || ref_dates[:due]
@@ -551,28 +558,45 @@ class IssueRecurrence < ActiveRecord::Base
         break if new_dates.nil?
         adj += 1
       end
-      yield(new_dates) unless new_dates.nil?
+      yield(new_dates) unless new_dates.nil? || (predict && ref_issue.closed?)
     end
+  end
+
+  # Depending on 'predict':
+  #  = false: give next recurrence dates for all issue schedules, where renewal is due NOW,
+  #  = true: predict 1 recurrence ahead, assuming issue closed today for non-closed
+  #    close based schedules.
+  # Return hash: {r1 => dates_array1, r2 => dates_array2, ...}
+  def self.issue_dates(issue, predict=false)
+    inplace = nil
+    result = Hash.new { |h,k| h[k] = [] }
+
+    issue.recurrences.each do |r|
+      r.next_dates(predict) do |dates|
+        if (r.creation_mode == 'in_place')
+          current_date = dates[:start] || dates[:due]
+          earliest_date = inplace[:dates][:start] || inplace[:dates][:due] if inplace
+          inplace = {r: r, dates: dates} if inplace.nil? || (current_date < earliest_date)
+        else
+          result[r] << dates
+        end
+      end
+    end
+
+    result[inplace[:r]] << inplace[:dates] if inplace
+    result
+  end
+
+  def self.recurrences_dates(rs, predict=false)
+    issues = rs.map { |r| r.issue }.uniq
+    issues.map! { |issue| self.issue_dates(issue, predict) }.reduce(:merge)
   end
 
   def self.renew_all
     @@log_problems = true
-    IssueRecurrence.all.group_by { |r| r.issue_id }.each do |*, rs|
-      inplace = nil
-      rs.select { |r| r.creation_mode == 'in_place' }.map do |r|
-        r.renew do |dates|
-          if inplace.nil? || ((dates[:start] || dates[:due]) <
-                              (inplace[:dates][:start] || inplace[:dates][:due]))
-            inplace = {r: r, dates: dates}
-          end
-        end
-      end
-
-      rs.map do |r|
-        r.renew do |dates|
-          next if (r.creation_mode == 'in_place') && (r != inplace[:r])
-          r.create(dates)
-        end
+    IssueRecurrence.select(:issue_id).distinct.includes(:issue).each do |r|
+      self.issue_dates(r.issue).each do |recurrence, dates_list|
+        dates_list.each { |dates| recurrence.create(dates) }
       end
     end
     @@log_problems = false

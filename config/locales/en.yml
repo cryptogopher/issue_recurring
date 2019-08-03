@@ -43,9 +43,10 @@ en:
     index:
       heading: 'Issue recurrences'
       issue: 'Issue'
-      last_recurrence: 'Last recurrence'
       mode: 'Every'
-      next_recurrence: 'Next recurrence'
+      last_recurrence: 'Last'
+      next_recurrence: 'Next'
+      predicted_recurrence: 'Predicted'
       include_subtasks: 'Subtasks?'
       creation_mode: 'Create'
       anchor_mode: 'Based on'
@@ -67,6 +68,7 @@ en:
       index:
         last_recurrence: 'Last:'
         next_recurrence: 'Next:'
+        predicted_recurrence: 'Predicted:'
       details:
       form:
         creation_modes:
@@ -127,13 +129,13 @@ en:
           :false: '<b>due date</b>'
         delayed_by: ', delayed by'
         delay_modes:
-          day: 'day(s)'
-          week: 'week(s)'
-          month: 'month(s)'
+          days: 'day(s)'
+          weeks: 'week(s)'
+          months: 'month(s)'
         delay_intervals:
-          day: 'day'
-          week: 'week'
-          month: 'month'
+          days: 'day'
+          weeks: 'week'
+          months: 'month'
         until: 'and repeat until'
         limit_modes:
           forever: '<b>forever</b>'
