@@ -1284,30 +1284,74 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_renew_anchor_mode_fixed_with_delay
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+  def test_renew_with_delay
+    configs = [
+      {anchor_mode: :first_issue_fixed},
+      [{start: Date.new(2019,10,25), due: Date.new(2019,10,30)}],
+      [
+        {start: Date.new(2019,11,25), due: Date.new(2019,11,30)},
+        {start: Date.new(2019,12,25), due: Date.new(2019,12,30)}
+      ],
 
-    [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
-      travel_to(Date.new(2018,9,14))
-      create_recurrence(anchor_mode: anchor_mode,
-                        anchor_to_start: true,
-                        mode: :monthly_day_from_first,
-                        delay_mode: :days,
-                        delay_multiplier: 10)
+      {anchor_mode: :last_issue_fixed},
+      [{start: Date.new(2019,10,25), due: Date.new(2019,10,30)}],
+      [
+        {start: Date.new(2019,11,25), due: Date.new(2019,11,30)},
+        {start: Date.new(2019,12,25), due: Date.new(2019,12,30)}
+      ],
 
+      {anchor_mode: :last_issue_fixed_after_close},
+      [{start: Date.new(2019,10,25), due: Date.new(2019,10,30)}],
+      [{start: Date.new(2019,11,25), due: Date.new(2019,11,30)}],
+
+      {anchor_mode: :date_fixed_after_close, anchor_date: Date.new(2019,9,15),
+       creation_mode: :in_place},
+      [{start: Date.new(2019,10,25), due: Date.new(2019,10,30)}],
+      [{start: Date.new(2019,11,25), due: Date.new(2019,11,30)}],
+    ]
+
+    configs.each_slice(3) do |r_params, renew1, renew2|
+      reopen_issue(@issue1) if @issue1.closed?
+      @issue1.update!(start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20))
+
+      r_params.update(anchor_to_start: true,
+                      mode: :monthly_day_from_first,
+                      delay_mode: :days,
+                      delay_multiplier: 10)
+      travel_to(Date.new(2019,9,14))
+      r = create_recurrence(r_params)
       renew_all(0)
-      travel_to(Date.new(2018,9,15))
-      r1 = renew_all(1)
-      assert_equal Date.new(2018,10,25), r1.start_date
-      assert_equal Date.new(2018,10,30), r1.due_date
 
-      travel_to(Date.new(2018,10,24))
+      close_issue(@issue1) if r_params[:anchor_mode].to_s.include?("_after_close")
+      travel_to(Date.new(2019,9,15))
+      r1s = if r.in_place?
+              renew_all(0)
+              [@issue1.reload]
+            else
+              Array(renew_all(renew1.length))
+            end
+      r1s.each_with_index do |r, i|
+        assert_equal renew1[i][:start], r.start_date
+        assert_equal renew1[i][:due], r.due_date
+      end
+
+      travel_to(Date.new(2019,10,24))
       renew_all(0)
 
-      travel_to(Date.new(2018,10,25))
-      r2 = renew_all(1)
-      assert_equal Date.new(2018,11,25), r2.start_date
-      assert_equal Date.new(2018,11,30), r2.due_date
+      close_issue(r1s.last) if r_params[:anchor_mode].to_s.include?("_after_close")
+      travel_to(Date.new(2019,12,24))
+      r2s = if r.in_place?
+              renew_all(0)
+              [@issue1.reload]
+            else
+              Array(renew_all(renew2.length))
+            end
+      r2s.each_with_index do |r, i|
+        assert_equal renew2[i][:start], r.start_date
+        assert_equal renew2[i][:due], r.due_date
+      end
+
+      destroy_recurrence(r)
     end
   end
 
