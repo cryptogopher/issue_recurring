@@ -1355,6 +1355,56 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
+  def test_renew_with_delay_should_add_delay_after_mode
+    configs = [
+      {anchor_mode: :first_issue_fixed},
+      [
+        {start: Date.new(2019,3,2), due: Date.new(2019,3,4)},
+        {start: Date.new(2019,3,31), due: Date.new(2019,4,2)}
+      ],
+
+      {anchor_mode: :last_issue_fixed},
+      [
+        {start: Date.new(2019,3,2), due: Date.new(2019,3,4)},
+        {start: Date.new(2019,4,2), due: Date.new(2019,4,4)}
+      ],
+
+      {anchor_mode: :last_issue_fixed_after_close},
+      [{start: Date.new(2019,3,2), due: Date.new(2019,3,4)}],
+
+      {anchor_mode: :date_fixed_after_close, anchor_date: Date.new(2019,1,29),
+       creation_mode: :in_place},
+      [{start: Date.new(2019,3,2), due: Date.new(2019,3,4)}],
+    ]
+
+    configs.each_slice(2) do |r_params, renews|
+      reopen_issue(@issue1) if @issue1.closed?
+      @issue1.update!(start_date: Date.new(2019,1,29), due_date: Date.new(2019,1,31))
+
+      r_params.update(anchor_to_start: true,
+                      mode: :monthly_day_from_first,
+                      delay_mode: :days,
+                      delay_multiplier: 2)
+      travel_to(Date.new(2019,2,1))
+      r = create_recurrence(r_params)
+
+      close_issue(@issue1) if r_params[:anchor_mode].to_s.include?("_after_close")
+      travel_to(Date.new(2019,3,2))
+      r1s = if r.in_place?
+              renew_all(0)
+              [@issue1.reload]
+            else
+              Array(renew_all(renews.length))
+            end
+      r1s.each_with_index do |r, i|
+        assert_equal renews[i][:start], r.start_date
+        assert_equal renews[i][:due], r.due_date
+      end
+
+      destroy_recurrence(r)
+    end
+  end
+
   def test_renew_sets_recurrence_of_for_new_recurrence_and_subtask
     @issue2.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
     set_parent_issue(@issue1, @issue2)
