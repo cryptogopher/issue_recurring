@@ -1405,6 +1405,65 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
+  def test_renew_should_create_issues_independently_from_recurence_creation_order
+    # Testing following rules:
+    # - multiple in-place should recur at the time of the earliest one,
+    # - in-place and non in-place should recur based on the same reference dates
+    # (i.e. when in-place is created/applied first, its resulting dates should
+    # not be reference dates for non in-place)
+    recurrences = [
+      {anchor_mode: :first_issue_fixed, mode: :weekly, multiplier: 3,
+       delay_mode: :days, delay_multiplier: 3},
+      {anchor_mode: :last_issue_fixed, mode: :daily, multiplier: 18},
+      {anchor_mode: :last_issue_flexible, mode: :daily, multiplier: 10,
+       creation_mode: :in_place},
+      {anchor_mode: :date_fixed_after_close, mode: :weekly, multiplier: 2,
+       creation_mode: :in_place, anchor_date: Date.new(2019,7,29)},
+    ]
+
+    recurrences.permutation.each_with_index do |r_perm|
+      reopen_issue(@issue1) if @issue1.closed?
+      @issue1.update!(start_date: Date.new(2019,7,31), due_date: Date.new(2019,8,4))
+
+      travel_to(Date.new(2019,7,25))
+      rs = r_perm.map do |r_params|
+        r_params.update(anchor_to_start: true)
+        create_recurrence(r_params)
+      end
+
+      travel_to(Date.new(2019,8,20))
+      close_issue(@issue1)
+
+      travel_to(Date.new(2019,9,1))
+      irs = renew_all(4)
+      @issue1.reload
+      # 1: [2019,8,24, 2019,9,14], 2: [2019,8,18, 2019,9,5], 3: [], 4: [2019,8,28]
+      assert_equal Date.new(2019,8,26), @issue1.start_date
+      assert_equal Date.new(2019,8,30), @issue1.due_date
+      dates = [
+        {start: Date.new(2019,8,18), due: Date.new(2019,8,22)},
+        {start: Date.new(2019,8,24), due: Date.new(2019,8,28)},
+        {start: Date.new(2019,9,5), due: Date.new(2019,9,9)},
+        {start: Date.new(2019,9,14), due: Date.new(2019,9,18)},
+      ]
+      irs.sort! { |a, b| a.start_date <=> b.start_date }
+      irs.each_with_index do |r, i|
+        assert_equal dates[i][:start], r.start_date
+        assert_equal dates[i][:due], r.due_date
+      end
+
+      travel_to(Date.new(2019,8,27))
+      close_issue(@issue1)
+      renew_all(0)
+      @issue1.reload
+      # 1: [], 2: [], 3: [2019,9,6], 4: []
+      assert_equal Date.new(2019,9,6), @issue1.start_date
+      assert_equal Date.new(2019,9,10), @issue1.due_date
+
+      rs.each { |r| destroy_recurrence(r) }
+    end
+  end
+
   def test_renew_sets_recurrence_of_for_new_recurrence_and_subtask
     @issue2.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
     set_parent_issue(@issue1, @issue2)
