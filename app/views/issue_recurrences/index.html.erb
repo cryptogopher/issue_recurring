@@ -24,8 +24,8 @@
           <td class="subject"><%= issue_link(r) %></td>
           <td class="mode"><%= mode(r) %></td>
           <td class="last"><%= last_recurrence(r, false) %></td>
-          <td class="next"><%= recurrence_nexts(@next_dates[r], false) %></td>
-          <td class="next"><%= recurrence_predicts(@predicted_dates[r], false) %></td>
+          <td class="next"><%= next_recurrences(@next_dates[r], false) %></td>
+          <td class="next"><%= predicted_recurrences(@predicted_dates[r], false) %></td>
           <td class="subtasks"><%= checked_image r.include_subtasks %></td>
           <td class="creation"><%= creation_mode(r) %></td>
           <td class="anchor"><%= anchor_mode(r) %></td>

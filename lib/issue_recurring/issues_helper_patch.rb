@@ -64,14 +64,14 @@ module IssueRecurring
 
       def format_dates(dates_list)
         dates_str = dates_list.map { |dates| "#{dates[:start]} - #{dates[:due]}" }.join(", ")
-        dates_str.empty? ? ' - ' : dates_str
+        dates_str.empty? ? '-' : dates_str
       end
 
-      def recurrence_nexts(dates_list, intro=true)
+      def next_recurrences(dates_list, intro=true)
         "#{"#{t ".next_recurrence"} " if intro}#{format_dates(dates_list)}".html_safe
       end
 
-      def recurrence_predicts(dates_list, intro=true)
+      def predicted_recurrences(dates_list, intro=true)
         "#{"#{t ".predicted_recurrence"} " if intro}" \
           "#{format_dates(dates_list)}".html_safe
       end

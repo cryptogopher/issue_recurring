@@ -251,6 +251,131 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_response :ok
   end
 
+  def test_show_issue_shows_next_and_predicted_dates
+    configs = [
+      # fixed with single 'next'
+      {start_date: Date.new(2019,8,6), due_date: Date.new(2019,8,7)},
+      [
+        {anchor_mode: :first_issue_fixed, anchor_to_start: false,
+         mode: :monthly_day_from_first, multiplier: 1}
+      ],
+      Date.new(2019,8,14),
+      {
+        false => [
+          {next: ["2019-09-06 - 2019-09-07"], predicted: ["2019-10-06 - 2019-10-07"]}
+        ]
+      },
+
+      # fixed with multiple 'next' without and with date/count limits
+      {start_date: Date.new(2019,8,6), due_date: Date.new(2019,8,7)},
+      [
+        {anchor_mode: :last_issue_fixed, anchor_to_start: true,
+         mode: :weekly, multiplier: 1},
+        {anchor_mode: :last_issue_fixed, anchor_to_start: true,
+         mode: :weekly, multiplier: 1, count_limit: 2},
+        {anchor_mode: :last_issue_fixed, anchor_to_start: true,
+         mode: :weekly, multiplier: 1, count_limit: 3},
+        {anchor_mode: :last_issue_fixed, anchor_to_start: true,
+         mode: :weekly, multiplier: 1, count_limit: 5},
+        {anchor_mode: :last_issue_fixed, anchor_to_start: true,
+         mode: :weekly, multiplier: 1, date_limit: Date.new(2019,8,15)},
+        {anchor_mode: :last_issue_fixed, anchor_to_start: true,
+         mode: :weekly, multiplier: 1, date_limit: Date.new(2019,9,1)},
+        {anchor_mode: :last_issue_fixed, anchor_to_start: true,
+         mode: :weekly, multiplier: 1, date_limit: Date.new(2019,10,1)}
+      ],
+      Date.new(2019,8,22),
+      {
+        false => [
+          {next: ["2019-08-13 - 2019-08-14", "2019-08-20 - 2019-08-21",
+                  "2019-08-27 - 2019-08-28"],
+           predicted: ["2019-09-03 - 2019-09-04"]},
+          {next: ["2019-08-13 - 2019-08-14", "2019-08-20 - 2019-08-21"],
+           predicted: ["-"]},
+          {next: ["2019-08-13 - 2019-08-14", "2019-08-20 - 2019-08-21",
+                  "2019-08-27 - 2019-08-28"],
+           predicted: ["-"]},
+          {next: ["2019-08-13 - 2019-08-14", "2019-08-20 - 2019-08-21",
+                  "2019-08-27 - 2019-08-28"],
+           predicted: ["2019-09-03 - 2019-09-04"]},
+          {next: ["2019-08-13 - 2019-08-14"],
+           predicted: ["-"]},
+          {next: ["2019-08-13 - 2019-08-14", "2019-08-20 - 2019-08-21",
+                  "2019-08-27 - 2019-08-28"],
+           predicted: ["-"]},
+          {next: ["2019-08-13 - 2019-08-14", "2019-08-20 - 2019-08-21",
+                  "2019-08-27 - 2019-08-28"],
+           predicted: ["2019-09-03 - 2019-09-04"]}
+        ]
+      },
+
+      # close based
+      {start_date: Date.new(2019,8,6), due_date: Date.new(2019,8,7)},
+      [
+        {anchor_mode: :last_issue_flexible, anchor_to_start: false,
+         mode: :yearly, multiplier: 1}
+      ],
+      Date.new(2019,8,22),
+      {
+        false => [
+          {next: ["-"], predicted: ["2020-08-21 - 2020-08-22"]}
+        ],
+        true => [
+          {next: ["2020-08-21 - 2020-08-22"], predicted: ["-"]}
+        ]
+      },
+
+      # multiple in-place
+      {start_date: Date.new(2019,8,6), due_date: Date.new(2019,8,7)},
+      [
+        {anchor_mode: :last_issue_fixed_after_close, anchor_to_start: true,
+         mode: :monthly_wday_from_first, multiplier: 1,
+         creation_mode: :in_place},
+        {anchor_mode: :date_fixed_after_close, anchor_to_start: true,
+         mode: :monthly_wday_from_first, multiplier: 1,
+         creation_mode: :in_place, anchor_date: Date.new(2019,8,1)},
+        {anchor_mode: :date_fixed_after_close, anchor_to_start: true,
+         mode: :monthly_wday_from_first, multiplier: 1,
+         creation_mode: :in_place, anchor_date: Date.new(2019,8,10)}
+      ],
+      Date.new(2019,8,22),
+      {
+        false => [
+          {next: ["-"], predicted: ["-"]},
+          {next: ["-"], predicted: ["2019-09-02 - 2019-09-03"]},
+          {next: ["-"], predicted: ["-"]}
+        ],
+        true => [
+          {next: ["-"], predicted: ["-"]},
+          {next: ["2019-09-02 - 2019-09-03"], predicted: ["-"]},
+          {next: ["-"], predicted: ["-"]}
+        ]
+      },
+    ]
+
+    configs.each_slice(4) do |issue_dates, r_params, check_date, results|
+      @issue1.update!(issue_dates)
+      rs = r_params.map { |params| create_recurrence(params) }
+
+      travel_to(check_date)
+      results.each do |close, dates|
+        close_issue(@issue1) if !@issue1.closed? && close
+        reopen_issue(@issue1) if @issue1.closed? && !close
+
+        get issue_path(@issue1)
+        assert_response :ok
+        rs.each_with_index do |r, i|
+          r_next = dates[i][:next].join(", ")
+          assert_select "tr#recurrence-#{r.id} p#next", "Next: #{r_next}"
+          r_predicted = dates[i][:predicted].join(", ")
+          assert_select "tr#recurrence-#{r.id} p#predicted", "Predicted: #{r_predicted}"
+        end
+      end
+
+      rs.each { |r| destroy_recurrence(r) }
+    end
+  end
+
   def test_index_and_project_view_tab_visible_only_when_view_permission_granted
     logout_user
     log_user 'bob', 'foo'
