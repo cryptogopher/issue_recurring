@@ -376,6 +376,16 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
+  def test_show_issue_shows_description_based_on_reference_date_without_delay
+    @issue1.update!(start_date: Date.new(2019,8,15), due_date: Date.new(2019,8,20))
+    r = create_recurrence(mode: :monthly_day_from_first, multiplier: 1,
+                          delay_mode: :days, delay_multiplier: 4, anchor_to_start: true)
+
+    get issue_path(@issue1)
+    assert_response :ok
+    assert_select "tr#recurrence-#{r.id} td:nth-child(1)", /on 15th day/
+  end
+
   def test_index_and_project_view_tab_visible_only_when_view_permission_granted
     logout_user
     log_user 'bob', 'foo'
