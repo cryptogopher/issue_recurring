@@ -150,7 +150,7 @@ class IssueRecurrence < ActiveRecord::Base
   def to_s
     s = 'issues.recurrences.form'
 
-    *, ref_dates = self.reference_dates
+    *, ref_dates = self.reference_dates(assume_closed_at = Date.current)
     ref_description = ''
     if ref_dates.nil? || FLEXIBLE_ANCHORS.include?(self.anchor_mode)
       ref_description = " #{l("#{s}.mode_descriptions.#{self.mode}")}"

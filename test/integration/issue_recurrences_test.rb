@@ -378,12 +378,27 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_show_issue_shows_description_based_on_reference_date_without_delay
     @issue1.update!(start_date: Date.new(2019,8,15), due_date: Date.new(2019,8,20))
-    r = create_recurrence(mode: :monthly_day_from_first, multiplier: 1,
-                          delay_mode: :days, delay_multiplier: 4, anchor_to_start: true)
 
-    get issue_path(@issue1)
-    assert_response :ok
-    assert_select "tr#recurrence-#{r.id} td:nth-child(1)", /on 15th day/
+    # params, delay_allowed?
+    anchor_modes = [
+      {anchor_mode: :first_issue_fixed},
+      {anchor_mode: :last_issue_fixed},
+      {anchor_mode: :last_issue_fixed_after_close},
+      {anchor_mode: :date_fixed_after_close, creation_mode: :in_place,
+       anchor_date: Date.new(2019,8,15)},
+    ]
+
+    anchor_modes.each do |r_params|
+      r_params. update(mode: :monthly_day_from_first, multiplier: 1,
+                       delay_mode: :days, delay_multiplier: 4, anchor_to_start: true)
+      r = create_recurrence(r_params)
+
+      get issue_path(@issue1)
+      assert_response :ok
+      assert_select "tr#recurrence-#{r.id} td:nth-child(1)", /on 15th day/
+
+      destroy_recurrence(r)
+    end
   end
 
   def test_index_and_project_view_tab_visible_only_when_view_permission_granted
@@ -1421,6 +1436,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
   def test_renew_with_delay
     configs = [
+      # delay alone
       {anchor_mode: :first_issue_fixed},
       [{start: Date.new(2019,10,25), due: Date.new(2019,10,30)}],
       [
@@ -1443,6 +1459,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
        creation_mode: :in_place},
       [{start: Date.new(2019,10,25), due: Date.new(2019,10,30)}],
       [{start: Date.new(2019,11,25), due: Date.new(2019,11,30)}],
+
+      # delay with date/count limits
     ]
 
     configs.each_slice(3) do |r_params, renew1, renew2|
