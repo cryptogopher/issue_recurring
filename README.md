@@ -36,7 +36,7 @@ The most notable features of this plugin include:
 * ability to recur with or without subtasks,
 * ability to delay recurrence against base date to create multiple recurrences of the same frequency with different time offset (e.g. monthly recurrence on 10th, 20th and 30th day of month),
 * ability to limit recurrence by final date or recurrence count,
-* showing dates of last/next recurrence and history of recurrences,
+* showing last recurrence and dates next/predicted recurrences,
 * logging errors as an issue note when unable to renew issue recurrences (instead of logging into web-inaccessible log file),
 * permissions to view/manage recurrences managed by Redmine roles,
 * per project enabling of issue recurring plugin,
@@ -44,6 +44,13 @@ The most notable features of this plugin include:
 * specification of recurrence issue assignment: assignee can be kept unchanged from previous recurrence or set to Redmine's default.
 
 ## Changelog
+
+### 1.4
+
+* added Spanish translation, thanks to [lupa18](https://github.com/lupa18/)!,
+* introduced order independent recurrence scheduling when there is more than 1 recurrence schedule assigned to issue; this is rare configuration and situations where order does really matter are even more rare (e.g. when there is non-inplace and inplace schedule or when there are multiple inplace schedules),
+* fixed display of _Next_ recurrence dates; _Next_ dates show what recurrences will be created if the renewal process is executed _now_,
+* added display of _Predicted_ recurrence dates; _Predicted_ dates show what recurrences will be created in future given that no issue dates will change and assuming that non-closed issues will be closed today; this is to give you overview how your schedule(s) works and in future may be extended to show more than 1 future date at a time.
 
 ### 1.3
 
@@ -88,7 +95,7 @@ The most notable features of this plugin include:
    # available version, as it is most stable. But you can omit those 2 commands ang go with latest code as well.
    git -C issue_recurring/ tag
    # Doing checkout this way you can get "You are in 'detached HEAD' state." warning; it's ok to ignore it
-   git -C issue_recurring/ checkout tags/1.1
+   git -C issue_recurring/ checkout tags/1.4
    
    cd /var/lib/redmine
    bundle install
@@ -138,7 +145,7 @@ The most notable features of this plugin include:
    # choose version from this list
    git tag
    # doing checkout this way you can get "You are in 'detached HEAD' state." warning; it's ok to ignore it
-   git checkout tags/1.1
+   git checkout tags/1.4
    
    cd /var/lib/redmine
    bundle update
