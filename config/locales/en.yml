@@ -29,7 +29,7 @@ en:
                 issue without due date'
             date_limit:
               not_in_future: 'user provided recurrence limit date has to be in future'
-  project_menu_caption: 'Issue recurrences'
+  issue_recurrences_menu_caption: 'Issue recurrences'
   journal_warning: "<b>Warning</b>: can't renew recurrence, %{msg}."
   settings:
     issue_recurrences:

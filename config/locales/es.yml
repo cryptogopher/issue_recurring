@@ -30,7 +30,7 @@ es:
             date_limit:
               not_in_future: 'el límite de fecha para una recurrencia proporcionada por el
                 usuario debe ser futuro'
-  project_menu_caption: 'Recurrencias'
+  issue_recurrences_menu_caption: 'Recurrencias'
   journal_warning: "<b>Advertencia</b>: no se puede renovar recurrencia, %{msg}."
   settings:
     issue_recurrences:
