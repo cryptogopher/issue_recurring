@@ -75,7 +75,7 @@ def renew_all(count=0)
   assert_difference 'Issue.count', count do
     IssueRecurrence.renew_all
   end
-  count > 1 ? Issue.last(count) : Issue.last
+  count == 1 ? Issue.last : Issue.last(count)
 end
 
 def set_parent_issue(parent, child)

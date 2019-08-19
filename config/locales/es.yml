@@ -130,13 +130,13 @@ es:
           :false: '<b>fecha fin</b>'
         delayed_by: ', retrasada por'
         delay_modes:
-          day: 'día(s)'
-          week: 'semana(s)'
-          month: 'mes(es)'
+          days: 'día(s)'
+          weeks: 'semana(s)'
+          months: 'mes(es)'
         delay_intervals:
-          day: 'día'
-          week: 'semana'
-          month: 'mes'
+          days: 'día'
+          weeks: 'semana'
+          months: 'mes'
         until: 'y repetir hasta'
         limit_modes:
           forever: '<b>siempre</b>'

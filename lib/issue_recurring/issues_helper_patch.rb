@@ -62,10 +62,18 @@ module IssueRecurring
         s.html_safe
       end
 
-      def next_recurrence_date(r, intro=true)
-        next_dates = r.next_dates || {}
-        "#{"#{t ".next_recurrence"} " if intro}" \
-          "#{next_dates[:start]} - #{next_dates[:due]}".html_safe
+      def format_dates(dates_list)
+        dates_str = dates_list.map { |dates| "#{dates[:start]} - #{dates[:due]}" }.join(", ")
+        dates_str.empty? ? '-' : dates_str
+      end
+
+      def next_recurrences(dates_list, intro=true)
+        "#{"#{t ".next_recurrence"} " if intro}#{format_dates(dates_list)}".html_safe
+      end
+
+      def predicted_recurrences(dates_list, intro=true)
+        "#{"#{t ".predicted_recurrence"} " if intro}" \
+          "#{format_dates(dates_list)}".html_safe
       end
 
       def delete_button(r)
