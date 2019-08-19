@@ -200,7 +200,9 @@ class IssueRecurrence < ActiveRecord::Base
   # Advance 'dates' according to recurrence mode and adjustment (+/- # of periods).
   # Return advanced 'dates' or nil if recurrence limit reached.
   def advance(adj=0, **dates)
-    return nil if self.count_limit.present? && (self.count + adj) >= self.count_limit
+    adj_count = self.count + adj
+    adj_count = [self.count, adj_count].min if self.date_fixed_after_close?
+    return nil if self.count_limit.present? && adj_count >= self.count_limit
 
     shift = if self.first_issue_fixed? || self.date_fixed_after_close?
               self.multiplier*(self.count + 1 + adj)

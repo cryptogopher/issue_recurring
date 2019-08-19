@@ -1078,6 +1078,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
                else
                  Array(renew_all(r_dates.length))
                end
+          assert_equal r_dates.length, rs.length
           rs.each_with_index do |ir, i|
             if r_dates[i][:start].present?
               assert_equal r_dates[i][:start], ir.start_date
@@ -1627,6 +1628,141 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
       destroy_recurrence(r)
     end
+  end
+
+  def test_renew_with_count_limit
+    configs = [
+      {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
+      {anchor_mode: :first_issue_fixed, count_limit: 4},
+      [
+        nil, Date.new(2019,9,28),
+        [
+          {start: Date.new(2019,9,22), due: Date.new(2019,9,27)},
+          {start: Date.new(2019,9,29), due: Date.new(2019,10,4)}
+        ],
+        nil, Date.new(2019,10,28),
+        [
+          {start: Date.new(2019,10,6), due: Date.new(2019,10,11)},
+          {start: Date.new(2019,10,13), due: Date.new(2019,10,18)},
+        ],
+        nil, Date.new(2019,11,28), []
+      ],
+
+      {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
+      {anchor_mode: :first_issue_fixed, count_limit: 0},
+      [
+        nil, Date.new(2019,11,28), []
+      ],
+
+      {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
+      {anchor_mode: :last_issue_fixed, count_limit: 4},
+      [
+        nil, Date.new(2019,9,28),
+        [
+          {start: Date.new(2019,9,22), due: Date.new(2019,9,27)},
+          {start: Date.new(2019,9,29), due: Date.new(2019,10,4)}
+        ],
+        nil, Date.new(2019,10,28),
+        [
+          {start: Date.new(2019,10,6), due: Date.new(2019,10,11)},
+          {start: Date.new(2019,10,13), due: Date.new(2019,10,18)},
+        ],
+        nil, Date.new(2019,11,28), []
+      ],
+
+      {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
+      {anchor_mode: :last_issue_fixed, count_limit: 0},
+      [
+        nil, Date.new(2019,11,28), []
+      ],
+
+      {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
+      {anchor_mode: :last_issue_flexible, count_limit: 2},
+      [
+        Date.new(2019,9,28), Date.new(2019,9,28),
+        [
+          {start: Date.new(2019,9,30), due: Date.new(2019,10,5)}
+        ],
+        Date.new(2019,10,10), Date.new(2019,10,10),
+        [
+          {start: Date.new(2019,10,12), due: Date.new(2019,10,17)}
+        ],
+        Date.new(2019,11,28), Date.new(2019,11,28), []
+      ],
+
+      {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
+      {anchor_mode: :last_issue_flexible, count_limit: 0},
+      [
+        Date.new(2019,11,28), Date.new(2019,11,28), []
+      ],
+
+      {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
+      {anchor_mode: :last_issue_flexible_on_delay, count_limit: 2},
+      [
+        Date.new(2019,9,28), Date.new(2019,9,28),
+        [
+          {start: Date.new(2019,9,30), due: Date.new(2019,10,5)}
+        ],
+        Date.new(2019,10,10), Date.new(2019,10,10),
+        [
+          {start: Date.new(2019,10,12), due: Date.new(2019,10,17)}
+        ],
+        Date.new(2019,11,28), Date.new(2019,11,28), []
+      ],
+
+      {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
+      {anchor_mode: :last_issue_flexible_on_delay, count_limit: 0},
+      [
+        Date.new(2019,11,28), Date.new(2019,11,28), []
+      ],
+
+      {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
+      {anchor_mode: :last_issue_fixed_after_close, count_limit: 2},
+      [
+        Date.new(2019,9,28), Date.new(2019,9,28),
+        [
+          {start: Date.new(2019,9,29), due: Date.new(2019,10,4)}
+        ],
+        Date.new(2019,10,5), Date.new(2019,10,5),
+        [
+          {start: Date.new(2019,10,6), due: Date.new(2019,10,11)}
+        ],
+        Date.new(2019,11,28), Date.new(2019,11,28), []
+      ],
+
+      {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
+      {anchor_mode: :last_issue_fixed_after_close, count_limit: 0},
+      [
+        Date.new(2019,11,28), Date.new(2019,11,28), []
+      ],
+    ]
+
+    configs_inplace = [
+      {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
+      {anchor_mode: :date_fixed_after_close, anchor_date: Date.new(2019,9,15),
+       count_limit: 2},
+      [
+        Date.new(2019,9,28), Date.new(2019,9,28),
+        [
+          {start: Date.new(2019,10,1), due: Date.new(2019,10,6)}
+        ],
+        Date.new(2019,10,5), Date.new(2019,10,5),
+        [
+          {start: Date.new(2019,10,8), due: Date.new(2019,10,13)}
+        ],
+        Date.new(2019,11,28), Date.new(2019,11,28), []
+      ],
+
+      {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
+      {anchor_mode: :date_fixed_after_close, anchor_date: Date.new(2019,9,15),
+       count_limit: 0},
+      [
+        Date.new(2019,11,28), Date.new(2019,11,28), []
+      ],
+    ]
+
+    process_recurrences(configs, [:copy_first])
+    process_recurrences(configs_inplace, [:in_place])
   end
 
   def test_renew_should_create_issues_independently_from_recurence_creation_order
