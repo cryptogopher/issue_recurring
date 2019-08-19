@@ -544,7 +544,7 @@ class IssueRecurrence < ActiveRecord::Base
         break if new_dates.nil?
         ref_dates = new_dates
       end
-      yield(ref_dates) unless ref_dates.nil? || (predict && ref_issue.closed?)
+      yield(ref_dates) unless new_dates.nil? || (predict && ref_issue.closed?)
     when :date_fixed_after_close
       adj = 0
       closed_date = predict ? Date.current : ref_issue.closed_on.to_date
