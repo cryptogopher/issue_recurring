@@ -1,7 +1,6 @@
 # Spanish strings go here for Rails i18n, author: https://github.com/lupa18
 es:
-  errors:
-    format: '%{message}'
+  field_recurrence_of: 'Recurrence of'
   activerecord:
     errors:
       models:
@@ -46,9 +45,10 @@ es:
     index:
       heading: 'Recurrencias de petición'
       issue: 'Petición'
-      last_recurrence: 'Última recurrencia'
       mode: 'Every'
+      last_recurrence: 'Última recurrencia'
       next_recurrence: 'Próxima recurrencia'
+      predicted_recurrence: 'Predicted'
       include_subtasks: '¿Subtareas?'
       creation_mode: 'Crear'
       anchor_mode: 'Basada en'
@@ -70,6 +70,7 @@ es:
       index:
         last_recurrence: 'Última:'
         next_recurrence: 'Próxima:'
+        predicted_recurrence: 'Predicted:'
       details:
       form:
         creation_modes:

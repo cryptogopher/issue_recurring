@@ -1,6 +1,12 @@
 module IssueRecurring
   module IssuesHelperPatch
     IssuesHelper.class_eval do
+      def nameless_error_messages_for(*objects)
+        objects = objects.map {|o| o.is_a?(String) ? instance_variable_get("@#{o}") : o}
+        errors = objects.compact.map {|o| o.errors.messages.values()}.flatten
+        render_error_messages(errors)
+      end
+
       def creation_mode_options
         translations = t('.creation_modes')
         IssueRecurrence.creation_modes.map do |k,v|
