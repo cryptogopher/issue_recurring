@@ -162,12 +162,20 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   def test_create_multiple_recurrences
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    IssueRecurrence::creation_modes.each do |creation_mode|
-      IssueRecurrence::anchor_modes.each do |anchor_mode|
+    IssueRecurrence::creation_modes.each_key do |creation_mode|
+      IssueRecurrence::anchor_modes.each_key do |anchor_mode|
         params = {creation_mode: creation_mode, anchor_mode: anchor_mode}
-        params.update(anchor_date: Date.current) if anchor_mode == 'date_fixed_after_close'
+        case anchor_mode
+        when 'first_issue_fixed', 'last_issue_fixed'
+          next if creation_mode == 'in_place'
+        when 'date_fixed_after_close'
+          next if creation_mode != 'in_place'
+          params[:anchor_date] = Date.current
+        end
 
         r = create_recurrence(params)
+        # create 2nd in-place when allowed; it won't be deleted
+        create_recurrence(params) if anchor_mode == 'date_fixed_after_close'
         # only one in-place allowed
         destroy_recurrence(r) if creation_mode == 'in_place'
       end
