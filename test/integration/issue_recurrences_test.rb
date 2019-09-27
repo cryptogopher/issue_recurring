@@ -924,28 +924,56 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_renew_new_recurrences_of_closed_issue_should_not_be_closed
-    IssueRecurrence::creation_modes.each do |creation_mode|
-      @issue1.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,4))
+  def test_renew_status_of_new_recurrence_and_its_children_should_be_reset
+    IssueRecurrence::creation_modes.each_key do |creation_mode|
+      @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,4))
+      @issue3.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,9,30))
+      set_parent_issue(@issue1, @issue2) unless @issue2.parent == @issue1
+      set_parent_issue(@issue2, @issue3) unless @issue3.parent == @issue2
+
       # Issue can be open and have not nil closed_on time if it has been
       # closed+reopened in the past.
       # Issue status should be checked by closed?, not closed_on.
-      assert !@issue1.closed?
+      assert_not @issue2.closed?
+      assert_not @issue3.closed?
 
       travel_to(Date.new(2018,10,4))
-      r = create_recurrence(anchor_mode: :last_issue_flexible,
+      r = create_recurrence(@issue2,
+                            anchor_mode: :last_issue_flexible,
                             creation_mode: creation_mode,
                             mode: :weekly,
-                            multiplier: 2)
+                            multiplier: 2,
+                            include_subtasks: true)
 
-      close_issue(@issue1)
-      assert @issue1.reload.closed?
-      r1 = renew_all(1)
-      assert !r1.closed?
+      # Child issue has to be closed first
+      close_issue(@issue3)
+      close_issue(@issue2)
+      [@issue2, @issue3].map(&:reload)
+      exp_status2 = @issue2.tracker.default_status
+      exp_status3 = @issue3.tracker.default_status
+      assert_not_equal exp_status2, @issue2.status
+      assert_not_equal exp_status3, @issue3.status
+      assert @issue2.closed?
+      assert @issue3.closed?
+      parent, child = if r.in_place?
+                        renew_all(0)
+                        [@issue2, @issue3].each(&:reload)
+                      else
+                        renew_all(2)
+                      end
+      assert_equal parent, child.parent
+      assert_equal 1, parent.children.length
+      assert_equal exp_status2, parent.status
+      assert_equal exp_status3, child.status
+      assert_not parent.closed?
+      assert_not child.closed?
 
       destroy_recurrence(r)
-      reopen_issue(@issue1)
-      @issue1.reload
+      unless r.in_place?
+        reopen_issue(@issue2)
+        reopen_issue(@issue3)
+      end
+      [@issue1, @issue2, @issue3].map(&:reload)
     end
   end
 

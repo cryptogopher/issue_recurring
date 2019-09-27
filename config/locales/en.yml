@@ -19,7 +19,7 @@ en:
               date_anchor_in_place_only: 'recurrences based on fixed date can be used for
                 in-place modification only'
             creation_mode:
-              only_one_in_place: 'additional in-place recurrences are only allowed when based
+              only_one_in_place: 'additional in-place recurrences are only allowed if based
                 on fixed date'
             anchor_to_start:
               start_mode_requires_date: 'recurrence based on start date cannot be created for
