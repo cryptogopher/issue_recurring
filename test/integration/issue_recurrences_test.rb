@@ -932,56 +932,78 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def test_renew_status_of_new_recurrence_and_its_children_should_be_reset
-    IssueRecurrence::creation_modes.each_key do |creation_mode|
-      @issue2.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,4))
-      @issue3.update!(start_date: Date.new(2018,9,25), due_date: Date.new(2018,9,30))
-      set_parent_issue(@issue1, @issue2) unless @issue2.parent == @issue1
-      set_parent_issue(@issue2, @issue3) unless @issue3.parent == @issue2
+  def process_issue_tree(tree, r_issue)
+    tree.each do |p, c|
+      p.update!(start_date: Date.current, due_date: Date.current+9.days)
+      p.children.each { |i| set_parent_issue(nil, i) if c != i }
+      set_parent_issue(p, c) if c.present? && c.parent != p
+      set_parent_issue(nil, p) unless tree.has_value?(p) || p.parent.blank?
+    end
 
+    # Sort issues in child-before-parent order
+    order = []
+    tree = tree.dup
+    while !tree.empty?
+      childless = tree.select { |k,v| tree.delete(k) || true if v == nil }.keys
+      childless = [tree.shift[0]] if childless.empty?
+      tree.each { |k,v| tree[k] = nil if childless.include?(v) }
+      order += childless
+    end
+    assert_includes order, r_issue
+
+    IssueRecurrence::creation_modes.each_key do |creation_mode|
       # Issue can be open and have not nil closed_on time if it has been
       # closed+reopened in the past.
       # Issue status should be checked by closed?, not closed_on.
-      assert_not @issue2.closed?
-      assert_not @issue3.closed?
+      assert_not order.map(&:closed?).any?
 
-      travel_to(Date.new(2018,10,4))
-      r = create_recurrence(@issue2,
+      travel_to(Date.current+2.weeks)
+      r = create_recurrence(r_issue,
                             anchor_mode: :last_issue_flexible,
                             creation_mode: creation_mode,
                             mode: :weekly,
                             multiplier: 2,
                             include_subtasks: true)
+      r_count = order.index(r_issue) + 1
 
       # Child issue has to be closed first
-      close_issue(@issue3)
-      close_issue(@issue2)
-      [@issue2, @issue3].map(&:reload)
-      exp_status2 = @issue2.tracker.default_status
-      exp_status3 = @issue3.tracker.default_status
-      assert_not_equal exp_status2, @issue2.status
-      assert_not_equal exp_status3, @issue3.status
-      assert @issue2.closed?
-      assert @issue3.closed?
-      parent, child = if r.in_place?
-                        renew_all(0)
-                        [@issue2, @issue3].each(&:reload)
-                      else
-                        renew_all(2)
-                      end
-      assert_equal parent, child.parent
-      assert_equal 1, parent.children.length
-      assert_equal exp_status2, parent.status
-      assert_equal exp_status3, child.status
-      assert_not parent.closed?
-      assert_not child.closed?
+      order.each { |i| close_issue(i); assert i.reload.closed? }
+      yield(:pre_renew, order)
+      children = if r.in_place?
+                   old_attrs = order.map(&:reload).map(&:attributes)
+                   renew_all(0)
+                   new_attrs = order.map(&:reload).map(&:attributes)
+                   new_attrs.zip(old_attrs, order).map { |n, o, i| n!=o ? i : nil }.reverse
+                 else
+                   renew_all(r_count)
+                 end
+      assert_equal r_count, children.length
+      children.each { |i| assert_not i.closed? if i.present? }
+      puts creation_mode
+      yield(:post_renew, children)
 
       destroy_recurrence(r)
-      unless r.in_place?
-        reopen_issue(@issue2)
-        reopen_issue(@issue3)
+      order.reverse.each { |i| reopen_issue(i) if i.closed?; i.reload }
+    end
+  end
+
+  def test_renew_status_of_new_recurrence_and_its_children_should_be_reset
+    # FIXME: 3 cases - issue itself, issue with child, issue with child and
+    # parent
+    tree = {@issue2 => @issue3, @issue3 => nil}
+    exp_status2 = @issue2.tracker.default_status
+    exp_status3 = @issue3.tracker.default_status
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      case stage
+      when :pre_renew
+        assert_not_equal exp_status2, @issue2.status
+        assert_not_equal exp_status3, @issue3.status
+      when :post_renew
+        parent, child = issues
+        assert_equal parent, child.parent
+        assert_equal exp_status2, parent.status
+        assert_equal exp_status3, child.status
       end
-      [@issue1, @issue2, @issue3].map(&:reload)
     end
   end
 

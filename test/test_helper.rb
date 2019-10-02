@@ -79,10 +79,17 @@ def renew_all(count=0)
 end
 
 def set_parent_issue(parent, child)
-  assert_not_equal child.parent_issue_id, parent.id
-  put "/issues/#{child.id}", params: {issue: {parent_issue_id: parent.id}}
+  parent_id = parent && parent.id
+  assert_not_equal child.parent_issue_id, parent_id
+  put "/issues/#{child.id}", params: {issue: {parent_issue_id: parent_id}}
   child.reload
-  assert_equal child.parent_issue_id, parent.id
+  assert_equal child.parent_issue_id, parent_id
+end
+
+def set_done_ratio(issue, ratio)
+  put "/issues/#{issue.id}", params: {issue: {done_ratio: ratio}}
+  issue.reload
+  assert_equal issue.done_ratio, ratio
 end
 
 def reopen_issue(issue)
