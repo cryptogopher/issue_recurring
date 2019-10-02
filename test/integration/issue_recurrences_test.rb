@@ -932,7 +932,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
   end
 
-  def process_issue_tree(tree, r_issue)
+  def process_issue_tree(tree, r_issue, **r_params)
     tree.each do |p, c|
       p.update!(start_date: Date.current, due_date: Date.current+9.days)
       p.children.each { |i| set_parent_issue(nil, i) if c != i }
@@ -958,29 +958,31 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       assert_not order.map(&:closed?).any?
 
       travel_to(Date.current+2.weeks)
-      r = create_recurrence(r_issue,
-                            anchor_mode: :last_issue_flexible,
-                            creation_mode: creation_mode,
-                            mode: :weekly,
-                            multiplier: 2,
-                            include_subtasks: true)
-      r_count = order.index(r_issue) + 1
+      params = {
+        anchor_mode: :last_issue_flexible,
+        creation_mode: creation_mode,
+        mode: :weekly,
+        multiplier: 2,
+        include_subtasks: true
+      }.update(r_params)
+      r = create_recurrence(r_issue, params)
+
+      subtree_count = order.index(r_issue) + 1
+      r_count = params[:include_subtasks] ? subtree_count : 1
 
       # Child issue has to be closed first
-      order.each { |i| close_issue(i); assert i.reload.closed? }
+      order[0...subtree_count].each { |i| close_issue(i); assert i.reload.closed? }
       yield(:pre_renew, order)
-      children = if r.in_place?
-                   old_attrs = order.map(&:reload).map(&:attributes)
-                   renew_all(0)
-                   new_attrs = order.map(&:reload).map(&:attributes)
-                   new_attrs.zip(old_attrs, order).map { |n, o, i| n!=o ? i : nil }.reverse
-                 else
-                   renew_all(r_count)
-                 end
-      assert_equal r_count, children.length
-      children.each { |i| assert_not i.closed? if i.present? }
-      puts creation_mode
-      yield(:post_renew, children)
+      issues = if r.in_place?
+                 closed = order.select { |i| i.closed? }
+                 renew_all(0)
+                 closed.reject { |i| i.reload.closed? }
+               else
+                 Array(renew_all(r_count)).reverse
+               end
+      assert_equal r_count, issues.length
+      issues.each { |i| assert_not i.closed? if i.present? }
+      yield(:post_renew, issues)
 
       destroy_recurrence(r)
       order.reverse.each { |i| reopen_issue(i) if i.closed?; i.reload }
@@ -988,21 +990,61 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_status_of_new_recurrence_and_its_children_should_be_reset
-    # FIXME: 3 cases - issue itself, issue with child, issue with child and
-    # parent
+    exp_status = {}
+    [@issue1, @issue2, @issue3].each { |i| exp_status[i] = i.tracker.default_status}
+
+    # Single issue
+    tree = {@issue3 => nil}
+    process_issue_tree(tree, @issue3) do |stage, issues|
+      case stage
+      when :pre_renew
+        issues.each { |i| assert_not_equal exp_status[i], i.status }
+      when :post_renew
+        assert_equal exp_status[@issue3], issues.first.status
+      end
+    end
+
+    # Issue with child
     tree = {@issue2 => @issue3, @issue3 => nil}
-    exp_status2 = @issue2.tracker.default_status
-    exp_status3 = @issue3.tracker.default_status
     process_issue_tree(tree, @issue2) do |stage, issues|
       case stage
       when :pre_renew
-        assert_not_equal exp_status2, @issue2.status
-        assert_not_equal exp_status3, @issue3.status
+        issues.each { |i| assert_not_equal exp_status[i], i.status }
       when :post_renew
-        parent, child = issues
+        child, parent = issues
         assert_equal parent, child.parent
-        assert_equal exp_status2, parent.status
-        assert_equal exp_status3, child.status
+        assert_equal exp_status[@issue2], parent.status
+        assert_equal exp_status[@issue3], child.status
+      end
+    end
+
+    # Issue with child, recurring without subtasks
+    tree = {@issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2, include_subtasks: false) do |stage, issues|
+      case stage
+      when :pre_renew
+        issues.each { |i| assert_not_equal exp_status[i], i.status }
+      when :post_renew
+        issue = issues.first
+        assert_equal exp_status[@issue2], issue.status
+        assert_not_equal exp_status[@issue3], @issue3.reload.status
+      end
+    end
+
+    # Issue with child and parent
+    status1 = (IssueStatus.where(is_closed: false) - [exp_status[@issue1]]).first
+    @issue1.update!(status: status1)
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      case stage
+      when :pre_renew
+        issues.each { |i| assert_not_equal exp_status[i], i.status }
+      when :post_renew
+        child, parent = issues
+        assert_equal parent, child.parent
+        assert_equal status1, @issue1.reload.status
+        assert_equal exp_status[@issue2], parent.status
+        assert_equal exp_status[@issue3], child.status
       end
     end
   end
