@@ -957,7 +957,6 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       # Issue status should be checked by closed?, not closed_on.
       assert_not order.map(&:closed?).any?
 
-      travel_to(Date.current+2.weeks)
       params = {
         anchor_mode: :last_issue_flexible,
         creation_mode: creation_mode,
@@ -965,6 +964,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
         multiplier: 2,
         include_subtasks: true
       }.update(r_params)
+
+      travel_to(Date.current+2.weeks)
       r = create_recurrence(r_issue, params)
 
       subtree_count = order.index(r_issue) + 1
@@ -986,6 +987,65 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
       destroy_recurrence(r)
       order.reverse.each { |i| reopen_issue(i) if i.closed?; i.reload }
+    end
+  end
+
+  def test_renew_parent_of_new_recurrence_and_its_children_should_be_set_properly
+    # Single issue
+    tree = {@issue3 => nil}
+    process_issue_tree(tree, @issue3) do |stage, issues|
+      issue = issues.first
+      assert_nil issue.parent
+      assert_equal [], issue.children
+    end
+
+    # Issue with child
+    tree = {@issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      child, parent = issues
+      assert_nil parent.parent
+      assert_equal [child], parent.children
+      assert_equal [], child.children
+    end
+
+    # Issue with child, recurring without subtasks
+    tree = {@issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2, include_subtasks: false) do |stage, issues|
+      case stage
+      when :pre_renew
+        child, parent = issues
+        assert_nil parent.parent
+        assert_equal [child], parent.children
+        assert_equal [], child.children
+      when :post_renew
+        issue = issues.first
+        assert_nil issue.parent
+        if @issue2.reload.recurrences.first.in_place?
+          assert_equal [@issue3.reload], issue.children
+          assert_equal [], @issue3.children
+        else
+          assert_equal [], issue.children
+        end
+      end
+    end
+
+    # Issue with child and parent
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      case stage
+      when :pre_renew
+        child, parent, grandparent = issues
+        assert_nil grandparent.parent
+        assert_equal [parent], grandparent.children
+        assert_equal [child], parent.children
+        assert_equal [], child.children
+      when :post_renew
+        child, parent, grandparent = issues + [@issue1.reload]
+        assert_nil grandparent.parent
+        assert_equal [@issue2.reload, parent], grandparent.children
+        assert_equal [child], parent.children
+        assert_equal [], child.children
+      end
     end
   end
 
