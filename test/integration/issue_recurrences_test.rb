@@ -1202,16 +1202,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
           travel_to(travel)
           r = renew_all(dates.present? ? 1 : 0)
           if dates.present?
-            if dates[:start].present?
-              assert_equal dates[:start], r.start_date
-            else
-              assert_nil r.start_date
-            end
-            if dates[:due].present?
-              assert_equal dates[:due], r.due_date
-            else
-              assert_nil r.due_date
-            end
+            assert_equal [dates[:start]], [r.start_date]
+            assert_equal [dates[:due]], [r.due_date]
           end
         end
       end
@@ -1244,16 +1236,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
                end
           assert_equal r_dates.length, rs.length
           rs.each_with_index do |ir, i|
-            if r_dates[i][:start].present?
-              assert_equal r_dates[i][:start], ir.start_date
-            else
-              assert_nil ir.start_date
-            end
-            if r_dates[i][:due].present?
-              assert_equal r_dates[i][:due], ir.due_date
-            else
-              assert_nil ir.due_date
-            end
+            assert_equal [r_dates[i][:start]], [ir.start_date]
+            assert_equal [r_dates[i][:due]], [ir.due_date]
           end
         end
 
