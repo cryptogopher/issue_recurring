@@ -933,25 +933,25 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def process_issue_tree(tree, r_issue, **r_params)
-    tree.each do |p, c|
-      p.update!(start_date: Date.current, due_date: Date.current+9.days)
-      p.children.each { |i| set_parent_issue(nil, i) if c != i }
-      set_parent_issue(p, c) if c.present? && c.parent != p
-      set_parent_issue(nil, p) unless tree.has_value?(p) || p.parent.blank?
-    end
-
     # Sort issues in child-before-parent order
     order = []
-    tree = tree.dup
-    while !tree.empty?
-      childless = tree.select { |k,v| tree.delete(k) || true if v == nil }.keys
-      childless = [tree.shift[0]] if childless.empty?
-      tree.each { |k,v| tree[k] = nil if childless.include?(v) }
+    tree_copy = tree.dup
+    while !tree_copy.empty?
+      childless = tree_copy.select { |k,v| tree_copy.delete(k) || true if v == nil }.keys
+      childless = [tree_copy.shift[0]] if childless.empty?
+      tree_copy.each { |k,v| tree_copy[k] = nil if childless.include?(v) }
       order += childless
     end
     assert_includes order, r_issue
 
     IssueRecurrence::creation_modes.each_key do |creation_mode|
+      tree.each do |p, c|
+        p.update!(start_date: Date.current, due_date: Date.current+9.days)
+        p.children.each { |i| set_parent_issue(nil, i) if c != i }
+        set_parent_issue(p, c) if c.present? && c.parent != p
+        set_parent_issue(nil, p) unless tree.has_value?(p) || p.parent.blank?
+      end
+
       # Issue can be open and have not nil closed_on time if it has been
       # closed+reopened in the past.
       # Issue status should be checked by closed?, not closed_on.
@@ -986,7 +986,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       yield(:post_renew, issues)
 
       destroy_recurrence(r)
-      order.reverse.each { |i| reopen_issue(i) if i.closed?; i.reload }
+      order.reverse.each { |i| reopen_issue(i) if i.closed?; }.map(&:reload)
     end
   end
 
@@ -1042,7 +1042,11 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       when :post_renew
         child, parent, grandparent = issues + [@issue1.reload]
         assert_nil grandparent.parent
-        assert_equal [@issue2.reload, parent], grandparent.children
+        if @issue2.reload.recurrences.first.in_place?
+          assert_equal [parent], grandparent.children
+        else
+          assert_equal [@issue2.reload, parent], grandparent.children
+        end
         assert_equal [child], parent.children
         assert_equal [], child.children
       end

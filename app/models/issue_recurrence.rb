@@ -375,6 +375,7 @@ class IssueRecurrence < ActiveRecord::Base
 
       new_issue.start_date = dates[:start]
       new_issue.due_date = dates[:due]
+      new_issue.parent = ref_issue.parent
       new_issue.done_ratio = 0
       new_issue.status = new_issue.tracker.default_status
       new_issue.recurrence_of = self.issue

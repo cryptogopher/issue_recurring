@@ -80,10 +80,10 @@ end
 
 def set_parent_issue(parent, child)
   parent_id = parent && parent.id
-  assert_not_equal child.parent_issue_id, parent_id
+  assert_not_equal [parent_id], [child.parent_issue_id]
   put "/issues/#{child.id}", params: {issue: {parent_issue_id: parent_id}}
   child.reload
-  assert_equal child.parent_issue_id, parent_id
+  assert_equal [parent_id], [child.parent_issue_id]
 end
 
 def set_done_ratio(issue, ratio)
