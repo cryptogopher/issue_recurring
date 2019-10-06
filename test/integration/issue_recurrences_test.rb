@@ -20,6 +20,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     super
 
     Setting.non_working_week_days = [6, 7]
+    Setting.parent_issue_dates = 'derived'
     Setting.plugin_issue_recurring['author_id'] = 0
     Setting.plugin_issue_recurring['keep_assignee'] = false
     Setting.plugin_issue_recurring['add_journal'] = false
@@ -194,6 +195,38 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     roles.each { |role| role.remove_permission! :manage_issue_recurrences }
     refute roles.any? { |role| role.has_permission? :manage_issue_recurrences }
     create_recurrence_should_fail(error_code: :forbidden)
+  end
+
+  def test_create_creation_mode_in_place_without_subtasks_if_dates_derived_should_fail
+    set_parent_issue(@issue1, @issue2)
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    @issue2.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+
+    Setting.parent_issue_dates = 'derived'
+    errors = create_recurrence_should_fail(
+      anchor_mode: :last_issue_flexible,
+      creation_mode: :in_place,
+      include_subtasks: false
+    )
+    assert errors.added?(
+      :creation_mode,
+      errors.generate_message(:creation_mode, :derived_in_place_requires_subtasks)
+    )
+
+    Setting.parent_issue_dates = 'independent'
+    r = create_recurrence(
+      anchor_mode: :last_issue_flexible,
+      creation_mode: :in_place,
+      include_subtasks: false
+    )
+    destroy_recurrence(r)
+
+    Setting.parent_issue_dates = 'derived'
+    r = create_recurrence(
+      anchor_mode: :last_issue_flexible,
+      creation_mode: :in_place,
+      include_subtasks: true
+    )
   end
 
   def test_destroy_only_when_manage_permission_granted
@@ -1009,6 +1042,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
 
     # Issue with child, recurring without subtasks
+    Setting.parent_issue_dates = 'independent'
     tree = {@issue2 => @issue3, @issue3 => nil}
     process_issue_tree(tree, @issue2, include_subtasks: false) do |stage, issues|
       case stage
@@ -1028,6 +1062,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
         end
       end
     end
+    Setting.parent_issue_dates = 'derived'
 
     # Issue with child and parent
     tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
@@ -1083,6 +1118,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     end
 
     # Issue with child, recurring without subtasks
+    Setting.parent_issue_dates = 'independent'
     tree = {@issue2 => @issue3, @issue3 => nil}
     process_issue_tree(tree, @issue2, include_subtasks: false) do |stage, issues|
       case stage
@@ -1094,6 +1130,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
         assert_not_equal exp_status[@issue3], @issue3.reload.status
       end
     end
+    Setting.parent_issue_dates = 'derived'
 
     # Issue with child and parent
     status1 = (IssueStatus.where(is_closed: false) - [exp_status[@issue1]]).first
@@ -2493,6 +2530,67 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
       destroy_recurrence(ir)
     end
+  end
+
+  def test_renew_creation_mode_in_place_wo_subtasks_after_child_added_should_log_error
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: nil)
+
+    Setting.parent_issue_dates = 'derived'
+    assert_equal [], @issue1.children
+    r = create_recurrence(
+      anchor_to_start: true,
+      anchor_mode: :last_issue_flexible,
+      creation_mode: :in_place,
+      include_subtasks: false
+    )
+
+    travel_to(Date.new(2018,9,15))
+    close_issue(@issue1)
+    renew_all(0)
+    [@issue1, @issue2].map(&:reload)
+    assert_equal Date.new(2018,9,22), @issue1.start_date
+    assert_not @issue1.closed?
+
+
+    @issue2.update!(start_date: Date.new(2018,9,29), due_date: nil)
+    set_parent_issue(@issue1, @issue2)
+    [@issue1, @issue2].map(&:reload)
+    assert_equal Date.new(2018,9,29), @issue1.start_date
+
+    travel_to(Date.new(2018,12,2))
+    close_issue(@issue2)
+    close_issue(@issue1)
+    assert_difference 'Journal.count', 1 do
+      renew_all(0)
+    end
+    [@issue1, @issue2].map(&:reload)
+    assert Journal.last.notes.include?('dates are derived from subtasks')
+    assert_equal Date.new(2018,9,29), @issue1.start_date
+    assert @issue1.closed?
+
+
+    Setting.parent_issue_dates = 'independent'
+    renew_all(0)
+    [@issue1, @issue2].map(&:reload)
+    assert_equal Date.new(2018,12,9), @issue1.start_date
+    assert_not @issue1.closed?
+    assert @issue2.closed?
+
+
+    Setting.parent_issue_dates = 'derived'
+    [@issue1, @issue2].map(&:reload)
+    assert_equal Date.new(2018,12,9), @issue1.start_date
+    assert_equal Date.new(2018,9,29), @issue2.start_date
+    r.update!(include_subtasks: true)
+    travel_to(Date.new(2019,1,10))
+    assert @issue2.closed?
+    close_issue(@issue1)
+    renew_all(0)
+    [@issue1, @issue2].map(&:reload)
+    assert_equal Date.new(2018,11,7), @issue1.start_date
+    assert_equal Date.new(2018,11,7), @issue2.start_date
+    assert_not @issue1.closed?
+    assert_not @issue2.closed?
   end
 
   def test_deleting_first_issue_destroys_recurrence_and_nullifies_recurrence_of

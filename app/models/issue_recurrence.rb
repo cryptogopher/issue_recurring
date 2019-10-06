@@ -93,6 +93,9 @@ class IssueRecurrence < ActiveRecord::Base
   validates :anchor_to_start, inclusion: [true, false]
   validates :anchor_date, absence: {unless: -> { anchor_mode == 'date_fixed_after_close' }},
     presence: {if: -> { anchor_mode == 'date_fixed_after_close' }}
+  # Validates Issue attributes that may become invalid during IssueRecurrence lifetime.
+  # Besides being checked on IssueRecurrence validation, they should be checked
+  # every time new recurrence has to be provided.
   validate :validate_base_dates
   def validate_base_dates
     issue, base = self.base_dates
@@ -107,6 +110,9 @@ class IssueRecurrence < ActiveRecord::Base
     end
     if !self.anchor_to_start && base[:start].present? && base[:due].blank?
       errors.add(:anchor_to_start, :due_mode_requires_date)
+    end
+    if self.in_place? && include_subtasks == false && issue.dates_derived?
+      errors.add(:creation_mode, :derived_in_place_requires_subtasks)
     end
   end
   validates :mode, inclusion: modes.keys
@@ -380,7 +386,6 @@ class IssueRecurrence < ActiveRecord::Base
       new_issue.status = new_issue.tracker.default_status
       new_issue.recurrence_of = self.issue
       new_issue.default_reassign unless Setting.plugin_issue_recurring['keep_assignee']
-
       new_issue.save!
 
       if self.include_subtasks

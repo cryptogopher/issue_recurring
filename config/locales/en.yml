@@ -21,6 +21,9 @@ en:
             creation_mode:
               only_one_in_place: 'additional in-place recurrences are only allowed if based
                 on fixed date'
+              derived_in_place_requires_subtasks: 'cannot recur issue in-place without
+                subtasks if start and due dates are derived from subtasks (check
+                Administration -> Settings -> Issue tracking -> Parent tasks attributes)'
             anchor_to_start:
               start_mode_requires_date: 'recurrence based on start date cannot be created for
                 issue without start date'
