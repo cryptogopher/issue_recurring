@@ -1009,6 +1009,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
       # Child issue has to be closed first
       order[0...subtree_count].each { |i| close_issue(i); assert i.reload.closed? }
+      order[subtree_count..r_count].map(&:reload)
       yield(:pre_renew, order)
       issues = if r.in_place?
                  closed = order.select { |i| i.closed? }
@@ -1089,6 +1090,75 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
         assert_equal [], child.children
       end
     end
+  end
+
+  def test_renew_priority_of_new_recurrence_and_its_children_should_be_set_properly
+    default = IssuePriority.default
+    non_default = IssuePriority.where(is_default: false).first
+    assert_not_nil default
+    assert_not_nil non_default
+    [@issue1, @issue2, @issue3].each { |i| i.update!(priority: non_default) }
+
+    # Single issue
+    tree = {@issue3 => nil}
+    process_issue_tree(tree, @issue3) do |stage, issues|
+      issues.each { |i| assert_equal non_default, i.priority }
+    end
+
+    # Issue with child
+    tree = {@issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      case stage
+      when :pre_renew
+        child, parent = issues
+        # When parent_issue_priority == 'derived', parent is assigned default priority
+        # when all children are closed
+        assert_equal default, parent.priority
+        assert_equal non_default, child.priority
+      when :post_renew
+        issues.each { |i| assert_equal non_default, i.priority }
+      end
+    end
+
+    # Issue with child, recurring without subtasks
+    Setting.parent_issue_dates = 'independent'
+    tree = {@issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2, include_subtasks: false) do |stage, issues|
+      case stage
+      when :pre_renew
+        child, parent = issues
+        assert_equal default, parent.priority
+        assert_equal non_default, child.priority
+      when :post_renew
+        issue = issues.first
+        assert_equal default, issue.priority
+        assert_equal non_default, @issue3.reload.priority
+      end
+    end
+    Setting.parent_issue_dates = 'derived'
+
+    # Issue with child and parent
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      case stage
+      when :pre_renew
+        child, parent, grandparent = issues
+        assert_equal default, grandparent.priority
+        assert_equal default, parent.priority
+        assert_equal non_default, child.priority
+      when :post_renew
+        issues += [@issue1.reload]
+        issues.each { |i| assert_equal non_default, i.priority }
+      end
+    end
+
+    # Issue with child and parent, priority independent
+    Setting.parent_issue_priority = 'independent'
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      issues.each { |i| assert_equal non_default, i.priority }
+    end
+    Setting.parent_issue_priority = 'derived'
   end
 
   def test_renew_status_of_new_recurrence_and_its_children_should_be_reset

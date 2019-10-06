@@ -5,3 +5,11 @@ normal:
   type: IssuePriority
   active: true
   position_name: default
+
+super_low:
+  name: Super low
+  position: 2
+  is_default: false
+  type: IssuePriority
+  active: true
+  position_name: lowest
