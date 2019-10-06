@@ -40,6 +40,14 @@
             <%= (@issue.start_date || @issue.due_date).blank? ? 'true' : 'false' %>
            )
     $('#recurrence_anchor_mode option:selected:disabled').prop('selected', false);
+
+    $('#recurrence_include_subtasks option').filter('[value="false"]')
+      .prop('disabled',
+            $('#recurrence_creation_mode option[value="in_place"]').prop('selected') &&
+            <%= @issue.dates_derived? ? 'true' : 'false' %>
+           )
+    $('#recurrence_include_subtasks option:selected:disabled').prop('selected', false);
+
     anchorModeChange();
   }
   $('#new-recurrence-form').on('click', '#recurrence_creation_mode', creationModeChange);
