@@ -21,6 +21,9 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
     Setting.non_working_week_days = [6, 7]
     Setting.parent_issue_dates = 'derived'
+    Setting.parent_issue_priority = 'derived'
+    Setting.parent_issue_done_ratio = 'derived'
+    Setting.issue_done_ratio == 'issue_field'
     Setting.plugin_issue_recurring['author_id'] = 0
     Setting.plugin_issue_recurring['keep_assignee'] = false
     Setting.plugin_issue_recurring['add_journal'] = false
@@ -1015,7 +1018,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
                  Array(renew_all(r_count)).reverse
                end
       assert_equal r_count, issues.length
-      issues.each { |i| assert_not i.closed? if i.present? }
+      issues.each { |i| assert_not i.closed? }
       yield(:post_renew, issues)
 
       destroy_recurrence(r)
@@ -1148,6 +1151,81 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
         assert_equal exp_status[@issue3], child.status
       end
     end
+  end
+
+  def test_renew_done_ratio_of_new_recurrence_and_its_children_should_be_reset
+    assert Issue.use_field_for_done_ratio?
+
+    # Single issue
+    tree = {@issue3 => nil}
+    [@issue3].each { |i| i.update!(done_ratio: 60) }
+    process_issue_tree(tree, @issue3) do |stage, issues|
+      case stage
+      when :pre_renew
+        issues.each { |i| assert_not_equal 0, i.done_ratio; assert_not_nil i.done_ratio }
+      when :post_renew
+        issues.each { |i| assert_equal 0, i.done_ratio }
+      end
+    end
+
+    # Issue with child
+    tree = {@issue2 => @issue3, @issue3 => nil}
+    [@issue2, @issue3].each { |i| i.update!(done_ratio: 60) }
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      case stage
+      when :pre_renew
+        issues.each { |i| assert_not_equal 0, i.done_ratio; assert_not_nil i.done_ratio }
+      when :post_renew
+        issues.each { |i| assert_equal 0, i.done_ratio }
+      end
+    end
+
+    # Issue with child, recurring without subtasks
+    Setting.parent_issue_dates = 'independent'
+    tree = {@issue2 => @issue3, @issue3 => nil}
+    [@issue2, @issue3].each { |i| i.update!(done_ratio: 60) }
+    process_issue_tree(tree, @issue2, include_subtasks: false) do |stage, issues|
+      case stage
+      when :pre_renew
+        issues.each { |i| assert_not_equal 0, i.done_ratio; assert_not_nil i.done_ratio }
+      when :post_renew
+        issues.each { |i| assert_equal 0, i.done_ratio }
+      end
+    end
+    Setting.parent_issue_dates = 'derived'
+
+    # Issue with child and parent
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    [@issue1, @issue2, @issue3].each { |i| i.update!(done_ratio: 60) }
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      case stage
+      when :pre_renew
+        issues.each { |i| assert_not_equal 0, i.done_ratio; assert_not_nil i.done_ratio }
+      when :post_renew
+        issues.each { |i| assert_equal 0, i.done_ratio }
+        if @issue2.reload.recurrences.first.in_place?
+          assert_equal 0, @issue1.reload.done_ratio
+        else
+          # @issue1 has 2 children now: 1 closed and 1 open
+          assert_equal 50, @issue1.reload.done_ratio
+        end
+      end
+    end
+
+    # Issue with child and parent, done ratio independent
+    Setting.parent_issue_done_ratio = 'independent'
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    [@issue1, @issue2, @issue3].each { |i| i.update!(done_ratio: 60) }
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      case stage
+      when :pre_renew
+        issues.each { |i| assert_not_equal 0, i.done_ratio; assert_not_nil i.done_ratio }
+      when :post_renew
+        issues.each { |i| assert_equal 0, i.done_ratio }
+        assert_equal 60, @issue1.reload.done_ratio
+      end
+    end
+    Setting.parent_issue_done_ratio = 'derived'
   end
 
   def test_renew_creation_mode_in_place_if_issue_not_closed_should_not_recur
@@ -2535,6 +2613,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   def test_renew_creation_mode_in_place_wo_subtasks_after_child_added_should_log_error
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: nil)
 
+    # No children, recur w/o subtasks, dates derived = should recur
     Setting.parent_issue_dates = 'derived'
     assert_equal [], @issue1.children
     r = create_recurrence(
@@ -2552,6 +2631,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert_not @issue1.closed?
 
 
+    # 1 child, recur w/o subtasks, dates derived = should NOT recur
     @issue2.update!(start_date: Date.new(2018,9,29), due_date: nil)
     set_parent_issue(@issue1, @issue2)
     [@issue1, @issue2].map(&:reload)
@@ -2569,6 +2649,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert @issue1.closed?
 
 
+    # 1 child, recur w/o subtasks, dates independent = should recur
     Setting.parent_issue_dates = 'independent'
     renew_all(0)
     [@issue1, @issue2].map(&:reload)
@@ -2577,6 +2658,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     assert @issue2.closed?
 
 
+    # 1 child, recur w/ subtasks, dates derived = should recur
     Setting.parent_issue_dates = 'derived'
     [@issue1, @issue2].map(&:reload)
     assert_equal Date.new(2018,12,9), @issue1.start_date
