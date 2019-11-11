@@ -96,7 +96,7 @@ end
 def set_done_ratio(issue, ratio)
   put "/issues/#{issue.id}", params: {issue: {done_ratio: ratio}}
   issue.reload
-  assert_equal issue.done_ratio, ratio
+  assert_equal ratio, issue.done_ratio
 end
 
 def reopen_issue(issue)

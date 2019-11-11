@@ -1228,7 +1228,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
     # Single issue
     tree = {@issue3 => nil}
-    [@issue3].each { |i| i.update!(done_ratio: 60) }
+    [@issue3].each { |i| set_done_ratio(i, 60) }
     process_issue_tree(tree, @issue3) do |stage, issues|
       case stage
       when :pre_renew
@@ -1240,7 +1240,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
     # Issue with child
     tree = {@issue2 => @issue3, @issue3 => nil}
-    [@issue2, @issue3].each { |i| i.update!(done_ratio: 60) }
+    [@issue3, @issue2].each { |i| set_done_ratio(i, 60) }
     process_issue_tree(tree, @issue2) do |stage, issues|
       case stage
       when :pre_renew
@@ -1253,7 +1253,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     # Issue with child, recurring without subtasks
     Setting.parent_issue_dates = 'independent'
     tree = {@issue2 => @issue3, @issue3 => nil}
-    [@issue2, @issue3].each { |i| i.update!(done_ratio: 60) }
+    [@issue3, @issue2].each { |i| set_done_ratio(i, 60) }
     process_issue_tree(tree, @issue2, include_subtasks: false) do |stage, issues|
       case stage
       when :pre_renew
@@ -1266,7 +1266,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
 
     # Issue with child and parent
     tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
-    [@issue1, @issue2, @issue3].each { |i| i.update!(done_ratio: 60) }
+    [@issue3, @issue2, @issue1].each { |i| set_done_ratio(i, 60) }
     process_issue_tree(tree, @issue2) do |stage, issues|
       case stage
       when :pre_renew
@@ -1285,7 +1285,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     # Issue with child and parent, done ratio independent
     Setting.parent_issue_done_ratio = 'independent'
     tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
-    [@issue1, @issue2, @issue3].each { |i| i.update!(done_ratio: 60) }
+    [@issue1, @issue2, @issue3].each { |i| set_done_ratio(i, 60) }
     process_issue_tree(tree, @issue2) do |stage, issues|
       case stage
       when :pre_renew
