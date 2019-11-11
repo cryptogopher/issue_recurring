@@ -86,6 +86,13 @@ def set_parent_issue(parent, child)
   assert_equal [parent_id], [child.parent_issue_id]
 end
 
+def set_priority(issue, priority)
+  assert_not_equal priority.id, issue.priority_id
+  put "/issues/#{issue.id}", params: {issue: {priority_id: priority.id}}
+  issue.reload
+  assert_equal priority.id, issue.priority_id
+end
+
 def set_done_ratio(issue, ratio)
   put "/issues/#{issue.id}", params: {issue: {done_ratio: ratio}}
   issue.reload

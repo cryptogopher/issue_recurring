@@ -1097,7 +1097,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     non_default = IssuePriority.where(is_default: false).first
     assert_not_nil default
     assert_not_nil non_default
-    [@issue1, @issue2, @issue3].each { |i| i.update!(priority: non_default) }
+    [@issue1, @issue2, @issue3].each { |i| set_priority(i, non_default) }
 
     # Single issue
     tree = {@issue3 => nil}
