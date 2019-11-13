@@ -3,7 +3,8 @@ require File.expand_path('../../test_helper', __FILE__)
 class IssueRecurrencesTest < Redmine::IntegrationTest
   fixtures :issues, :issue_statuses, :issue_priorities,
     :users, :email_addresses, :trackers, :projects, 
-    :roles, :members, :member_roles, :enabled_modules, :workflow_transitions
+    :roles, :members, :member_roles, :enabled_modules, :workflow_transitions,
+    :custom_fields
 
   class Date < ::Date
     def self.today
@@ -1159,6 +1160,40 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       issues.each { |i| assert_equal non_default, i.priority }
     end
     Setting.parent_issue_priority = 'derived'
+  end
+
+  def test_renew_custom_fields_of_new_recurrence_and_its_children_should_be_set_properly
+    field = custom_fields(:custom_field_01)
+    [@issue1, @issue2, @issue3].each { |i| set_custom_field(i, field, i.subject.reverse) }
+
+    # Single issue
+    tree = {@issue3 => nil}
+    process_issue_tree(tree, @issue3) do |stage, issues|
+      issues.each { |i| assert_equal i.subject.reverse, i.custom_field_value(field) }
+    end
+
+    # Issue with child
+    tree = {@issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      issues.each { |i| assert_equal i.subject.reverse, i.custom_field_value(field) }
+    end
+
+    # Issue with child, recurring without subtasks
+    Setting.parent_issue_dates = 'independent'
+    tree = {@issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2, include_subtasks: false) do |stage, issues|
+      issues.each { |i| assert_equal i.subject.reverse, i.custom_field_value(field) }
+    end
+    Setting.parent_issue_dates = 'derived'
+
+    # Issue with child and parent
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      if stage == :post_renew
+        issues << @issue1.reload
+      end
+      issues.each { |i| assert_equal i.subject.reverse, i.custom_field_value(field) }
+    end
   end
 
   def test_renew_status_of_new_recurrence_and_its_children_should_be_reset

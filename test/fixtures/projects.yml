@@ -8,3 +8,4 @@ project_01:
   rgt: 2
   trackers: bug
   default_assigned_to: gopher
+  issue_custom_fields: custom_field_01

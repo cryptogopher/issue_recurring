@@ -15,7 +15,8 @@ ActiveRecord::FixtureSet.create_fixtures(
     :members,
     :member_roles,
     :enabled_modules,
-    :workflow_transitions
+    :workflow_transitions,
+    :custom_fields
   ]
 )
 
@@ -97,6 +98,16 @@ def set_done_ratio(issue, ratio)
   put "/issues/#{issue.id}", params: {issue: {done_ratio: ratio}}
   issue.reload
   assert_equal ratio, issue.done_ratio
+end
+
+def set_custom_field(issue, field, value)
+  assert_empty issue.custom_field_value(field)
+  put "/issues/#{issue.id}", params: {issue: {custom_field_values: {field.id => value}}}
+  issue.reload
+  assert_equal value, issue.custom_field_value(field)
+end
+
+def set_time_entry(issue)
 end
 
 def reopen_issue(issue)

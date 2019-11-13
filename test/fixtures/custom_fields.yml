@@ -1,0 +1,11 @@
+custom_field_01:
+  type: IssueCustomField
+  name: Extra field
+  field_format: string
+  regexp: ""
+  is_required: false
+  is_for_all: true
+  is_filter: true
+  position: 1
+  default_value: ""
+  editable: true

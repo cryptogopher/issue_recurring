@@ -3,3 +3,4 @@ bug:
   is_in_chlog: true
   default_status: new
   position: 1
+  custom_fields: custom_field_01
