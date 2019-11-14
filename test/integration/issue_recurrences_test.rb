@@ -1,10 +1,10 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class IssueRecurrencesTest < Redmine::IntegrationTest
-  fixtures :issues, :issue_statuses, :issue_priorities,
+  fixtures :issues, :issue_statuses,
     :users, :email_addresses, :trackers, :projects, 
     :roles, :members, :member_roles, :enabled_modules, :workflow_transitions,
-    :custom_fields
+    :custom_fields, :enumerations
 
   class Date < ::Date
     def self.today
@@ -1131,8 +1131,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
         assert_equal default, parent.priority
         assert_equal non_default, child.priority
       when :post_renew
-        issue = issues.first
-        assert_equal default, issue.priority
+        assert_equal default, issues.first.priority
         assert_equal non_default, @issue3.reload.priority
       end
     end
@@ -1148,7 +1147,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
         assert_equal default, parent.priority
         assert_equal non_default, child.priority
       when :post_renew
-        issues += [@issue1.reload]
+        issues << @issue1.reload
         issues.each { |i| assert_equal non_default, i.priority }
       end
     end
@@ -1182,6 +1181,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     Setting.parent_issue_dates = 'independent'
     tree = {@issue2 => @issue3, @issue3 => nil}
     process_issue_tree(tree, @issue2, include_subtasks: false) do |stage, issues|
+      issues << @issue3.reload if stage == :post_renew
       issues.each { |i| assert_equal i.subject.reverse, i.custom_field_value(field) }
     end
     Setting.parent_issue_dates = 'derived'
@@ -1189,9 +1189,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
     # Issue with child and parent
     tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
     process_issue_tree(tree, @issue2) do |stage, issues|
-      if stage == :post_renew
-        issues << @issue1.reload
-      end
+      issues << @issue1.reload if stage == :post_renew
       issues.each { |i| assert_equal i.subject.reverse, i.custom_field_value(field) }
     end
   end
@@ -1233,8 +1231,7 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       when :pre_renew
         issues.each { |i| assert_not_equal exp_status[i], i.status }
       when :post_renew
-        issue = issues.first
-        assert_equal exp_status[@issue2], issue.status
+        assert_equal exp_status[@issue2], issues.first.status
         assert_not_equal exp_status[@issue3], @issue3.reload.status
       end
     end
@@ -1294,7 +1291,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       when :pre_renew
         issues.each { |i| assert_not_equal 0, i.done_ratio; assert_not_nil i.done_ratio }
       when :post_renew
-        issues.each { |i| assert_equal 0, i.done_ratio }
+        assert_equal 0, issues.first.done_ratio
+        assert_equal 60, @issue3.reload.done_ratio
       end
     end
     Setting.parent_issue_dates = 'derived'
@@ -1331,6 +1329,57 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
       end
     end
     Setting.parent_issue_done_ratio = 'derived'
+  end
+
+  def test_renew_time_entries_of_new_recurrence_and_its_children_should_be_reset
+    [@issue1, @issue2, @issue3].each_with_index do |i, index|
+      set_time_entry(i, (index + 1)*1.5)
+    end
+
+    # Single issue
+    tree = {@issue3 => nil}
+    process_issue_tree(tree, @issue3) do |stage, issues|
+      # Timelog entries are left intact when recurring in_place
+      if stage == :pre_renew || @issue3.recurrences.first.in_place?
+        issues.each { |i| assert_operator 0.0, :<, i.spent_hours }
+      else
+        issues.each { |i| assert_equal 0.0, i.spent_hours }
+      end
+    end
+
+    # Issue with child
+    tree = {@issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      if stage == :pre_renew || @issue2.recurrences.first.in_place?
+        issues.each { |i| assert_operator 0.0, :<, i.spent_hours }
+      else
+        issues.each { |i| assert_equal 0.0, i.spent_hours }
+      end
+    end
+
+    # Issue with child, recurring without subtasks
+    Setting.parent_issue_dates = 'independent'
+    tree = {@issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2, include_subtasks: false) do |stage, issues|
+      if stage == :pre_renew || @issue2.recurrences.first.in_place?
+        issues.each { |i| assert_operator 0.0, :<, i.spent_hours }
+      else
+        assert_equal 0.0, issues.first.spent_hours
+      end
+      assert_operator 0.0, :<, @issue3.reload.spent_hours
+    end
+    Setting.parent_issue_dates = 'derived'
+
+    # Issue with child and parent
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    process_issue_tree(tree, @issue2) do |stage, issues|
+      if stage == :pre_renew || @issue2.recurrences.first.in_place?
+        issues.each { |i| assert_operator 0.0, :<, i.spent_hours }
+      else
+        issues.each { |i| assert_equal 0.0, i.spent_hours }
+      end
+      assert_operator 0.0, :<, @issue1.reload.spent_hours
+    end
   end
 
   def test_renew_creation_mode_in_place_if_issue_not_closed_should_not_recur

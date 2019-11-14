@@ -5,3 +5,7 @@ enabled_module_01:
 enabled_module_02:
   name: issue_recurring
   project: project_01
+
+enabled_module_03:
+  name: time_tracking
+  project: project_01

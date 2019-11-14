@@ -6,7 +6,6 @@ ActiveRecord::FixtureSet.create_fixtures(
   [
     :issues,
     :issue_statuses,
-    :issue_priorities,
     :users,
     :email_addresses,
     :trackers,
@@ -16,7 +15,8 @@ ActiveRecord::FixtureSet.create_fixtures(
     :member_roles,
     :enabled_modules,
     :workflow_transitions,
-    :custom_fields
+    :custom_fields,
+    :enumerations
   ]
 )
 
@@ -107,7 +107,15 @@ def set_custom_field(issue, field, value)
   assert_equal value, issue.custom_field_value(field)
 end
 
-def set_time_entry(issue)
+def set_time_entry(issue, hours)
+  old_hours = issue.spent_hours
+  assert_difference 'issue.reload.spent_hours', hours do
+    post "/issues/#{issue.id}/time_entries", params: {
+      :time_entry => {
+        :hours => hours, :activity_id => enumerations(:time_entry_activity_01).id
+      }
+    }
+  end
 end
 
 def reopen_issue(issue)
