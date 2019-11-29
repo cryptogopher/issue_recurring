@@ -46,20 +46,23 @@ The most notable features of this plugin include:
 
 ## Changelog
 
-### 1.5 (2019-11-29)
+### 1.5
 
+* released on: 2019-11-29,
 * properly handling parent attribute of recurred issue,
 * reporting in-place recurrence without subtasks as invalid if issue dates are derived from children (previously it was possible to create such recurrence, though it wouldn't recur properly).
 
-### 1.4 (2019-08-19)
+### 1.4
 
+* released on: 2019-08-19,
 * added Spanish translation, thanks to [lupa18](https://github.com/lupa18/)!,
 * introduced order independent recurrence scheduling when there is more than 1 recurrence schedule assigned to issue; this is rare configuration and situations where order does really matter are even more rare (e.g. when there is non-inplace and inplace schedule or when there are multiple inplace schedules),
 * fixed display of _Next_ recurrence dates; _Next_ dates show what recurrences will be created if the renewal process is executed _now_,
 * added display of _Predicted_ recurrence dates; _Predicted_ dates show what recurrences will be created in future given that no issue dates will change and assuming that non-closed issues will be closed today; this is to give you overview how your schedule(s) works and in future may be extended to show more than 1 future date at a time.
 
-### 1.3 (2019-07-14)
+### 1.3
 
+* released on: 2019-07-14
 * added 2 new scheduling algorithms:
    * based on last recurrence dates, but recurs only after last recurrence has been closed (i.e. after its close date),
    * based on fixed date configured separately from issue's own start/due dates; recurs only after last recurrence close date; this is the only recurrence scheme that allows multiple in-place recurrence schemes for one issue (and has been introduced exactly to allow that),
@@ -68,13 +71,15 @@ The most notable features of this plugin include:
    * wording and order of some options has been changed to create (hopefully) more natural reading experience,
    * inactive form inputs now fade out and hide instead of being visible but disabled for readability.
  
-### 1.2 (2019-07-03)
+### 1.2
 
+* released on: 2019-07-03
 * plugin is now compatible with Redmine 4.0/Rails 5.2, (2019-07-14: well, actually it is compatible with Redmine 4.0, but due to mistake migrations don't work with Redmine 3.4; either update to v1.3 or copy migration files from there),
 * it is now disallowed to create multiple in-place recurrence schedules for single issue. No real world scenario could justify such configuration and it might cause problems for the unwary.
 
-### 1.1 (2019-05-04)
+### 1.1
 
+* released on: 2019-05-04
 * from now on it is possible to explicitly specify if recurrence will be based on start or due date, for every recurrence type. Previously it was only possible for monthly recurrences. All other recurrences were treated automatically, depending on start/due date availability. You can use this feature to e.g. decide how recurrences based on close date will be treated: you can have either start or due date of next recurrence based on close date of the previous one. Upon upgrading all existing recurrences will be migrated according to previous rules, which were as follows:
    * for monthly recurrences things will be kept unchanged (monthly recurrences already had distinct start/due options),
    * for all of the rest: if start date is available and due date is empty for reference issue - recurrence will be based on start date; otherwise recurrence will be based on due date (that is also true for recurrences based on close date, which may have both start and due dates missing; such recurrence will be based on due date as well).
