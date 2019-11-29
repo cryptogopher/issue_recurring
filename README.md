@@ -58,7 +58,7 @@ The most notable features of this plugin include:
 * added Spanish translation, thanks to [lupa18](https://github.com/lupa18/)!,
 * introduced order independent recurrence scheduling when there is more than 1 recurrence schedule assigned to issue; this is rare configuration and situations where order does really matter are even more rare (e.g. when there is non-inplace and inplace schedule or when there are multiple inplace schedules),
 * fixed display of _Next_ recurrence dates; _Next_ dates show what recurrences will be created if the renewal process is executed _now_,
-* added display of _Predicted_ recurrence dates; _Predicted_ dates show what recurrences will be created in future given that no issue dates will change and assuming that non-closed issues will be closed today; this is to give you overview how your schedule(s) works and in future may be extended to show more than 1 future date at a time.
+* added display of _Predicted_ recurrence dates; _Predicted_ dates show what recurrences will be created in future given that no issue dates will change and assuming that non-closed issues will be closed today; this is to give you overview how your schedule(s) work(s) and in future may be extended to show more than 1 future date at a time.
 
 ### 1.3
 
@@ -69,7 +69,7 @@ The most notable features of this plugin include:
 * changed input form for recurrence creation:
    * recurrence limit input has been changed from radio buttons to drop-down list; it makes form more compact/consistent,
    * wording and order of some options has been changed to create (hopefully) more natural reading experience,
-   * inactive form inputs now fade out and hide instead of being visible but disabled for readability.
+   * for readability inactive form inputs now fade out and hide instead of being visible but disabled.
  
 ### 1.2
 
