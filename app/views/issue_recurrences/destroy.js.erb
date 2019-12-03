@@ -1,5 +1,7 @@
 <% if @recurrence.errors.present? %>
-  $('#recurrence-errors').html('<%= escape_javascript(error_messages_for 'recurrence') %>');
+  $('#recurrence-errors').html(
+    '<%= escape_javascript(nameless_error_messages_for 'recurrence') %>'
+  );
 <% else %>
   $('#recurrence-<%= @recurrence.id %>').remove();
   $('#recurrence-errors').empty();

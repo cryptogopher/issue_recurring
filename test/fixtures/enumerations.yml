@@ -13,3 +13,10 @@ super_low:
   type: IssuePriority
   active: true
   position_name: lowest
+
+time_entry_activity_01:
+  name: Boring testing
+  type: TimeEntryActivity
+  position: 1
+  active: true
+  is_default: true

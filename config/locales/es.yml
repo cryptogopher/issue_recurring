@@ -1,7 +1,6 @@
 # Spanish strings go here for Rails i18n, author: https://github.com/lupa18
 es:
-  errors:
-    format: '%{message}'
+  field_recurrence_of: 'Recurrence of'
   activerecord:
     errors:
       models:
@@ -30,7 +29,7 @@ es:
             date_limit:
               not_in_future: 'el límite de fecha para una recurrencia proporcionada por el
                 usuario debe ser futuro'
-  project_menu_caption: 'Recurrencias'
+  issue_recurrences_menu_caption: 'Recurrencias'
   journal_warning: "<b>Advertencia</b>: no se puede renovar recurrencia, %{msg}."
   settings:
     issue_recurrences:
@@ -46,9 +45,10 @@ es:
     index:
       heading: 'Recurrencias de petición'
       issue: 'Petición'
-      last_recurrence: 'Última recurrencia'
       mode: 'Every'
+      last_recurrence: 'Última recurrencia'
       next_recurrence: 'Próxima recurrencia'
+      predicted_recurrence: 'Predicted'
       include_subtasks: '¿Subtareas?'
       creation_mode: 'Crear'
       anchor_mode: 'Basada en'
@@ -70,6 +70,7 @@ es:
       index:
         last_recurrence: 'Última:'
         next_recurrence: 'Próxima:'
+        predicted_recurrence: 'Predicted:'
       details:
       form:
         creation_modes:
@@ -130,13 +131,13 @@ es:
           :false: '<b>fecha fin</b>'
         delayed_by: ', retrasada por'
         delay_modes:
-          day: 'día(s)'
-          week: 'semana(s)'
-          month: 'mes(es)'
+          days: 'día(s)'
+          weeks: 'semana(s)'
+          months: 'mes(es)'
         delay_intervals:
-          day: 'día'
-          week: 'semana'
-          month: 'mes'
+          days: 'día'
+          weeks: 'semana'
+          months: 'mes'
         until: 'y repetir hasta'
         limit_modes:
           forever: '<b>siempre</b>'

@@ -6,9 +6,10 @@ require File.expand_path(File.dirname(__FILE__) + '/../../../test/test_helper')
 require File.expand_path('../fixture_loader', __FILE__)
 
 class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
-  fixtures :issues, :issue_statuses, :issue_priorities,
+  fixtures :issues, :issue_statuses,
     :users, :email_addresses, :trackers, :projects, 
-    :roles, :members, :member_roles, :enabled_modules, :workflow_transitions
+    :roles, :members, :member_roles, :enabled_modules, :workflow_transitions,
+    :custom_fields, :enumerations
 
   class Date < ::Date
     def self.today
@@ -77,14 +78,50 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
     assert_difference 'Issue.count', count do
       IssueRecurrence.renew_all
     end
-    count > 1 ? Issue.last(count) : Issue.last
+    count == 1 ? Issue.last : Issue.last(count)
   end
 
   def set_parent_issue(parent, child)
-    assert_not_equal child.parent_issue_id, parent.id
-    put "/issues/#{child.id}", params: {issue: {parent_issue_id: parent.id}}
+    parent_id = parent && parent.id
+    assert_not_equal [parent_id], [child.parent_issue_id]
+    put "/issues/#{child.id}", params: {issue: {parent_issue_id: parent_id}}
     child.reload
-    assert_equal child.parent_issue_id, parent.id
+    assert_equal [parent_id], [child.parent_issue_id]
+  end
+
+  def set_priority(issue, priority)
+    assert_not_equal priority.id, issue.priority_id
+    put "/issues/#{issue.id}", params: {issue: {priority_id: priority.id}}
+    issue.reload
+    assert_equal priority.id, issue.priority_id
+  end
+
+  def set_done_ratio(issue, ratio)
+    put "/issues/#{issue.id}", params: {issue: {done_ratio: ratio}}
+    issue.reload
+    assert_equal ratio, issue.done_ratio
+  end
+
+  def set_custom_field(issue, field, value)
+    if Redmine::VERSION::MAJOR >= 4
+      assert_nil issue.custom_field_value(field)
+    else
+      assert_empty issue.custom_field_value(field)
+    end
+    put "/issues/#{issue.id}", params: {issue: {custom_field_values: {field.id => value}}}
+    issue.reload
+    assert_equal value, issue.custom_field_value(field)
+  end
+
+  def set_time_entry(issue, hours)
+    old_hours = issue.spent_hours
+    assert_difference 'issue.reload.spent_hours', hours do
+      post "/issues/#{issue.id}/time_entries", params: {
+        :time_entry => {
+          :hours => hours, :activity_id => enumerations(:time_entry_activity_01).id
+        }
+      }
+    end
   end
 
   def reopen_issue(issue)

@@ -1,14 +1,17 @@
 <% if @recurrences.present? %>
   <table class="list odd-even">
-    <% @recurrences.each do |recurrence| %>
-      <% if recurrence.visible? %>
-        <tr id="recurrence-<%= recurrence.id %>" class="<%= cycle('odd', 'even') %>">
-          <td class="description"><%= recurrence.to_s %></td>
+    <% @recurrences.each do |r| %>
+      <% if r.visible? %>
+        <tr id="recurrence-<%= r.id %>" class="<%= cycle('odd', 'even') %>">
+          <td class="description"><%= r.to_s %></td>
+          <td class="description"><%= last_recurrence(r) %></td>
           <td class="description">
-            <p><nobr><%= last_recurrence(recurrence) %></nobr></p>
-            <p><nobr><%= next_recurrence_date(recurrence) %></nobr></p>
+            <p id="next"><nobr><%= next_recurrences(@next_dates[r]) %></nobr></p>
+            <p id="predicted">
+              <nobr><%= predicted_recurrences(@predicted_dates[r]) %></nobr>
+            </p>
           </td>
-          <td class="buttons"><%= delete_button(recurrence) %></td>
+          <td class="buttons"><%= delete_button(r) %></td>
         </tr>
       <% end %>
     <% end %>

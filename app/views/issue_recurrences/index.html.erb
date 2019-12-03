@@ -5,9 +5,10 @@
     <thead>
       <tr>
         <th><%= t '.issue' %></th>
-        <th><%= t '.last_recurrence' %></th>
         <th><%= t '.mode' %></th>
+        <th><%= t '.last_recurrence' %></th>
         <th><%= t '.next_recurrence' %></th>
+        <th><%= t '.predicted_recurrence' %></th>
         <th><%= t '.include_subtasks' %></th>
         <th><%= t '.creation_mode' %></th>
         <th><%= t '.anchor_mode' %></th>
@@ -21,9 +22,10 @@
       <% if r.visible? %>
         <tr id="recurrence-<%= r.id %>" class="<%= cycle('odd', 'even') %>">
           <td class="subject"><%= issue_link(r) %></td>
-          <td class="last"><%= last_recurrence(r, false) %></td>
           <td class="mode"><%= mode(r) %></td>
-          <td class="next"><%= next_recurrence_date(r, false) %></td>
+          <td class="last"><%= last_recurrence(r, false) %></td>
+          <td class="next"><%= next_recurrences(@next_dates[r], false) %></td>
+          <td class="next"><%= predicted_recurrences(@predicted_dates[r], false) %></td>
           <td class="subtasks"><%= checked_image r.include_subtasks %></td>
           <td class="creation"><%= creation_mode(r) %></td>
           <td class="anchor"><%= anchor_mode(r) %></td>

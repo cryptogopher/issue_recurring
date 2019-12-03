@@ -16,6 +16,8 @@ Plugin for Redmine to configure issue recurring according to a schedule. The plu
 
 ## Features
 
+Greatest emphasis in development is put on reliability. Scheduling algorithms are tested for accuracy. Unusual situations are reported to user in a visible manner during use. Avoiding regressions and eliminating bugs is valued over new functionalities.
+
 The most notable features of this plugin include:
 * recurrence creation/deletion directly from form on issue page (no separate page, no page reloading when creating/deleting recurrences),
 * multiple recurrence schedules per issue possible (except for in-place recurrences not based on fixed date),
@@ -31,10 +33,11 @@ The most notable features of this plugin include:
 * next recurrence scheduling based on: original issue dates; last recurrence dates; close date of last recurrence; last recurrence dates if closed on time or close date otherwise; last recurrence dates but only after it has been closed; fixed date after last recurrence has been closed,
 * ability to specify recurrence based on start or due date; for recurrence based on close date: ability to specify which of these dates is inferred from close date,
 * updating both start and due dates according to schedule (if specified),
+* properly handling issue attributes, including keeping: parent, custom fields, priority and resetting: done ratio, time entries and status,
 * ability to recur with or without subtasks,
 * ability to delay recurrence against base date to create multiple recurrences of the same frequency with different time offset (e.g. monthly recurrence on 10th, 20th and 30th day of month),
 * ability to limit recurrence by final date or recurrence count,
-* showing dates of last/next recurrence and history of recurrences,
+* showing last recurrence and dates next/predicted recurrences,
 * logging errors as an issue note when unable to renew issue recurrences (instead of logging into web-inaccessible log file),
 * permissions to view/manage recurrences managed by Redmine roles,
 * per project enabling of issue recurring plugin,
@@ -43,23 +46,40 @@ The most notable features of this plugin include:
 
 ## Changelog
 
+### 1.5
+
+* released on: 2019-11-29,
+* properly handling parent attribute of recurred issue,
+* reporting in-place recurrence without subtasks as invalid if issue dates are derived from children (previously it was possible to create such recurrence, though it wouldn't recur properly).
+
+### 1.4
+
+* released on: 2019-08-19,
+* added Spanish translation, thanks to [lupa18](https://github.com/lupa18/)!,
+* introduced order independent recurrence scheduling when there is more than 1 recurrence schedule assigned to issue; this is rare configuration and situations where order does really matter are even more rare (e.g. when there is non-inplace and inplace schedule or when there are multiple inplace schedules),
+* fixed display of _Next_ recurrence dates; _Next_ dates show what recurrences will be created if the renewal process is executed _now_,
+* added display of _Predicted_ recurrence dates; _Predicted_ dates show what recurrences will be created in future given that no issue dates will change and assuming that non-closed issues will be closed today; this is to give you overview how your schedule(s) work(s) and in future may be extended to show more than 1 future date at a time.
+
 ### 1.3
 
+* released on: 2019-07-14
 * added 2 new scheduling algorithms:
    * based on last recurrence dates, but recurs only after last recurrence has been closed (i.e. after its close date),
    * based on fixed date configured separately from issue's own start/due dates; recurs only after last recurrence close date; this is the only recurrence scheme that allows multiple in-place recurrence schemes for one issue (and has been introduced exactly to allow that),
 * changed input form for recurrence creation:
    * recurrence limit input has been changed from radio buttons to drop-down list; it makes form more compact/consistent,
    * wording and order of some options has been changed to create (hopefully) more natural reading experience,
-   * inactive form inputs now fade out and hide instead of being visible but disabled for readability.
+   * for readability inactive form inputs now fade out and hide instead of being visible but disabled.
  
 ### 1.2
 
+* released on: 2019-07-03
 * plugin is now compatible with Redmine 4.0/Rails 5.2, (2019-07-14: well, actually it is compatible with Redmine 4.0, but due to mistake migrations don't work with Redmine 3.4; either update to v1.3 or copy migration files from there),
 * it is now disallowed to create multiple in-place recurrence schedules for single issue. No real world scenario could justify such configuration and it might cause problems for the unwary.
 
 ### 1.1
 
+* released on: 2019-05-04
 * from now on it is possible to explicitly specify if recurrence will be based on start or due date, for every recurrence type. Previously it was only possible for monthly recurrences. All other recurrences were treated automatically, depending on start/due date availability. You can use this feature to e.g. decide how recurrences based on close date will be treated: you can have either start or due date of next recurrence based on close date of the previous one. Upon upgrading all existing recurrences will be migrated according to previous rules, which were as follows:
    * for monthly recurrences things will be kept unchanged (monthly recurrences already had distinct start/due options),
    * for all of the rest: if start date is available and due date is empty for reference issue - recurrence will be based on start date; otherwise recurrence will be based on due date (that is also true for recurrences based on close date, which may have both start and due dates missing; such recurrence will be based on due date as well).
@@ -69,10 +89,11 @@ The most notable features of this plugin include:
 1. Check prerequisites. To use this plugin you need to have:
    * Redmine (https://www.redmine.org) installed. Check that your Redmine version is compatible with plugin. Currently supported are following versions of software:
 
-     |Redmine |Compatible plugin versions|Tested with                                |
-     |--------|--------------------------|-------------------------------------------|
-     |3.4.x   |1.0 - current             |Redmine 3.4.5, Ruby 2.3.8p459, Rails 4.2.11|
-     |4.0.x   |1.2 - current             |Redmine 4.0.4, Ruby 2.4.6p354, Rails 5.2.3 |
+     |Redmine |Compatible plugin versions|Tested with                                  |
+     |--------|--------------------------|---------------------------------------------|
+     |3.4.x   |1.0 - 1.4                 |Redmine 3.4.5, Ruby 2.3.8p459, Rails 4.2.11  |
+     |        |1.5 - current             |Redmine 3.4.5, Ruby 2.4.7p357, Rails 4.2.11.1|
+     |4.0.x   |1.2 - current             |Redmine 4.0.4, Ruby 2.4.6p354, Rails 5.2.3   |
      
      You may try and find this plugin working on other versions too, but be prepared to get error messages. In case it works let everyone know that through issue tracker (send _support_ issue). If it doesn't work, you are welcome to send _feature_ request to make plugin compatible with other version. Keep in mind though, that for more exotic versions there will be more vote power needed to complete such feature request.
 
@@ -86,7 +107,7 @@ The most notable features of this plugin include:
    # available version, as it is most stable. But you can omit those 2 commands ang go with latest code as well.
    git -C issue_recurring/ tag
    # Doing checkout this way you can get "You are in 'detached HEAD' state." warning; it's ok to ignore it
-   git -C issue_recurring/ checkout tags/1.1
+   git -C issue_recurring/ checkout tags/1.4
    
    cd /var/lib/redmine
    bundle install
@@ -136,7 +157,7 @@ The most notable features of this plugin include:
    # choose version from this list
    git tag
    # doing checkout this way you can get "You are in 'detached HEAD' state." warning; it's ok to ignore it
-   git checkout tags/1.1
+   git checkout tags/1.4
    
    cd /var/lib/redmine
    bundle update

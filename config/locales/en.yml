@@ -1,7 +1,6 @@
 # English strings go here for Rails i18n
 en:
-  errors:
-    format: '%{message}'
+  field_recurrence_of: 'Recurrence of'
   activerecord:
     errors:
       models:
@@ -20,7 +19,11 @@ en:
               date_anchor_in_place_only: 'recurrences based on fixed date can be used for
                 in-place modification only'
             creation_mode:
-              only_one_in_place: 'only one in-place recurrence can be scheduled'
+              only_one_in_place: 'additional in-place recurrences are only allowed if based
+                on fixed date'
+              derived_in_place_requires_subtasks: 'cannot recur issue in-place without
+                subtasks if start and due dates are derived from subtasks (check
+                Administration -> Settings -> Issue tracking -> Parent tasks attributes)'
             anchor_to_start:
               start_mode_requires_date: 'recurrence based on start date cannot be created for
                 issue without start date'
@@ -28,23 +31,24 @@ en:
                 issue without due date'
             date_limit:
               not_in_future: 'user provided recurrence limit date has to be in future'
-  project_menu_caption: 'Issue recurrences'
+  issue_recurrences_menu_caption: 'Issue recurrences'
   journal_warning: "<b>Warning</b>: can't renew recurrence, %{msg}."
   settings:
     issue_recurrences:
       author: 'Set author of new recurrence to'
       author_unchanged: 'the author of source issue'
       keep_assignee: 'Keep assignee from previous recurrence'
-      keep_assignee_hint: 'if unchecked, default assignment rules will apply'
+      keep_assignee_hint: 'if unchecked, Redmine default assignment rules will apply'
       add_journal: 'Add journal entry on recurrence renewal'
       add_journal_hint: 'journal is added only on reference issue (not on new copy)'
   issue_recurrences:
     index:
       heading: 'Issue recurrences'
       issue: 'Issue'
-      last_recurrence: 'Last recurrence'
       mode: 'Every'
-      next_recurrence: 'Next recurrence'
+      last_recurrence: 'Last'
+      next_recurrence: 'Next'
+      predicted_recurrence: 'Predicted'
       include_subtasks: 'Subtasks?'
       creation_mode: 'Create'
       anchor_mode: 'Based on'
@@ -66,6 +70,7 @@ en:
       index:
         last_recurrence: 'Last:'
         next_recurrence: 'Next:'
+        predicted_recurrence: 'Predicted:'
       details:
       form:
         creation_modes:
@@ -114,25 +119,25 @@ en:
         anchor_modes:
           first_issue_fixed: 'of this <b>issue</b>'
           last_issue_fixed: 'of <b>last recurrence</b>'
-          last_issue_flexible: 'copied from <b>last recurrence close date</b>'
+          last_issue_flexible: 'assigned from <b>close date of last recurrence</b>'
           last_issue_flexible_on_delay: 'of <b>last recurrence if closed on time,</b>
-            otherwise copied from close date'
+            otherwise assigned from close date'
           last_issue_fixed_after_close: 'of <b>last recurrence (recurs only after close
             date)</b>'
-          date_fixed_after_close: 'copied from <b>fixed date</b> (recurs only after
+          date_fixed_after_close: 'assigned from <b>fixed date</b> (recurs only after
             last recurrence close date):'
         anchor_to_start:
           :true: '<b>start date</b>'
           :false: '<b>due date</b>'
         delayed_by: ', delayed by'
         delay_modes:
-          day: 'day(s)'
-          week: 'week(s)'
-          month: 'month(s)'
+          days: 'day(s)'
+          weeks: 'week(s)'
+          months: 'month(s)'
         delay_intervals:
-          day: 'day'
-          week: 'week'
-          month: 'month'
+          days: 'day'
+          weeks: 'week'
+          months: 'month'
         until: 'and repeat until'
         limit_modes:
           forever: '<b>forever</b>'

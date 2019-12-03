@@ -7,7 +7,9 @@ class IssueRecurrencesController < ApplicationController
   helper :issues
 
   def index
-    @recurrences = @project.recurrences
+    @recurrences = @project.recurrences.select {|r| r.visible?}
+    @next_dates = IssueRecurrence.recurrences_dates(@recurrences)
+    @predicted_dates = IssueRecurrence.recurrences_dates(@recurrences, true)
   end
 
   def create
@@ -16,11 +18,15 @@ class IssueRecurrencesController < ApplicationController
     @recurrence.save
     raise Unauthorized if @recurrence.errors.added?(:issue, :insufficient_privileges)
     @recurrences = @issue.reload.recurrences.select {|r| r.visible?}
+    @next_dates = IssueRecurrence.issue_dates(@issue)
+    @predicted_dates = IssueRecurrence.issue_dates(@issue, true)
   end
 
   def destroy
     raise Unauthorized unless @recurrence.destroy
     @recurrences = @issue.reload.recurrences.select {|r| r.visible?}
+    @next_dates = IssueRecurrence.issue_dates(@issue)
+    @predicted_dates = IssueRecurrence.issue_dates(@issue, true)
   end
 
   private

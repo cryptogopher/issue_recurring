@@ -3,9 +3,9 @@
   <div id="issue_recurrences">
     <div class="contextual">
       <% if User.current.allowed_to?(:manage_issue_recurrences, @project) %>
-        <%= toggle_link t('.button_details'), 'recurrence-details',
+        <%#= toggle_link t('.button_details'), 'recurrence-details',
           focus: 'recurrence-details' %>
-        |
+        <%# | %>
         <%= toggle_link t(:button_add), 'new-recurrence-form',
           focus: 'recurrence_creation_mode' %>
       <% end %>
@@ -31,7 +31,7 @@
 
     <% if User.current.allowed_to?(:manage_issue_recurrences, @project) %>
       <div id='recurrence-errors'>
-        <%= error_messages_for 'recurrence' %>
+        <%= nameless_error_messages_for 'recurrence' %>
       </div>
 
       <%= render partial: 'issues/recurrences/form' %>
