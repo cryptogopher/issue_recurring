@@ -119,12 +119,12 @@ en:
         anchor_modes:
           first_issue_fixed: 'of this <b>issue</b>'
           last_issue_fixed: 'of <b>last recurrence</b>'
-          last_issue_flexible: 'copied from <b>last recurrence close date</b>'
+          last_issue_flexible: 'assigned from <b>close date of last recurrence</b>'
           last_issue_flexible_on_delay: 'of <b>last recurrence if closed on time,</b>
-            otherwise copied from close date'
+            otherwise assigned from close date'
           last_issue_fixed_after_close: 'of <b>last recurrence (recurs only after close
             date)</b>'
-          date_fixed_after_close: 'copied from <b>fixed date</b> (recurs only after
+          date_fixed_after_close: 'assigned from <b>fixed date</b> (recurs only after
             last recurrence close date):'
         anchor_to_start:
           :true: '<b>start date</b>'
