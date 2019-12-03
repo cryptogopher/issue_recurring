@@ -17,9 +17,10 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     profile: profile
   }
 
-  fixtures :issues, :issue_statuses, :issue_priorities,
-    :users, :email_addresses, :trackers, :projects, 
-    :roles, :members, :member_roles, :enabled_modules, :workflow_transitions
+  fixtures :issues, :issue_statuses,
+    :users, :email_addresses, :trackers, :projects,
+    :roles, :members, :member_roles, :enabled_modules, :workflow_transitions,
+    :custom_fields, :enumerations
 
   class Date < ::Date
     def self.today

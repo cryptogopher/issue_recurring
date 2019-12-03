@@ -3,7 +3,6 @@ ActiveRecord::FixtureSet.create_fixtures(
   [
     :issues,
     :issue_statuses,
-    :issue_priorities,
     :users,
     :email_addresses,
     :trackers,
@@ -12,7 +11,9 @@ ActiveRecord::FixtureSet.create_fixtures(
     :members,
     :member_roles,
     :enabled_modules,
-    :workflow_transitions
+    :workflow_transitions,
+    :custom_fields,
+    :enumerations
   ]
 )
 

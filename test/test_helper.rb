@@ -7,7 +7,7 @@ require File.expand_path('../fixture_loader', __FILE__)
 
 class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
   fixtures :issues, :issue_statuses,
-    :users, :email_addresses, :trackers, :projects, 
+    :users, :email_addresses, :trackers, :projects,
     :roles, :members, :member_roles, :enabled_modules, :workflow_transitions,
     :custom_fields, :enumerations
 
