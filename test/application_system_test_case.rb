@@ -1,4 +1,5 @@
-# Required for Puma to start in test env
+# Required for Puma to start in test env for system tests (RAILS_ENV=test does
+# not work).
 ENV["RACK_ENV"] = "test"
 
 # Load the Redmine helper
