@@ -111,7 +111,7 @@ The most notable features of this plugin include:
    
    cd /var/lib/redmine
    bundle install
-   RAILS_ENV=production rake redmine:plugins:migrate
+   RAILS_ENV=production rake redmine:plugins:migrate NAME=issue_recurring
    ```
 
 3. Restart Redmine. Exact steps depend on your installation of Redmine. You may need to restart Apache (when using Passenger) or just Redmine daemon/service.
@@ -161,7 +161,7 @@ The most notable features of this plugin include:
    
    cd /var/lib/redmine
    bundle update
-   RAILS_ENV=production rake redmine:plugins:migrate
+   RAILS_ENV=production rake redmine:plugins:migrate NAME=issue_recurring
    ```
 
 4. Restart Redmine. Exact steps depend on your installation of Redmine.
