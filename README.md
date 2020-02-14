@@ -111,7 +111,7 @@ The most notable features of this plugin include:
    
    cd /var/lib/redmine
    bundle install
-   RAILS_ENV=production rake redmine:plugins:migrate NAME=issue_recurring
+   RAILS_ENV=production bundle exec rake redmine:plugins:migrate NAME=issue_recurring
    ```
 
 3. Restart Redmine. Exact steps depend on your installation of Redmine. You may need to restart Apache (when using Passenger) or just Redmine daemon/service.
@@ -127,7 +127,7 @@ The most notable features of this plugin include:
 
 6. Add cron task to enable recurrence creation at least once a day.
    ```
-   12 6 * * * cd /var/lib/redmine && RAILS_ENV=production rake redmine:issue_recurring:renew_all >> log/cron-issue_recurring.log
+   12 6 * * * cd /var/lib/redmine && RAILS_ENV=production bundle exec rake redmine:issue_recurring:renew_all >> log/cron-issue_recurring.log
    ```
 
 7. Go to Redmine, create/open issue, add issue recurrence.
@@ -161,7 +161,7 @@ The most notable features of this plugin include:
    
    cd /var/lib/redmine
    bundle update
-   RAILS_ENV=production rake redmine:plugins:migrate NAME=issue_recurring
+   RAILS_ENV=production bundle exec rake redmine:plugins:migrate NAME=issue_recurring
    ```
 
 4. Restart Redmine. Exact steps depend on your installation of Redmine.
@@ -175,6 +175,6 @@ Upgrade steps should work for downgrade also, given that you do them in reverse 
 Database downgrade (```VERSION``` number ```<NNN>``` is a number taken from migration file name in _issue_recurring/db/migrate_):
    ```
    ca /var/lib/redmine
-   RAILS_ENV=production rake redmine:plugins:migrate VERSION=<NNN> NAME=issue_recurring
+   RAILS_ENV=production bundle exec rake redmine:plugins:migrate VERSION=<NNN> NAME=issue_recurring
    ```
 Keep in mind though, that downgrading database might cause some information to be lost irreversibly. This is because some downgrades may require deletion of tables/columns that were introduced in higher version. Also structure of the data may not be compatible between versions, so the automatic conversion can be lossy.
