@@ -17,12 +17,38 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
   end
 
   def teardown
-    super
     logout_user
+    super
   end
 
   def test_show_issue_recurrences
-    visit issues_url(@issue1)
-    #assert_selector "h1", text: "IssueRecurrence"
+    visit issue_path(@issue1)
+  end
+
+  def test_settings_add_journal
+    @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
+    create_recurrence(creation_mode: :copy_first)
+    logout_user
+
+    log_user 'admin', 'foo'
+    visit plugin_settings_path(id: 'issue_recurring')
+
+    uncheck t('settings.issue_recurrences.add_journal')
+    click_button t(:button_apply)
+    assert_text '#flash_notice', t(:notice_successful_update)
+    travel_to(@issue1.start_date)
+    r1 = assert_no_difference 'Journal.count' do
+      renew_all(1)
+    end
+
+    check t('settings.issue_recurrences.add_journal')
+    click_button t(:button_apply)
+    assert_text '#flash_notice', t(:notice_successful_update)
+    travel_to(r1.start_date)
+    assert_difference 'Journal.count', 1 do
+      renew_all(1)
+    end
+
+    assert_equal @issue1.author, Journal.last.user
   end
 end

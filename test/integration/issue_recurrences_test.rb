@@ -2535,6 +2535,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   end
 
   def test_renew_applies_add_journal_configuration_setting
+    # NOTE: remove when systems tests are working with all supported Redmine versions.
+    # * corresponding system test: test_settings_add_journal
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     create_recurrence(creation_mode: :copy_first)

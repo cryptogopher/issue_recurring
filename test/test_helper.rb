@@ -1,6 +1,6 @@
 # Load the Redmine helper
 require File.expand_path(File.dirname(__FILE__) + '/../../../test/test_helper')
-require File.expand_path('../fixture_loader', __FILE__)
+require File.expand_path('../test_case', __FILE__)
 
 class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
   fixtures :issues, :issue_statuses,
@@ -8,16 +8,7 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
     :roles, :members, :member_roles, :enabled_modules, :workflow_transitions,
     :custom_fields, :enumerations
 
-  class Date < ::Date
-    def self.today
-      # Due to its nature, Date.today may sometimes be equal to Date.yesterday/tomorrow.
-      # https://rails.lighthouseapp.com/projects/8994-ruby-on-rails/tickets
-      # /6410-dateyesterday-datetoday
-      # For this reason WE SHOULD NOT USE Date.today anywhere in the code and use
-      # Date.current instead.
-      raise "Date.today should not be called!"
-    end
-  end
+  include IssueRecurringTestCase
 
   def logout_user
     post signout_path
@@ -69,13 +60,6 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
       assert_not_empty assigns(:recurrence).errors
       assigns(:recurrence).errors
     end
-  end
-
-  def renew_all(count=0)
-    assert_difference 'Issue.count', count do
-      IssueRecurrence.renew_all
-    end
-    count == 1 ? Issue.last : Issue.last(count)
   end
 
   def set_parent_issue(parent, child)
