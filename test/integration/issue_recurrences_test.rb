@@ -1,22 +1,6 @@
 require File.expand_path('../../test_helper', __FILE__)
 
-class IssueRecurrencesTest < Redmine::IntegrationTest
-  fixtures :issues, :issue_statuses,
-    :users, :email_addresses, :trackers, :projects, 
-    :roles, :members, :member_roles, :enabled_modules, :workflow_transitions,
-    :custom_fields, :enumerations
-
-  class Date < ::Date
-    def self.today
-      # Due to its nature, Date.today may sometimes be equal to Date.yesterday/tomorrow.
-      # https://rails.lighthouseapp.com/projects/8994-ruby-on-rails/tickets
-      # /6410-dateyesterday-datetoday
-      # For this reason WE SHOULD NOT USE Date.today anywhere in the code and use
-      # Date.current instead.
-      raise "Date.today should not be called!"
-    end
-  end
-
+class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   def setup
     super
 
@@ -2508,6 +2492,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_applies_author_id_configuration_setting
+    # NOTE: to be removed when system tests are working with all supported Redmine versions.
+    # * corresponding system test: test_settings_author_id
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     Setting.plugin_issue_recurring['author_id'] = 0
@@ -2529,6 +2515,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_applies_keep_assignee_configuration_setting
+    # NOTE: to be removed when system tests are working with all supported Redmine versions.
+    # * corresponding system test: test_settings_keep_assignee
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     Setting.plugin_issue_recurring['keep_assignee'] = false
@@ -2551,6 +2539,8 @@ class IssueRecurrencesTest < Redmine::IntegrationTest
   end
 
   def test_renew_applies_add_journal_configuration_setting
+    # NOTE: to be removed when system tests are working with all supported Redmine versions.
+    # * corresponding system test: test_settings_add_journal
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     create_recurrence(creation_mode: :copy_first)

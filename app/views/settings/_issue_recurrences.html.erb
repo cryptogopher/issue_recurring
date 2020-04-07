@@ -1,14 +1,14 @@
 <p>
-<%= content_tag :label, t('.author') %>
-<%= select_tag "settings[author_id]", authors(@settings['author_id']) %>
+<%= label_tag 'settings[author_id]', t('.author') %>
+<%= select_tag 'settings[author_id]', authors(@settings['author_id']) %>
 </p>
 <p>
-<%= content_tag :label, t('.keep_assignee') %>
-<%= check_box_tag "settings[keep_assignee]", true, @settings['keep_assignee'] %>
+<%= label_tag 'settings[keep_assignee]', t('.keep_assignee') %>
+<%= check_box_tag 'settings[keep_assignee]', true, @settings['keep_assignee'] %>
 <em class="info"><%= t('.keep_assignee_hint') %></em>
 </p>
 <p>
-<%= content_tag :label, t('.add_journal') %>
-<%= check_box_tag "settings[add_journal]", true, @settings['add_journal'] %>
+<%= label_tag 'settings[add_journal]', t('.add_journal') %>
+<%= check_box_tag 'settings[add_journal]', true, @settings['add_journal'] %>
 <em class="info"><%= t('.add_journal_hint') %></em>
 </p>
