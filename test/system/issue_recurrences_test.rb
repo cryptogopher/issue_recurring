@@ -55,6 +55,36 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     assert_equal users(:charlie), r2.author
   end
 
+  def test_settings_keep_assignee
+    @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
+    assert_not_equal @issue1.assigned_to, @issue1.project.default_assigned_to
+    create_recurrence(creation_mode: :copy_first)
+    logout_user
+
+    log_user 'admin', 'foo'
+    visit plugin_settings_path(id: 'issue_recurring')
+
+    uncheck t('settings.issue_recurrences.keep_assignee')
+    click_button t(:button_apply)
+    assert_text '#flash_notice', t(:notice_successful_update)
+    assert_equal false, Setting.plugin_issue_recurring['keep_assignee']
+
+    travel_to(@issue1.start_date)
+    r1 = renew_all(1)
+    assert_equal users(:gopher), @issue1.project.default_assigned_to
+    assert_equal users(:gopher), r1.assigned_to
+
+    check t('settings.issue_recurrences.keep_assignee')
+    click_button t(:button_apply)
+    assert_text '#flash_notice', t(:notice_successful_update)
+    assert_equal true, Setting.plugin_issue_recurring['keep_assignee']
+
+    travel_to(r1.start_date)
+    r2 = renew_all(1)
+    assert_equal users(:alice), @issue1.assigned_to
+    assert_equal users(:alice), r2.assigned_to
+  end
+
   def test_settings_add_journal
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
     create_recurrence(creation_mode: :copy_first)

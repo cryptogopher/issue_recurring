@@ -2515,6 +2515,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   end
 
   def test_renew_applies_keep_assignee_configuration_setting
+    # NOTE: to be removed when system tests are working with all supported Redmine versions.
+    # * corresponding system test: test_settings_keep_assignee
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     Setting.plugin_issue_recurring['keep_assignee'] = false
