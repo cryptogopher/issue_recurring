@@ -25,6 +25,36 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     visit issue_path(@issue1)
   end
 
+  def test_settings_author_id
+    @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
+    create_recurrence(creation_mode: :copy_first)
+    logout_user
+
+    log_user 'admin', 'foo'
+    visit plugin_settings_path(id: 'issue_recurring')
+    t_base = 'settings.issue_recurrences'
+
+    select t("#{t_base}.author_unchanged"), from: t("#{t_base}.author")
+    click_button t(:button_apply)
+    assert_text '#flash_notice', t(:notice_successful_update)
+    assert_equal 0, Setting.plugin_issue_recurring['author_id']
+
+    travel_to(@issue1.start_date)
+    r1 = renew_all(1)
+    assert_equal users(:bob), @issue1.author
+    assert_equal users(:bob), r1.author
+
+    select users(:charlie).name, from: t("#{t_base}.author")
+    click_button t(:button_apply)
+    assert_text '#flash_notice', t(:notice_successful_update)
+    assert_equal users(:charlie).id, Setting.plugin_issue_recurring['author_id']
+
+    travel_to(r1.start_date)
+    r2 = renew_all(1)
+    assert_equal users(:bob), @issue1.author
+    assert_equal users(:charlie), r2.author
+  end
+
   def test_settings_add_journal
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
     create_recurrence(creation_mode: :copy_first)
@@ -36,6 +66,8 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     uncheck t('settings.issue_recurrences.add_journal')
     click_button t(:button_apply)
     assert_text '#flash_notice', t(:notice_successful_update)
+    assert_equal false, Setting.plugin_issue_recurring['add_journal']
+
     travel_to(@issue1.start_date)
     r1 = assert_no_difference 'Journal.count' do
       renew_all(1)
@@ -44,6 +76,8 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     check t('settings.issue_recurrences.add_journal')
     click_button t(:button_apply)
     assert_text '#flash_notice', t(:notice_successful_update)
+    assert_equal true, Setting.plugin_issue_recurring['add_journal']
+
     travel_to(r1.start_date)
     assert_difference 'Journal.count', 1 do
       renew_all(1)

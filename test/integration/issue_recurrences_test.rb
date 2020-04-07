@@ -2492,6 +2492,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   end
 
   def test_renew_applies_author_id_configuration_setting
+    # NOTE: to be removed when system tests are working with all supported Redmine versions.
+    # * corresponding system test: test_settings_author_id
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     Setting.plugin_issue_recurring['author_id'] = 0
@@ -2535,7 +2537,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   end
 
   def test_renew_applies_add_journal_configuration_setting
-    # NOTE: remove when systems tests are working with all supported Redmine versions.
+    # NOTE: to be removed when system tests are working with all supported Redmine versions.
     # * corresponding system test: test_settings_add_journal
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
