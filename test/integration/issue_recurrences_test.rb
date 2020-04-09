@@ -9,9 +9,11 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     Setting.parent_issue_priority = 'derived'
     Setting.parent_issue_done_ratio = 'derived'
     Setting.issue_done_ratio == 'issue_field'
-    Setting.plugin_issue_recurring[:author_id] = 0
-    Setting.plugin_issue_recurring[:keep_assignee] = false
-    Setting.plugin_issue_recurring[:journal_mode] = :never
+    Setting.plugin_issue_recurring = {
+      author_id: 0,
+      keep_assignee: false,
+      journal_mode: :never
+    }
 
     @issue1 = issues(:issue_01)
     @issue2 = issues(:issue_02)
@@ -2496,8 +2498,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     # * corresponding system test: test_settings_author_id
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    Setting.plugin_issue_recurring[:author_id] = 0
-    assert_equal 0, Setting.plugin_issue_recurring[:author_id]
+    Setting.plugin_issue_recurring = Setting.plugin_issue_recurring
+      .update({author_id: 0})
     assert_equal users(:bob), @issue1.author
 
     create_recurrence(creation_mode: :copy_first)
@@ -2506,8 +2508,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     r1 = renew_all(1)
     assert_equal users(:bob), r1.author
 
-    Setting.plugin_issue_recurring[:author_id] = users(:charlie).id
-    assert_equal users(:charlie).id, Setting.plugin_issue_recurring[:author_id]
+    Setting.plugin_issue_recurring = Setting.plugin_issue_recurring
+      .update({author_id: users(:charlie).id})
 
     travel_to(r1.start_date)
     r2 = renew_all(1)
@@ -2519,8 +2521,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     # * corresponding system test: test_settings_keep_assignee
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    Setting.plugin_issue_recurring[:keep_assignee] = false
-    assert !Setting.plugin_issue_recurring[:keep_assignee]
+    Setting.plugin_issue_recurring = Setting.plugin_issue_recurring
+      .update({keep_assignee: false})
     assert_equal users(:alice), @issue1.assigned_to
     assert_equal users(:gopher), @issue1.project.default_assigned_to
 
@@ -2530,8 +2532,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     r1 = renew_all(1)
     assert_equal users(:gopher), r1.assigned_to
 
-    Setting.plugin_issue_recurring[:keep_assignee] = true
-    assert Setting.plugin_issue_recurring[:keep_assignee]
+    Setting.plugin_issue_recurring = Setting.plugin_issue_recurring
+      .update({keep_assignee: true})
 
     travel_to(r1.start_date)
     r2 = renew_all(1)
@@ -2555,8 +2557,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     ]
 
     configs.each do |config|
-      Setting.plugin_issue_recurring[:journal_mode] = config[:mode]
-      assert_equal config[:mode], Setting.plugin_issue_recurring[:journal_mode]
+      Setting.plugin_issue_recurring = Setting.plugin_issue_recurring
+        .update({journal_mode: config[:mode]})
 
       assert_equal (ir1.last_issue || @issue1).start_date, @issue2.start_date
       travel_to(@issue2.start_date)

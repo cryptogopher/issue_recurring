@@ -5,9 +5,11 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     super
 
     Setting.non_working_week_days = [6, 7]
-    Setting.plugin_issue_recurring[:author_id] = 0
-    Setting.plugin_issue_recurring[:keep_assignee] = false
-    Setting.plugin_issue_recurring[:journal_mode] = :never
+    Setting.plugin_issue_recurring = {
+      author_id: 0,
+      keep_assignee: false,
+      journal_mode: :never
+    }
 
     @issue1 = issues(:issue_01)
     @issue2 = issues(:issue_02)
