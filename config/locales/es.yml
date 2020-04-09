@@ -21,6 +21,9 @@ es:
                 utilizadas para modificación in-situ solamente'
             creation_mode:
               only_one_in_place: 'solamente una recurrencia puede ser programada in situ'
+              derived_in_place_requires_subtasks: 'cannot recur issue in-place without
+                subtasks if start and due dates are derived from subtasks (check
+                Administration -> Settings -> Issue tracking -> Parent tasks attributes)'
             anchor_to_start:
               start_mode_requires_date: 'recurrencias basadas en fecha de inicio no pueden
                 ser creadas para peticiones sin fecha de inicio'
@@ -38,9 +41,13 @@ es:
       keep_assignee: 'Conservar asignación de recurrencia anterior'
       keep_assignee_hint: 'si no está marcado, serán aplicadas las reglas de asignación por
         defecto'
-      add_journal: 'Agregar una entrada de registro cuando se renueve la recurrencia'
-      add_journal_hint: 'el registro solo se agrega en la petición referenciada (no en la
+      journal_mode: 'Agregar una entrada de registro cuando se renueve la recurrencia'
+      journal_mode_hint: 'el registro solo se agrega en la petición referenciada (no en la
         nueva copia)'
+      journal_modes:
+        never: 'never'
+        always: 'always'
+        in_place: 'for in-place only'
   issue_recurrences:
     index:
       heading: 'Recurrencias de petición'

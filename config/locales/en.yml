@@ -39,8 +39,12 @@ en:
       author_unchanged: 'the author of source issue'
       keep_assignee: 'Keep assignee from previous recurrence'
       keep_assignee_hint: 'if unchecked, Redmine default assignment rules will apply'
-      add_journal: 'Add journal entry on recurrence renewal'
-      add_journal_hint: 'journal is added only on reference issue (not on new copy)'
+      journal_mode: 'Add journal entry on recurrence renewal'
+      journal_mode_hint: 'journal is added only on reference issue (not on new copy)'
+      journal_modes:
+        never: 'never'
+        always: 'always'
+        in_place: 'for in-place only'
   issue_recurrences:
     index:
       heading: 'Issue recurrences'

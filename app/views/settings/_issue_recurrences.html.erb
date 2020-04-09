@@ -1,14 +1,14 @@
 <p>
-<%= label_tag 'settings[author_id]', t('.author') %>
-<%= select_tag 'settings[author_id]', authors(@settings['author_id']) %>
+<%= label_tag :settings_author_id, t('.author') %>
+<%= select_tag 'settings[author_id]', authors(@settings[:author_id]) %>
 </p>
 <p>
-<%= label_tag 'settings[keep_assignee]', t('.keep_assignee') %>
-<%= check_box_tag 'settings[keep_assignee]', true, @settings['keep_assignee'] %>
+<%= label_tag :settings_keep_assignee, t('.keep_assignee') %>
+<%= check_box_tag 'settings[keep_assignee]', 1, @settings[:keep_assignee] %>
 <em class="info"><%= t('.keep_assignee_hint') %></em>
 </p>
 <p>
-<%= label_tag 'settings[add_journal]', t('.add_journal') %>
-<%= check_box_tag 'settings[add_journal]', true, @settings['add_journal'] %>
-<em class="info"><%= t('.add_journal_hint') %></em>
+<%= label_tag :settings_journal_mode, t('.journal_mode') %>
+<%= select_tag 'settings[journal_mode]', journal_mode_options(@settings[:journal_mode]) %>
+<em class="info"><%= t('.journal_mode_hint') %></em>
 </p>

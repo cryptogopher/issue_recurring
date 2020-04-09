@@ -9,9 +9,9 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     Setting.parent_issue_priority = 'derived'
     Setting.parent_issue_done_ratio = 'derived'
     Setting.issue_done_ratio == 'issue_field'
-    Setting.plugin_issue_recurring['author_id'] = 0
-    Setting.plugin_issue_recurring['keep_assignee'] = false
-    Setting.plugin_issue_recurring['add_journal'] = false
+    Setting.plugin_issue_recurring[:author_id] = 0
+    Setting.plugin_issue_recurring[:keep_assignee] = false
+    Setting.plugin_issue_recurring[:journal_mode] = :never
 
     @issue1 = issues(:issue_01)
     @issue2 = issues(:issue_02)
@@ -2496,8 +2496,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     # * corresponding system test: test_settings_author_id
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    Setting.plugin_issue_recurring['author_id'] = 0
-    assert_equal 0, Setting.plugin_issue_recurring['author_id']
+    Setting.plugin_issue_recurring[:author_id] = 0
+    assert_equal 0, Setting.plugin_issue_recurring[:author_id]
     assert_equal users(:bob), @issue1.author
 
     create_recurrence(creation_mode: :copy_first)
@@ -2506,8 +2506,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     r1 = renew_all(1)
     assert_equal users(:bob), r1.author
 
-    Setting.plugin_issue_recurring['author_id'] = users(:charlie).id
-    assert_equal users(:charlie).id, Setting.plugin_issue_recurring['author_id']
+    Setting.plugin_issue_recurring[:author_id] = users(:charlie).id
+    assert_equal users(:charlie).id, Setting.plugin_issue_recurring[:author_id]
 
     travel_to(r1.start_date)
     r2 = renew_all(1)
@@ -2519,8 +2519,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     # * corresponding system test: test_settings_keep_assignee
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    Setting.plugin_issue_recurring['keep_assignee'] = false
-    assert !Setting.plugin_issue_recurring['keep_assignee']
+    Setting.plugin_issue_recurring[:keep_assignee] = false
+    assert !Setting.plugin_issue_recurring[:keep_assignee]
     assert_equal users(:alice), @issue1.assigned_to
     assert_equal users(:gopher), @issue1.project.default_assigned_to
 
@@ -2530,38 +2530,46 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     r1 = renew_all(1)
     assert_equal users(:gopher), r1.assigned_to
 
-    Setting.plugin_issue_recurring['keep_assignee'] = true
-    assert Setting.plugin_issue_recurring['keep_assignee']
+    Setting.plugin_issue_recurring[:keep_assignee] = true
+    assert Setting.plugin_issue_recurring[:keep_assignee]
 
     travel_to(r1.start_date)
     r2 = renew_all(1)
     assert_equal users(:alice), r2.assigned_to
   end
 
-  def test_renew_applies_add_journal_configuration_setting
+  def test_renew_applies_journal_mode_configuration_setting
     # NOTE: to be removed when system tests are working with all supported Redmine versions.
-    # * corresponding system test: test_settings_add_journal
+    # * corresponding system test: test_settings_journal_mode
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    @issue2.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    create_recurrence(creation_mode: :copy_first)
+    ir1 = create_recurrence(@issue1, creation_mode: :copy_first, anchor_to_start: true)
+    ir2 = create_recurrence(@issue2, creation_mode: :in_place, anchor_to_start: true,
+                      anchor_mode: :last_issue_flexible)
 
-    Setting.plugin_issue_recurring['add_journal'] = false
-    assert !Setting.plugin_issue_recurring['add_journal']
+    configs = [
+      {mode: :never, journalized: []},
+      {mode: :always, journalized: [@issue1, @issue2]},
+      {mode: :in_place, journalized: [@issue2]}
+    ]
 
-    travel_to(@issue1.start_date)
-    r1 = nil
-    assert_no_difference 'Journal.count' do
-      r1 = renew_all(1)
+    configs.each do |config|
+      Setting.plugin_issue_recurring[:journal_mode] = config[:mode]
+      assert_equal config[:mode], Setting.plugin_issue_recurring[:journal_mode]
+
+      assert_equal (ir1.last_issue || @issue1).start_date, @issue2.start_date
+      travel_to(@issue2.start_date)
+      close_issue(@issue2)
+      count = config[:journalized].length
+      r2 = assert_difference 'Journal.count', count do renew_all(1) end
+      [ir1, @issue1, @issue2].map(&:reload)
+      assert !@issue2.closed?
+      if count > 0
+        assert_equal config[:journalized], Journal.last(count).map(&:journalized)
+        assert_equal config[:journalized].map(&:author), Journal.last(count).map(&:user)
+      end
     end
-
-    Setting.plugin_issue_recurring['add_journal'] = true
-    assert Setting.plugin_issue_recurring['add_journal']
-
-    travel_to(r1.start_date)
-    assert_difference 'Journal.count', 1 do
-      renew_all(1)
-    end
-    assert_equal @issue1.author, Journal.last.user
   end
 
   def test_renew_anchor_mode_first_issue_fixed_after_first_and_last_issue_date_change

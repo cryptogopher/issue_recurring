@@ -43,6 +43,8 @@ class IssueRecurrence < ActiveRecord::Base
     months: 2
   }
 
+  JOURNAL_MODES = [:never, :always, :in_place]
+
   validates :issue, presence: true, associated: true
   validate on: :create do
     errors.add(:issue, :insufficient_privileges) unless editable?
@@ -367,11 +369,12 @@ class IssueRecurrence < ActiveRecord::Base
     prev_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
 
     prev_user = User.current
-    author_id = Setting.plugin_issue_recurring['author_id'].to_i
+    author_id = Setting.plugin_issue_recurring[:author_id]
     User.current = User.find_by(id: author_id) || ref_issue.author
 
     IssueRecurrence.transaction do
-      if Setting.plugin_issue_recurring['add_journal']
+      if Setting.plugin_issue_recurring[:journal_mode] == :always ||
+          (Setting.plugin_issue_recurring[:journal_mode] == :in_place && self.in_place?)
         # Setting journal on self.issue won't record copy if :copy_last is used
         ref_issue.init_journal(User.current)
       end
@@ -385,7 +388,7 @@ class IssueRecurrence < ActiveRecord::Base
       new_issue.done_ratio = 0
       new_issue.status = new_issue.tracker.default_status
       new_issue.recurrence_of = self.issue
-      new_issue.default_reassign unless Setting.plugin_issue_recurring['keep_assignee']
+      new_issue.default_reassign unless Setting.plugin_issue_recurring[:keep_assignee]
       new_issue.save!
 
       if self.include_subtasks
@@ -398,7 +401,7 @@ class IssueRecurrence < ActiveRecord::Base
           child.done_ratio = 0
           child.status = child.tracker.default_status
           child.recurrence_of = self.issue
-          child.default_reassign unless Setting.plugin_issue_recurring['keep_assignee']
+          child.default_reassign unless Setting.plugin_issue_recurring[:keep_assignee]
           child.save!
         end
       end
@@ -616,7 +619,7 @@ class IssueRecurrence < ActiveRecord::Base
     return unless @@log_problems
 
     prev_user = User.current
-    author_id = Setting.plugin_issue_recurring['author_id'].to_i
+    author_id = Setting.plugin_issue_recurring[:author_id]
     User.current = User.find_by(id: author_id) || self.issue.author
     self.issue.init_journal(User.current, l(:journal_warning, {msg: msg}))
     self.issue.save

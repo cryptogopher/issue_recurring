@@ -5,9 +5,9 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     super
 
     Setting.non_working_week_days = [6, 7]
-    Setting.plugin_issue_recurring['author_id'] = 0
-    Setting.plugin_issue_recurring['keep_assignee'] = false
-    Setting.plugin_issue_recurring['add_journal'] = false
+    Setting.plugin_issue_recurring[:author_id] = 0
+    Setting.plugin_issue_recurring[:keep_assignee] = false
+    Setting.plugin_issue_recurring[:journal_mode] = :never
 
     @issue1 = issues(:issue_01)
     @issue2 = issues(:issue_02)
@@ -37,7 +37,7 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     select t("#{t_base}.author_unchanged"), from: t("#{t_base}.author")
     click_button t(:button_apply)
     assert_text '#flash_notice', t(:notice_successful_update)
-    assert_equal 0, Setting.plugin_issue_recurring['author_id']
+    assert_equal 0, Setting.plugin_issue_recurring[:author_id]
 
     travel_to(@issue1.start_date)
     r1 = renew_all(1)
@@ -47,7 +47,7 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     select users(:charlie).name, from: t("#{t_base}.author")
     click_button t(:button_apply)
     assert_text '#flash_notice', t(:notice_successful_update)
-    assert_equal users(:charlie).id, Setting.plugin_issue_recurring['author_id']
+    assert_equal users(:charlie).id, Setting.plugin_issue_recurring[:author_id]
 
     travel_to(r1.start_date)
     r2 = renew_all(1)
@@ -67,7 +67,7 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     uncheck t('settings.issue_recurrences.keep_assignee')
     click_button t(:button_apply)
     assert_text '#flash_notice', t(:notice_successful_update)
-    assert_equal false, Setting.plugin_issue_recurring['keep_assignee']
+    assert_equal false, Setting.plugin_issue_recurring[:keep_assignee]
 
     travel_to(@issue1.start_date)
     r1 = renew_all(1)
@@ -77,7 +77,7 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     check t('settings.issue_recurrences.keep_assignee')
     click_button t(:button_apply)
     assert_text '#flash_notice', t(:notice_successful_update)
-    assert_equal true, Setting.plugin_issue_recurring['keep_assignee']
+    assert_equal true, Setting.plugin_issue_recurring[:keep_assignee]
 
     travel_to(r1.start_date)
     r2 = renew_all(1)
@@ -85,34 +85,40 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     assert_equal users(:alice), r2.assigned_to
   end
 
-  def test_settings_add_journal
+  def test_settings_journal_mode
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
-    create_recurrence(creation_mode: :copy_first)
+    @issue2.update!(start_date: 10.days.ago, due_date: 5.days.ago)
+    ir1 = create_recurrence(@issue1, creation_mode: :copy_first, anchor_to_start: true)
+    ir2 = create_recurrence(@issue2, creation_mode: :in_place, anchor_to_start: true,
+                            anchor_mode: :last_issue_flexible)
     logout_user
-
     log_user 'admin', 'foo'
-    visit plugin_settings_path(id: 'issue_recurring')
 
-    uncheck t('settings.issue_recurrences.add_journal')
-    click_button t(:button_apply)
-    assert_text '#flash_notice', t(:notice_successful_update)
-    assert_equal false, Setting.plugin_issue_recurring['add_journal']
+    configs = [
+      {mode: :never, journalized: []},
+      {mode: :always, journalized: [@issue1, @issue2]},
+      {mode: :in_place, journalized: [@issue2]}
+    ]
 
-    travel_to(@issue1.start_date)
-    r1 = assert_no_difference 'Journal.count' do
-      renew_all(1)
+    configs.each do |config|
+      visit plugin_settings_path(id: 'issue_recurring')
+      select t("settings.issue_recurrences.journal_modes.#{config[:mode]}"),
+        from: t('settings.issue_recurrences.journal_mode')
+      click_button t(:button_apply)
+      assert_text '#flash_notice', t(:notice_successful_update)
+      assert_equal config[:mode], Setting.plugin_issue_recurring[:journal_mode]
+
+      assert_equal (ir1.last_issue || @issue1).start_date, @issue2.start_date
+      travel_to(@issue2.start_date)
+      close_issue(@issue2)
+      count = config[:journalized].length
+      r2 = assert_difference 'Journal.count', count do renew_all(1) end
+      [ir1, @issue1, @issue2].map(&:reload)
+      assert !@issue2.closed?
+      if count > 0
+        assert_equal config[:journalized], Journal.last(count).map(&:journalized)
+        assert_equal config[:journalized].map(&:author), Journal.last(count).map(&:user)
+      end
     end
-
-    check t('settings.issue_recurrences.add_journal')
-    click_button t(:button_apply)
-    assert_text '#flash_notice', t(:notice_successful_update)
-    assert_equal true, Setting.plugin_issue_recurring['add_journal']
-
-    travel_to(r1.start_date)
-    assert_difference 'Journal.count', 1 do
-      renew_all(1)
-    end
-
-    assert_equal @issue1.author, Journal.last.user
   end
 end

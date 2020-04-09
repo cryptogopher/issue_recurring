@@ -44,7 +44,8 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
       within 'div#issue_recurrences' do
         click_link t(:button_add)
         attributes.each do |k, v|
-          select strip_tags(t("#{t_base}.#{k.to_s.pluralize}.#{v}")), from: "recurrence_#{k}"
+          name = k == :anchor_to_start ? k.to_s : k.to_s.pluralize
+          select strip_tags(t("#{t_base}.#{name}.#{v}")), from: "recurrence_#{k}"
         end
         click_button t(:button_add)
       end
@@ -57,6 +58,24 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     #assert_difference 'IssueRecurrence.count', 1 do
     #  post "#{issue_recurrences_path(issue)}.js", params: {recurrence: attributes}
     #end
-    #IssueRecurrence.last
+    IssueRecurrence.last
+  end
+
+  def close_issue(issue)
+    assert !issue.closed?
+    closed_on = issue.closed_on
+    status = IssueStatus.all.where(is_closed: true).first
+
+    visit edit_issue_path(issue)
+    within 'form#issue-form' do
+      select status.name, from: t(:field_status)
+      click_button t(:button_submit)
+    end
+    issue.reload
+
+    assert_equal status.id, issue.status_id
+    assert_not_nil issue.closed_on
+    assert_not_equal closed_on, issue.closed_on
+    assert issue.closed?
   end
 end
