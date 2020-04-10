@@ -4,7 +4,7 @@
 </p>
 <p>
 <%= label_tag :settings_keep_assignee, t('.keep_assignee') %>
-<%= check_box_tag 'settings[keep_assignee]', 1, @settings[:keep_assignee] %>
+<%= check_box_tag 'settings[keep_assignee]', true, @settings[:keep_assignee] %>
 <em class="info"><%= t('.keep_assignee_hint') %></em>
 </p>
 <p>

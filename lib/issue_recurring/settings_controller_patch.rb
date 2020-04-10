@@ -10,7 +10,7 @@ module IssueRecurring
         author_id = params[:settings][:author_id].to_i
         settings[:author_id] = User.exists?(author_id) ? author_id : 0
 
-        settings[:keep_assignee] = params[:settings][:keep_assignee] == '1' ? true : false
+        settings[:keep_assignee] = params[:settings][:keep_assignee] == 'true' ? true : false
 
         journal_mode = params[:settings][:journal_mode].to_sym
         settings[:journal_mode] = IssueRecurrence::JOURNAL_MODES.include?(journal_mode) ?
