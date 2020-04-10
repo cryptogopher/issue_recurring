@@ -205,6 +205,12 @@ class IssueRecurrence < ActiveRecord::Base
       "#{count_limit_info}".html_safe
   end
 
+  def initialize_dup(other)
+    self.last_issue = nil
+    self.count = 0
+    super
+  end
+
   # Advance 'dates' according to recurrence mode and adjustment (+/- # of periods).
   # Return advanced 'dates' or nil if recurrence limit reached.
   def advance(adj=0, **dates)
@@ -380,7 +386,7 @@ class IssueRecurrence < ActiveRecord::Base
       end
 
       new_issue = (self.creation_mode == 'in_place') ? ref_issue :
-        ref_issue.copy(nil, subtasks: self.include_subtasks)
+        ref_issue.copy(nil, subtasks: self.include_subtasks, skip_recurrences: true)
 
       new_issue.start_date = dates[:start]
       new_issue.due_date = dates[:due]

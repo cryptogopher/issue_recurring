@@ -1,6 +1,22 @@
 module IssueRecurring
   module IssuePatch
+    module CopyFromWithRecurrences
+      def copy_from(arg, options={})
+        super
+
+        unless options[:skip_recurrences]
+          self.recurrence_of = nil
+
+          if Setting.plugin_issue_recurring[:copy_recurrences]
+            self.recurrences = @copied_from.recurrences.map(&:dup)
+          end
+        end
+      end
+    end
+
     Issue.class_eval do
+      prepend CopyFromWithRecurrences
+
       has_many :recurrences, class_name: 'IssueRecurrence', dependent: :destroy
 
       belongs_to :recurrence_of, class_name: 'Issue'

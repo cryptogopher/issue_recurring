@@ -12,3 +12,8 @@
 <%= select_tag 'settings[journal_mode]', journal_mode_options(@settings[:journal_mode]) %>
 <em class="info"><%= t('.journal_mode_hint') %></em>
 </p>
+<p>
+<%= label_tag :settings_copy_recurrences, t('.copy_recurrences') %>
+<%= check_box_tag 'settings[copy_recurrences]', true, @settings[:copy_recurrences] %>
+<em class="info"><%= t('.copy_recurrences_hint') %></em>
+</p>

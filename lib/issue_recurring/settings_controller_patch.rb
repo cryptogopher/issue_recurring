@@ -16,6 +16,9 @@ module IssueRecurring
         settings[:journal_mode] = IssueRecurrence::JOURNAL_MODES.include?(journal_mode) ?
           journal_mode : IssueRecurrence::JOURNAL_MODES.first
 
+        settings[:copy_recurrences] =
+          params[:settings][:copy_recurrences] == 'true' ? true : false
+
         params[:settings] = settings
       end
     end
