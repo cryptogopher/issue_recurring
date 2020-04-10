@@ -136,4 +136,11 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
     end
     assert_raises(ActiveRecord::RecordNotFound) { issue.reload }
   end
+
+  def update_plugin_settings(**s)
+    assert User.current.admin
+    settings = Setting.plugin_issue_recurring.merge(s)
+    post plugin_settings_path(id: 'issue_recurring'), params: {settings: settings}
+    assert_redirected_to plugin_settings_path(id: 'issue_recurring')
+  end
 end
