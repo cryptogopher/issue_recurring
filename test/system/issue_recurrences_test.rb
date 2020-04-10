@@ -90,7 +90,8 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
   def test_settings_journal_mode
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
     @issue2.update!(start_date: 10.days.ago, due_date: 5.days.ago)
-    ir1 = create_recurrence(@issue1, creation_mode: :copy_first, anchor_to_start: true)
+    ir1 = create_recurrence(@issue1, creation_mode: :copy_first, anchor_to_start: true,
+                           anchor_mode: :last_issue_fixed)
     ir2 = create_recurrence(@issue2, creation_mode: :in_place, anchor_to_start: true,
                             anchor_mode: :last_issue_flexible)
     logout_user
