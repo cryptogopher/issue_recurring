@@ -7,7 +7,7 @@ require_dependency 'issue_recurring/issue_recurrences_view_listener'
 
   Project.include IssueRecurring::ProjectPatch
 
-  Setting.extend IssueRecurring::SettingPatch
+  Setting.singleton_class.prepend IssueRecurring::SettingPatch
   SettingsController.include IssueRecurring::SettingsControllerPatch
   SettingsHelper.include IssueRecurring::SettingsHelperPatch
 end
