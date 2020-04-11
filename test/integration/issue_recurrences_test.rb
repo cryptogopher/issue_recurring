@@ -2390,6 +2390,17 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal @issue1, r2.recurrence_of
   end
 
+  def test_copying_issue_resets_recurrence_of
+    @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
+    ir = create_recurrence
+    travel_to(@issue1.start_date)
+    r1 = renew_all(1)
+    assert_equal @issue1, r1.recurrence_of
+
+    r1_copy = copy_issue(r1, r1.project)
+    assert_nil r1_copy.recurrence_of
+  end
+
   def test_renew_subtasks
     configs = [
       {start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5)},
@@ -2580,7 +2591,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   def test_renew_applies_copy_recurrences_configuration_setting
     # NOTE: to be removed when system tests are working with all supported Redmine versions.
     # * corresponding system test: test_settings_copy_recurrences
-    malleable_attrs = [:id, :created_at, :updated_at, :issue_id, :last_issue_id]
+    malleable_attrs = [:id, :created_at, :updated_at, :issue_id, :last_issue_id, :count]
     fixed_attrs = ->(ir) { ir.attributes.with_indifferent_access.except(*malleable_attrs) }
 
 
@@ -2626,6 +2637,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       ir_copy = IssueRecurrence.last
       assert_equal project_copy, ir_copy.issue.project
       assert_equal fixed_attrs.(ir), fixed_attrs.(ir_copy)
+      assert_nil ir_copy.last_issue
+      assert_equal 0, ir_copy.count
     end
 
     logout_user
@@ -2637,6 +2650,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       ir_copy = IssueRecurrence.last
       assert_equal issue_copy, ir_copy.issue
       assert_equal fixed_attrs.(ir), fixed_attrs.(ir_copy)
+      assert_nil ir_copy.last_issue
+      assert_equal 0, ir_copy.count
     end
 
     # copy_recurrences: true -> recur issue and its copies created above
