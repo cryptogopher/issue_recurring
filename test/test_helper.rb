@@ -172,4 +172,15 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
     assert_redirected_to issue_path(new_issue)
     new_issue
   end
+
+  def copy_issue_should_fail(from_issue, to_project, **attrs)
+    assert_no_difference 'Issue.count' do
+      post project_issues_path(to_project), params: {
+        copy_from: from_issue.id,
+        issue: attrs
+      }
+    end
+    assert_not_empty assigns(:issue).errors
+    assigns(:issue).errors
+  end
 end

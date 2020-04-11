@@ -2401,6 +2401,17 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_nil r1_copy.recurrence_of
   end
 
+  def test_copying_issue_with_changes_that_invalidate_recurrence_should_fail
+    @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
+    ir = create_recurrence(anchor_to_start: false)
+
+    issue1_copy = copy_issue(@issue1, @project1)
+    refute_empty issue1_copy.recurrences
+
+    errors = copy_issue_should_fail(@issue1, @project1, due_date: nil)
+    assert errors.added?(:recurrences, :invalid)
+  end
+
   def test_renew_subtasks
     configs = [
       {start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5)},
