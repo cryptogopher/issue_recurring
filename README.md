@@ -35,6 +35,7 @@ The most notable features of this plugin include:
 * updating both start and due dates according to schedule (if specified),
 * properly handling issue attributes, including keeping: parent, custom fields, priority and resetting: done ratio, time entries and status,
 * ability to recur with or without subtasks,
+* ability to have recurrence schemes copied regardless of whether individual issues or whole projects are copied,
 * ability to delay recurrence against base date to create multiple recurrences of the same frequency with different time offset (e.g. monthly recurrence on 10th, 20th and 30th day of month),
 * ability to limit recurrence by final date or recurrence count,
 * showing last recurrence and dates next/predicted recurrences,
@@ -45,6 +46,13 @@ The most notable features of this plugin include:
 * specification of recurrence issue assignment: assignee can be kept unchanged from previous recurrence or set to Redmine's default.
 
 ## Changelog
+
+### 1.6
+
+* released on: 2020-04-11
+* upgraded wording of anchor modes in recurrence form,
+* added new value for option specifying whether to add journal for new recurrence; now journal can not only be enabled/diabled, but also enabled selectively for _in-place_ recurrences; if you use this option, you can eliminate email notifications on (less important) journal updates on reference issues with _copy_ recurrences, while still getting notifications on: a) new issues created from _copy_ recurrences and b) journal updates on issues with _in-place_ recurrences (#24)
+- issue recurrence schemes are now copied along with issue, regardless of whether you copy individual issues or projects; this behavior can be controlled by plugin setting (#21); if recurrence copy fails on project copy (e.g. because issue recurring module is not enabled for project) it is silently ignored; if recurrence copy fails on issue (e.g. because required issue date has been removed) - issue copy is aborted and error reported
 
 ### 1.5
 
