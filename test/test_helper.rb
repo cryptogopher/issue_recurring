@@ -143,4 +143,33 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
     post plugin_settings_path(id: 'issue_recurring'), params: {settings: settings}
     assert_redirected_to plugin_settings_path(id: 'issue_recurring')
   end
+
+  def copy_project(project)
+    assert User.current.admin
+    assert_difference 'Project.count', 1 do
+      post copy_project_path(project), params: {
+        project: {
+          name: "copy of: #{project.name} at [#{DateTime.current.strftime('%F %R')}]",
+          identifier: "#{project.identifier}-#{DateTime.current.strftime('%Y%m%d%H%M%S')}",
+          inherit_members: 1,
+          enabled_module_names: project.enabled_modules.map(&:name)
+        }
+      }
+    end
+    new_project = Project.last
+    assert_redirected_to settings_project_path(new_project)
+    new_project
+  end
+
+  def copy_issue(from_issue, to_project, **attrs)
+    assert_difference 'Issue.count', 1 do
+      post project_issues_path(to_project), params: {
+        copy_from: from_issue.id,
+        issue: attrs
+      }
+    end
+    new_issue = Issue.last
+    assert_redirected_to issue_path(new_issue)
+    new_issue
+  end
 end

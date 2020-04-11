@@ -11,6 +11,8 @@ module IssueRecurring
             self.recurrences = @copied_from.recurrences.map(&:dup)
           end
         end
+
+        self
       end
     end
 

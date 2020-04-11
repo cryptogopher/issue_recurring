@@ -11,9 +11,13 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     Setting.issue_done_ratio == 'issue_field'
 
     log_user 'admin', 'foo'
-    update_plugin_settings(author_id: 0, keep_assignee: false, journal_mode: :never)
+    update_plugin_settings(author_id: 0,
+                           keep_assignee: false,
+                           journal_mode: :never,
+                           copy_recurrences: true)
     logout_user
 
+    @project1 = projects(:project_01)
     @issue1 = issues(:issue_01)
     @issue2 = issues(:issue_02)
     @issue3 = issues(:issue_03)
@@ -2563,13 +2567,82 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       travel_to(@issue2.start_date)
       close_issue(@issue2)
       count = config[:journalized].length
-      r2 = assert_difference 'Journal.count', count do renew_all(1) end
+      assert_difference 'Journal.count', count do renew_all(1) end
       [ir1, @issue1, @issue2].map(&:reload)
       assert !@issue2.closed?
       if count > 0
         assert_equal config[:journalized], Journal.last(count).map(&:journalized)
         assert_equal config[:journalized].map(&:author), Journal.last(count).map(&:user)
       end
+    end
+  end
+
+  def test_renew_applies_copy_recurrences_configuration_setting
+    # NOTE: to be removed when system tests are working with all supported Redmine versions.
+    # * corresponding system test: test_settings_copy_recurrences
+    malleable_attrs = [:id, :created_at, :updated_at, :issue_id, :last_issue_id]
+    fixed_attrs = ->(ir) { ir.attributes.with_indifferent_access.except(*malleable_attrs) }
+
+
+    @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
+    ir = create_recurrence(creation_mode: :copy_first)
+    logout_user
+    log_user 'admin', 'foo'
+    update_plugin_settings(copy_recurrences: false)
+
+    # copy_recurrences: false -> copy project
+    assert_no_difference 'IssueRecurrence.count' do
+      project_copy = copy_project(@project1)
+      assert_equal @project1, ir.reload.issue.project
+    end
+
+    logout_user
+    log_user 'alice', 'foo'
+
+    # copy_recurrences: false -> copy issue
+    assert_no_difference 'IssueRecurrence.count' do
+      issue_copy = copy_issue(@issue1, @project1)
+      assert_equal @issue1, ir.reload.issue
+    end
+
+    # copy_recurrences: false -> recur issue
+    travel_to(@issue1.start_date)
+    assert_no_difference 'IssueRecurrence.count' do
+      renew_all(1)
+    end
+
+    destroy_recurrence(ir)
+
+
+    @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
+    ir = create_recurrence(creation_mode: :copy_first)
+    logout_user
+    log_user 'admin', 'foo'
+    update_plugin_settings(copy_recurrences: true)
+
+    # copy_recurrences: true -> copy project
+    assert_difference 'IssueRecurrence.count', 1 do
+      project_copy = copy_project(@project1)
+      ir_copy = IssueRecurrence.last
+      assert_equal project_copy, ir_copy.issue.project
+      assert_equal fixed_attrs.(ir), fixed_attrs.(ir_copy)
+    end
+
+    logout_user
+    log_user 'alice', 'foo'
+
+    # copy_recurrences: true -> copy issue
+    assert_difference 'IssueRecurrence.count', 1 do
+      issue_copy = copy_issue(@issue1, @project1)
+      ir_copy = IssueRecurrence.last
+      assert_equal issue_copy, ir_copy.issue
+      assert_equal fixed_attrs.(ir), fixed_attrs.(ir_copy)
+    end
+
+    # copy_recurrences: true -> recur issue and its copies created above
+    travel_to(@issue1.start_date)
+    assert_no_difference 'IssueRecurrence.count' do
+      renew_all(3)
     end
   end
 

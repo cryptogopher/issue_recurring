@@ -46,8 +46,8 @@ en:
         always: 'always'
         in_place: 'for in-place only'
       copy_recurrences: 'Copy recurrences on issue copy'
-      copy_recurrences_hint: 'applies regardless of whether issues or projects with issues
-        are copied'
+      copy_recurrences_hint: 'applies regardless of whether issues are copied directly or
+        as a result of project copy'
   issue_recurrences:
     index:
       heading: 'Issue recurrences'

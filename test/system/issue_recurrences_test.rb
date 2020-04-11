@@ -5,12 +5,16 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     super
 
     Setting.non_working_week_days = [6, 7]
+
+    # FIXME: settings should be set through controller by admin user
     Setting.plugin_issue_recurring = {
       author_id: 0,
       keep_assignee: false,
-      journal_mode: :never
+      journal_mode: :never,
+      copy_recurrences: true
     }
 
+    @project1 = projects(:project_01)
     @issue1 = issues(:issue_01)
     @issue2 = issues(:issue_02)
     @issue3 = issues(:issue_03)
@@ -58,8 +62,8 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
   end
 
   def test_settings_keep_assignee
-    @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
     assert_not_equal @issue1.assigned_to, @issue1.project.default_assigned_to
+    @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
     create_recurrence(creation_mode: :copy_first)
     logout_user
 
@@ -123,5 +127,9 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
         assert_equal config[:journalized].map(&:author), Journal.last(count).map(&:user)
       end
     end
+  end
+
+  def test_settings_copy_recurrences
+    # TODO: migrate integrtion test_renew_applies_copy_recurrences_configuration_setting
   end
 end
