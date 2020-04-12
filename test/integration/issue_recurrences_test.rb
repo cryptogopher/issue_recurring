@@ -2599,7 +2599,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
   end
 
-  def test_renew_applies_copy_recurrences_configuration_setting
+  def test_copying_issue_applies_copy_recurrences_configuration_setting
     # NOTE: to be removed when system tests are working with all supported Redmine versions.
     # * corresponding system test: test_settings_copy_recurrences
     malleable_attrs = [:id, :created_at, :updated_at, :issue_id, :last_issue_id, :count]
@@ -2638,6 +2638,13 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
     ir = create_recurrence(creation_mode: :copy_first)
+    # Recur once and update :last_issue and :count
+    travel_to(@issue1.start_date)
+    r1 = renew_all(1)
+    ir.reload
+    assert_not_nil ir.last_issue
+    assert_not_equal 0, ir.count
+
     logout_user
     log_user 'admin', 'foo'
     update_plugin_settings(copy_recurrences: true)
@@ -2666,9 +2673,11 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
 
     # copy_recurrences: true -> recur issue and its copies created above
-    travel_to(@issue1.start_date)
+    travel_to(r1.start_date)
     assert_no_difference 'IssueRecurrence.count' do
-      renew_all(3)
+      # Copies are renewed twice and original once (it has already beed renewed
+      # once during setup)
+      renew_all(5)
     end
   end
 
