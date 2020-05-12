@@ -1,0 +1,142 @@
+# Bulgarian translation - превод на български език
+bg:
+  field_recurrence_of: 'Цикличност на'
+  activerecord:
+    errors:
+      models:
+        issue_recurrence:
+          attributes:
+            issue:
+              insufficient_privileges: 'вие имате недостатъчни права за да редактирате цикличността на тази задача'
+            anchor_mode:
+              close_anchor_no_delay: 'закъснение не може да бъде задавано на цикличности, базирани на дата на затваряне'
+              issue_anchor_no_blank_dates: 'Цикличности, базирани на датите на задачите или последните им повторения не могат да бъдат създадени, ако не са зададени и двете начална и крайна дати'
+              in_place_closed_only: 'само цикличности, зависими от дата на затваряне могат модифицират задача на място'
+              date_anchor_in_place_only: 'Цикличности, базирани на фиксирани дати могат да се използват само за модификации на място'
+            creation_mode:
+              only_one_in_place: 'допълнителни цикличности на място са позволени, само ако са базирани на фиксирана дата'
+              derived_in_place_requires_subtasks: 'не е възможно да се повтори задача на място без подзадачи, ако началната и крaйната дати се
+                вземат от подзадачи (вижте Администрация -> Настройки -> Тракинг -> Атрибути на родителските задачи)'
+            anchor_to_start:
+              start_mode_requires_date: 'цикличност, базирана на начална дата не може да бъде създадена за задача без начална дата'
+              due_mode_requires_date: 'цикличност, базирана на крайна дата не може да бъде създадена за задача без крайна дата'
+            date_limit:
+              not_in_future: 'Крайната дата на цикличност трябва да бъде в бъдещето'
+  issue_recurrences_menu_caption: 'Цикличност'
+  journal_warning: "<b>Внимание</b>: не е възможно да се поднови цикличност, %{msg}."
+  settings:
+    issue_recurrences:
+      author: 'Авторът на новата задача да бъде'
+      author_unchanged: 'авторът на старата задача'
+      keep_assignee: 'Запазване на изпълнителя от предишното повторение'
+      keep_assignee_hint: 'ако не е избрано, Redmine ще използва подразбиращите се правила за назначаване'
+      journal_mode: 'Добавяне на запис в журнала при създаване на нова задача'
+      journal_mode_hint: 'записът се добавя само за отправната задача (не и за новата задача)'
+      journal_modes:
+        never: 'никога'
+        always: 'винаги'
+        in_place: 'за на-място само'
+      copy_recurrences: 'Копиране на цикличностите при копиране на задачата'
+      copy_recurrences_hint: 'прилага се независимо дали задачите се копират директно или като резултат от копиране на проект'
+  issue_recurrences:
+    index:
+      heading: 'Цикличност на задачите'
+      issue: 'Задача'
+      mode: 'Интервал'
+      last_recurrence: 'Последно'
+      next_recurrence: 'Следващо'
+      predicted_recurrence: 'Предсказано'
+      include_subtasks: 'Подзадачите?'
+      creation_mode: 'Създаване'
+      anchor_mode: 'На базата на'
+      limit: 'Край'
+      count: '#'
+      anchor_modes:
+        first_issue_fixed: 'първата задача'
+        last_issue_fixed: 'последната задача'
+        last_issue_flexible: 'затварянето на последната задача като'
+        last_issue_flexible_on_delay: 'датата на затваряне на последната задача, ако е закъсняла като'
+        last_issue_fixed_after_close: 'последната задача (след датата на затваряне) като'
+        date_fixed_after_close: 'фиксирана задача (след датата на затваряне) като'
+  issues:
+    issue_recurrences_hook:
+      recurrences: 'Цикличност'
+      this_is_recurrence: 'Това е повторение на'
+      button_details: 'Подробности'
+    recurrences:
+      index:
+        last_recurrence: 'Последно:'
+        next_recurrence: 'Следващо:'
+        predicted_recurrence: 'Предсказано:'
+      details:
+      form:
+        creation_modes:
+          copy_first: 'Копиране на <b>задачата</b>'
+          copy_last: 'Копиране на <b>последното повторение</b> на задачата'
+          in_place: 'Модифициране на задачата <b>на място</b>'
+        include_subtasks:
+          :true: 'заедно с подзадачите'
+          :false: 'без подзадачите'
+        subtasks: 'подзадачи'
+        every: 'всеки/всяка'
+        mode_intervals:
+          daily: 'ден'
+          daily_wday: 'работен ден'
+          weekly: 'седмица'
+          monthly_day_from_first: 'месец'
+          monthly_day_to_last: 'месец'
+          monthly_dow_from_first: 'месец'
+          monthly_dow_to_last: 'месец'
+          monthly_wday_from_first: 'месец'
+          monthly_wday_to_last: 'месец'
+          yearly: 'година'
+        mode_descriptions:
+          daily: ''
+          daily_wday: ''
+          weekly: ''
+          monthly_day_from_first: 'на същия ден в месеца'
+          monthly_day_to_last: 'на същия ден от края на месеца'
+          monthly_dow_from_first: 'на същия ден от седмицата в месеца'
+          monthly_dow_to_last: 'на същия ден от седмицата от края на месеца'
+          monthly_wday_from_first: 'на същия работен ден от месеца'
+          monthly_wday_to_last: 'на същия работен ден от края на месеца'
+          yearly: ''
+        mode_modifiers:
+          daily: ''
+          daily_wday: ''
+          weekly: ''
+          monthly_day_from_first: 'на %{days_from_bom} ден'
+          monthly_day_to_last: 'на %{days_to_eom} от последния ден'
+          monthly_dow_from_first: 'на %{dows_from_bom} %{day_of_week}'
+          monthly_dow_to_last: 'на %{dows_to_eom} до последния %{day_of_week}'
+          monthly_wday_from_first: 'на %{wdays_from_bom} работен ден'
+          monthly_wday_to_last: 'на %{wdays_to_eom} до последния работен ден'
+          yearly: ''
+        based_on: 'базирано на'
+        anchor_modes:
+          first_issue_fixed: 'на тази <b>задача</b>'
+          last_issue_fixed: 'на <b>последната задача</b>'
+          last_issue_flexible: 'назначена след <b>датата на затваряне на последната задача</b>'
+          last_issue_flexible_on_delay: 'след <b>последната задача, ако е затворена навреме,</b>
+            иначе от датата на затваряне'
+          last_issue_fixed_after_close: 'след <b>последната задача (повтаря само след датата на затваряне)</b>'
+          date_fixed_after_close: 'назначена след <b>фиксирана дата</b> (повтаря само след датата на затваряне на последната задача):'
+        anchor_to_start:
+          :true: '<b>начална дата</b>'
+          :false: '<b>крайна дата</b>'
+        delayed_by: ', забавена с'
+        delay_modes:
+          days: 'дена'
+          weeks: 'седмици'
+          months: 'месеца'
+        delay_intervals:
+          days: 'ден'
+          weeks: 'седмица'
+          months: 'месец'
+        until: 'и повтаряне до'
+        limit_modes:
+          forever: '<b>завинаги</b>'
+          fixed_date: '<b>фиксирана дата (включително):</b>'
+          count: '<b>броят на повторенията</b> достигне:'
+        recurrence: 'повторение'
+
