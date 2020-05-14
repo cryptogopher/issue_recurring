@@ -2563,6 +2563,30 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal users(:alice), r2.assigned_to
   end
 
+  def test_renew_applies_keep_assignee_only_for_assignable_users
+    # https://it.michalczyk.pro/issues/26
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    create_recurrence(creation_mode: :copy_first)
+
+    assert_equal users(:alice), @issue1.assigned_to
+    assert_equal users(:gopher), @issue1.project.default_assigned_to
+
+    logout_user
+    log_user 'admin', 'foo'
+    update_plugin_settings(keep_assignee: true)
+
+    # Blocked user is not assignable
+    set_user_status(users(:alice), Principal::STATUS_LOCKED)
+    travel_to(@issue1.start_date)
+    r1 = renew_all(1)
+    assert_equal users(:gopher), r1.assigned_to
+
+    set_user_status(users(:alice), Principal::STATUS_ACTIVE)
+    travel_to(r1.start_date)
+    r2 = renew_all(1)
+    assert_equal users(:alice), r2.assigned_to
+  end
+
   def test_renew_applies_journal_mode_configuration_setting
     # NOTE: to be removed when system tests are working with all supported Redmine versions.
     # * corresponding system test: test_settings_journal_mode

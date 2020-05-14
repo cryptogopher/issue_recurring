@@ -183,4 +183,11 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
     assert_not_empty assigns(:issue).errors
     assigns(:issue).errors
   end
+
+  def set_user_status(user, status)
+    assert_not_equal user.status, status
+    put "/users/#{user.id}", params: {user: {status: status}}
+    user.reload
+    assert_equal user.status, status
+  end
 end
