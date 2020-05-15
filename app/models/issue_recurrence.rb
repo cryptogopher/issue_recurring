@@ -4,8 +4,6 @@ class IssueRecurrence < ActiveRecord::Base
   belongs_to :issue
   belongs_to :last_issue, class_name: 'Issue'
 
-  @@log_problems = false
-
   enum creation_mode: {
     copy_first: 0,
     copy_last: 1,
@@ -141,8 +139,12 @@ class IssueRecurrence < ActiveRecord::Base
       self.delay_multiplier ||= 0
       self.include_subtasks = false if self.include_subtasks.nil?
     end
+
+    @journal_notes = ''
   end
   before_destroy :editable?
+
+  attr_reader :journal_notes
 
   def visible?
     self.issue.visible? &&
@@ -394,8 +396,16 @@ class IssueRecurrence < ActiveRecord::Base
       new_issue.done_ratio = 0
       new_issue.status = new_issue.tracker.default_status
       new_issue.recurrence_of = self.issue
-      new_issue.default_reassign unless Setting.plugin_issue_recurring[:keep_assignee]
+      assignee = new_issue.assigned_to
+      is_assignee_valid = assignee.blank? || new_issue.assignable_users.include?(assignee)
+      unless Setting.plugin_issue_recurring[:keep_assignee] && is_assignee_valid
+        new_issue.default_reassign
+      end
       new_issue.save!
+      # Errors containing issue ID reported only after #save
+      if Setting.plugin_issue_recurring[:keep_assignee] && !is_assignee_valid
+        log(:warning_keep_assignee, id: new_issue.id, login: assignee.login)
+      end
 
       if self.include_subtasks
         target_label = self.anchor_to_start ? :start : :due
@@ -407,8 +417,16 @@ class IssueRecurrence < ActiveRecord::Base
           child.done_ratio = 0
           child.status = child.tracker.default_status
           child.recurrence_of = self.issue
-          child.default_reassign unless Setting.plugin_issue_recurring[:keep_assignee]
+          assignee = child.assigned_to
+          is_assignee_valid = assignee.blank? || child.assignable_users.include?(assignee)
+          unless Setting.plugin_issue_recurring[:keep_assignee] && is_assignee_valid
+            child.default_reassign
+          end
           child.save!
+          # Errors containing issue ID reported only after #save
+          if Setting.plugin_issue_recurring[:keep_assignee] && !is_assignee_valid
+            log(:warning_keep_assignee, id: child.id, login: assignee.login)
+          end
         end
       end
 
@@ -448,7 +466,7 @@ class IssueRecurrence < ActiveRecord::Base
 
     self.validate_base_dates
     unless self.errors.empty?
-      log("issue ##{ref_issue.id}: #{self.errors.messages.values.to_sentence}")
+      log(:warning_renew, id: ref_issue.id, errors: self.errors.messages.values.to_sentence)
       return nil
     end
 
@@ -610,26 +628,30 @@ class IssueRecurrence < ActiveRecord::Base
   end
 
   def self.renew_all
-    @@log_problems = true
     IssueRecurrence.select(:issue_id).distinct.includes(:issue).each do |r|
       self.issue_dates(r.issue).each do |recurrence, dates_list|
         dates_list.each { |dates| recurrence.create(dates) }
       end
+
+      # Problems are always logged to master issue, not recurrences (as opposed
+      # to normal journal entries, which go to the ref_issues)
+      journal_notes = r.issue.recurrences.map(&:journal_notes).join
+      if journal_notes.present?
+        prev_user = User.current
+        author_id = Setting.plugin_issue_recurring[:author_id]
+        User.current = User.find_by(id: author_id) || r.issue.author
+        journal = r.issue.init_journal(User.current)
+        journal.notes << journal_notes
+        journal.save
+        User.current = prev_user
+      end
     end
-    @@log_problems = false
   end
 
   private
 
-  def log(msg)
-    return unless @@log_problems
-
-    prev_user = User.current
-    author_id = Setting.plugin_issue_recurring[:author_id]
-    User.current = User.find_by(id: author_id) || self.issue.author
-    self.issue.init_journal(User.current, l(:journal_warning, {msg: msg}))
-    self.issue.save
-    User.current = prev_user
+  def log(label, **args)
+    @journal_notes << "#{l(label, args)}\r\n"
   end
 
   class Date < ::Date

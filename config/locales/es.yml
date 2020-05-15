@@ -33,7 +33,9 @@ es:
               not_in_future: 'el límite de fecha para una recurrencia proporcionada por el
                 usuario debe ser futuro'
   issue_recurrences_menu_caption: 'Recurrencias'
-  journal_warning: "<b>Advertencia</b>: no se puede renovar recurrencia, %{msg}."
+  warning_renew: "*Advertencia!* No se puede renovar recurrencia, issue #%{id}: %{errors}."
+  warning_keep_assignee: "*Warning!* Can't assign newly recurred issue #%{id} to @%{login}
+    (default assignment rules will apply)."
   settings:
     issue_recurrences:
       author: 'Establecer autor para nueva recurrencia a'

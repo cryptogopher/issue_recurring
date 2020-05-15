@@ -2563,7 +2563,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal users(:alice), r2.assigned_to
   end
 
-  def test_renew_applies_keep_assignee_only_for_assignable_users
+  def test_renew_applies_keep_assignee_only_for_assignable_users_otherwise_logs_error
     # https://it.michalczyk.pro/issues/26
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
     create_recurrence(creation_mode: :copy_first)
@@ -2578,12 +2578,18 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     # Blocked user is not assignable
     set_user_status(users(:alice), Principal::STATUS_LOCKED)
     travel_to(@issue1.start_date)
-    r1 = renew_all(1)
+    r1 = assert_difference 'Journal.count', 1 do
+      renew_all(1)
+    end
     assert_equal users(:gopher), r1.assigned_to
+    assert @issue1.reload.journals.last.notes.include?('Can\'t assign newly recurred issue')
 
+    # Active user is assignable
     set_user_status(users(:alice), Principal::STATUS_ACTIVE)
     travel_to(r1.start_date)
-    r2 = renew_all(1)
+    r2 = assert_no_difference 'Journal.count' do
+      renew_all(1)
+    end
     assert_equal users(:alice), r2.assigned_to
   end
 
@@ -2858,8 +2864,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
       @issue1.update!(start_date: Date.new(2018,9,15), due_date: nil)
       ir = create_recurrence(anchor_mode: anchor_mode,
-                        anchor_to_start: true,
-                        mode: :monthly_day_from_first)
+                             anchor_to_start: true,
+                             mode: :monthly_day_from_first)
       travel_to(Date.new(2018,9,15))
       r1 = renew_all(1)
 
@@ -2877,8 +2883,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
       @issue1.update!(start_date: nil, due_date: Date.new(2018,9,20))
       ir = create_recurrence(anchor_mode: anchor_mode,
-                        anchor_to_start: false,
-                        mode: :monthly_day_from_first)
+                             anchor_to_start: false,
+                             mode: :monthly_day_from_first)
       travel_to(Date.new(2018,9,20))
       r1 = renew_all(1)
       @issue1.reload
