@@ -2582,7 +2582,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       renew_all(1)
     end
     assert_equal users(:gopher), r1.assigned_to
-    assert @issue1.reload.journals.last.notes.include?('Can\'t assign newly recurred issue')
+    assert_equal @issue1, Journal.last.journalized
+    assert Journal.last.notes.include?('Can\'t assign newly recurred issue')
 
     # Active user is assignable
     set_user_status(users(:alice), Principal::STATUS_ACTIVE)
@@ -2853,8 +2854,9 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       assert_difference 'Journal.count', 1 do
         renew_all(0)
       end
-      assert Journal.last.notes.include?('both dates (start and due) are blank')
       @issue1.reload
+      assert_equal @issue1, Journal.last.journalized
+      assert Journal.last.notes.include?('both dates (start and due) are blank')
 
       destroy_recurrence(ir)
     end
@@ -2875,8 +2877,9 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       assert_difference 'Journal.count', 1 do
         renew_all(0)
       end
-      assert Journal.last.notes.include?('created for issue without start date')
       @issue1.reload
+      assert_equal @issue1, Journal.last.journalized
+      assert Journal.last.notes.include?('created for issue without start date')
 
       destroy_recurrence(ir)
 
@@ -2895,6 +2898,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       assert_difference 'Journal.count', 1 do
         renew_all(0)
       end
+      assert_equal @issue1, Journal.last.journalized
       assert Journal.last.notes.include?('created for issue without due date')
 
       destroy_recurrence(ir)
@@ -2935,6 +2939,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       renew_all(0)
     end
     [@issue1, @issue2].map(&:reload)
+    assert_equal @issue1, Journal.last.journalized
     assert Journal.last.notes.include?('dates are derived from subtasks')
     assert_equal Date.new(2018,9,29), @issue1.start_date
     assert @issue1.closed?
