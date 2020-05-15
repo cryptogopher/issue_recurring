@@ -2592,6 +2592,14 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       renew_all(1)
     end
     assert_equal users(:alice), r2.assigned_to
+
+    # nil user is assignable, but Redmine assigns default anyway
+    set_assigned_to(@issue1, nil)
+    travel_to(r2.start_date)
+    r3 = assert_no_difference 'Journal.count' do
+      renew_all(1)
+    end
+    assert_equal users(:gopher), r3.assigned_to
   end
 
   def test_renew_applies_journal_mode_configuration_setting

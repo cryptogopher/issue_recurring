@@ -190,4 +190,11 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
     user.reload
     assert_equal user.status, status
   end
+
+  def set_assigned_to(issue, assignee)
+    assert_not_equal [assignee], [issue.assigned_to]
+    put "/issues/#{issue.id}", params: {issue: {assigned_to_id: assignee ? assignee.id: ''}}
+    issue.reload
+    assert_equal [assignee], [issue.assigned_to]
+  end
 end
