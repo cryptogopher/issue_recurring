@@ -2574,32 +2574,32 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     logout_user
     log_user 'admin', 'foo'
     update_plugin_settings(keep_assignee: true)
+    r = {}
 
     # Blocked user is not assignable
     set_user_status(users(:alice), Principal::STATUS_LOCKED)
     travel_to(@issue1.start_date)
-    r1 = assert_difference 'Journal.count', 1 do
-      renew_all(1)
+    assert_difference ['Journal.count', '@issue1.journals.count'], 1 do
+      r[1] = renew_all(1)
     end
-    assert_equal users(:gopher), r1.assigned_to
-    assert_equal @issue1, Journal.last.journalized
+    assert_equal users(:gopher), r[1].assigned_to
     assert Journal.last.notes.include?('Can\'t assign newly recurred issue')
 
     # Active user is assignable
     set_user_status(users(:alice), Principal::STATUS_ACTIVE)
-    travel_to(r1.start_date)
-    r2 = assert_no_difference 'Journal.count' do
-      renew_all(1)
+    travel_to(r[1].start_date)
+    assert_no_difference 'Journal.count' do
+      r[2] = renew_all(1)
     end
-    assert_equal users(:alice), r2.assigned_to
+    assert_equal users(:alice), r[2].assigned_to
 
     # nil user is assignable, but Redmine assigns default anyway
     set_assigned_to(@issue1, nil)
-    travel_to(r2.start_date)
-    r3 = assert_no_difference 'Journal.count' do
-      renew_all(1)
+    travel_to(r[2].start_date)
+    assert_no_difference 'Journal.count' do
+      r[3] = renew_all(1)
     end
-    assert_equal users(:gopher), r3.assigned_to
+    assert_equal users(:gopher), r[3].assigned_to
   end
 
   def test_renew_applies_journal_mode_configuration_setting
