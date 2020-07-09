@@ -2583,7 +2583,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       r[1] = renew_all(1)
     end
     assert_equal users(:gopher), r[1].assigned_to
-    assert Journal.last.notes.include?('Can\'t assign newly recurred issue')
+    msg = "#{I18n.t(:warning_keep_assignee, id: r[1].id, login: users(:alice).login)}\r\n"
+    assert_equal msg, Journal.last.notes
 
     # Active user is assignable
     set_user_status(users(:alice), Principal::STATUS_ACTIVE)

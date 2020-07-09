@@ -35,6 +35,9 @@ en:
   warning_renew: "*Warning!* Can't renew recurrence, issue #%{id}: %{errors}."
   warning_keep_assignee: "*Warning!* Can't assign newly recurred issue #%{id} to @%{login}
     (default assignment rules will apply)."
+  warning_author: "*Warning!* Nonexistent user %{login} can't be set as an author for newly
+    recurred issue #%{id}. Please select existing user in plugin settings
+    (applying 'Anonymous' as author now)."
   settings:
     issue_recurrences:
       author: 'Set author of new recurrence to'
