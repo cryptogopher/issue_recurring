@@ -32,7 +32,7 @@ Redmine::Plugin.register :issue_recurring do
     :after => :issues, :param => :project_id
 
   settings default: {
-    author_id: 0,
+    author_login: nil,
     keep_assignee: false,
     journal_mode: :never
   }, partial: 'settings/issue_recurrences'

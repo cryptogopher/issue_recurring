@@ -377,8 +377,8 @@ class IssueRecurrence < ActiveRecord::Base
     prev_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
 
     prev_user = User.current
-    author_id = Setting.plugin_issue_recurring[:author_id]
-    User.current = User.find_by(id: author_id) || ref_issue.author
+    author_login = Setting.plugin_issue_recurring[:author_login]
+    User.current = User.find_by(login: author_login) || ref_issue.author
 
     IssueRecurrence.transaction do
       if Setting.plugin_issue_recurring[:journal_mode] == :always ||
@@ -638,8 +638,8 @@ class IssueRecurrence < ActiveRecord::Base
       journal_notes = r.issue.recurrences.map(&:journal_notes).join
       if journal_notes.present?
         prev_user = User.current
-        author_id = Setting.plugin_issue_recurring[:author_id]
-        User.current = User.find_by(id: author_id) || r.issue.author
+        author_login = Setting.plugin_issue_recurring[:author_login]
+        User.current = User.find_by(login: author_login) || r.issue.author
         journal = r.issue.init_journal(User.current)
         journal.notes << journal_notes
         journal.save

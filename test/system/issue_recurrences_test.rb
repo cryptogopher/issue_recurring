@@ -31,7 +31,7 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     visit issue_path(@issue1)
   end
 
-  def test_settings_author_id
+  def test_settings_author_login
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
     create_recurrence(creation_mode: :copy_first)
     logout_user
@@ -39,21 +39,24 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     log_user 'admin', 'foo'
     visit plugin_settings_path(id: 'issue_recurring')
     t_base = 'settings.issue_recurrences'
+    author_locator = t("#{t_base}.author")
 
-    select t("#{t_base}.author_unchanged"), from: t("#{t_base}.author")
+    select t("#{t_base}.author_unchanged"), from: author_locator
     click_button t(:button_apply)
-    assert_text '#flash_notice', t(:notice_successful_update)
-    assert_equal 0, Setting.plugin_issue_recurring[:author_id]
+    assert_selector '#flash_notice', exact_text: t(:notice_successful_update)
+    assert_nil Setting.plugin_issue_recurring[:author_login]
+    find_field(author_locator).assert_text t("#{t_base}.author_unchanged")
 
     travel_to(@issue1.start_date)
     r1 = renew_all(1)
     assert_equal users(:bob), @issue1.author
     assert_equal users(:bob), r1.author
 
-    select users(:charlie).name, from: t("#{t_base}.author")
+    select users(:charlie).name, from: author_locator
     click_button t(:button_apply)
-    assert_text '#flash_notice', t(:notice_successful_update)
-    assert_equal users(:charlie).id, Setting.plugin_issue_recurring[:author_id]
+    assert_selector '#flash_notice', exact_text: t(:notice_successful_update)
+    assert_equal users(:charlie).login, Setting.plugin_issue_recurring[:author_login]
+    find_field(author_locator).assert_text users(:charlie).name
 
     travel_to(r1.start_date)
     r2 = renew_all(1)
@@ -114,6 +117,7 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
       click_button t(:button_apply)
       assert_text '#flash_notice', t(:notice_successful_update)
       assert_equal config[:mode], Setting.plugin_issue_recurring[:journal_mode]
+      # TODO: check selected value as in author_login
 
       assert_equal (ir1.last_issue || @issue1).start_date, @issue2.start_date
       travel_to(@issue2.start_date)
@@ -130,6 +134,6 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
   end
 
   def test_settings_copy_recurrences
-    # TODO: migrate integrtion test_renew_applies_copy_recurrences_configuration_setting
+    # TODO: migrate integration test_renew_applies_copy_recurrences_configuration_setting
   end
 end

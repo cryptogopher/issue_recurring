@@ -1,6 +1,6 @@
 <p>
 <%= label_tag :settings_author_id, t('.author') %>
-<%= select_tag 'settings[author_id]', authors(@settings[:author_id]) %>
+<%= select_tag 'settings[author_id]', authors(@settings[:author_login]) %>
 </p>
 <p>
 <%= label_tag :settings_keep_assignee, t('.keep_assignee') %>

@@ -2518,9 +2518,9 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal r.last_issue, @issue1
   end
 
-  def test_renew_applies_author_id_configuration_setting
+  def test_renew_applies_author_login_configuration_setting
     # NOTE: to be removed when system tests are working with all supported Redmine versions.
-    # * corresponding system test: test_settings_author_id
+    # * corresponding system test: test_settings_author_login
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
     create_recurrence(creation_mode: :copy_first)
 

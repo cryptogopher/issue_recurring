@@ -7,8 +7,13 @@ module IssueRecurring
       def save_issue_recurring_settings
         settings = {}
 
-        author_id = params[:settings][:author_id].to_i
-        settings[:author_id] = User.exists?(author_id) ? author_id : 0
+        # * Author is saved as (unique) :login to allow for better error reporting once
+        # author is missing
+        # * Author is retrieved from form by User.id. Cannot retrieve by :login, as
+        # Anonymous.login == '' and we need empty value for 'author unchanged'
+        # * User with :id == 0 (= author unchanged) doesn't exist and is mapped to nil login
+        settings[:author_login] = User.find_by(id: params[:settings][:author_id].to_i)
+          .try(:login)
 
         settings[:keep_assignee] = params[:settings][:keep_assignee] == 'true' ? true : false
 
