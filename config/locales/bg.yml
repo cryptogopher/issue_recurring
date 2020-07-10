@@ -34,7 +34,12 @@ bg:
             date_limit:
               not_in_future: 'Крайната дата на цикличност трябва да бъде в бъдещето'
   issue_recurrences_menu_caption: 'Цикличност'
-  journal_warning: "<b>Внимание</b>: не е възможно да се поднови цикличност, %{msg}."
+  warning_renew: "<b>Внимание</b>: не е възможно да се поднови цикличност #%{id}: %{errors}."
+  warning_keep_assignee: "*Warning!* Can't assign newly recurred issue #%{id} to @%{login}.
+    Default assignment rules will apply."
+  warning_author: "*Warning!* Nonexistent user %{login} can't be set as the author of newly
+    recurred issue #%{id}. Keeping author from reference issue. Please select existing user in
+    plugin settings for future recurrences."
   settings:
     issue_recurrences:
       author: 'Авторът на новата задача да бъде'
