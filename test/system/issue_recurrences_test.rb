@@ -39,24 +39,24 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     log_user 'admin', 'foo'
     visit plugin_settings_path(id: 'issue_recurring')
     t_base = 'settings.issue_recurrences'
-    author_locator = t("#{t_base}.author")
+    author_select = t("#{t_base}.author")
 
-    select t("#{t_base}.author_unchanged"), from: author_locator
+    select t("#{t_base}.author_unchanged"), from: author_select
     click_button t(:button_apply)
     assert_selector '#flash_notice', exact_text: t(:notice_successful_update)
     assert_nil Setting.plugin_issue_recurring[:author_login]
-    find_field(author_locator).assert_text t("#{t_base}.author_unchanged")
+    assert has_select?(author_select, selected: t("#{t_base}.author_unchanged"))
 
     travel_to(@issue1.start_date)
     r1 = renew_all(1)
     assert_equal users(:bob), @issue1.author
     assert_equal users(:bob), r1.author
 
-    select users(:charlie).name, from: author_locator
+    select users(:charlie).name, from: author_select
     click_button t(:button_apply)
     assert_selector '#flash_notice', exact_text: t(:notice_successful_update)
     assert_equal users(:charlie).login, Setting.plugin_issue_recurring[:author_login]
-    find_field(author_locator).assert_text users(:charlie).name
+    assert has_select?(author_select, selected: users(:charlie).name)
 
     travel_to(r1.start_date)
     r2 = renew_all(1)
@@ -72,21 +72,24 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
 
     log_user 'admin', 'foo'
     visit plugin_settings_path(id: 'issue_recurring')
+    keep_assignee_checkbox = t('settings.issue_recurrences.keep_assignee')
 
-    uncheck t('settings.issue_recurrences.keep_assignee')
+    uncheck keep_assignee_checkbox
     click_button t(:button_apply)
-    assert_text '#flash_notice', t(:notice_successful_update)
+    assert_selector '#flash_notice', exact_text: t(:notice_successful_update)
     assert_equal false, Setting.plugin_issue_recurring[:keep_assignee]
+    assert has_unchecked_field?(keep_assignee_checkbox)
 
     travel_to(@issue1.start_date)
     r1 = renew_all(1)
     assert_equal users(:gopher), @issue1.project.default_assigned_to
     assert_equal users(:gopher), r1.assigned_to
 
-    check t('settings.issue_recurrences.keep_assignee')
+    check keep_assignee_checkbox
     click_button t(:button_apply)
-    assert_text '#flash_notice', t(:notice_successful_update)
+    assert_selector '#flash_notice', exact_text: t(:notice_successful_update)
     assert_equal true, Setting.plugin_issue_recurring[:keep_assignee]
+    assert has_checked_field?(keep_assignee_checkbox)
 
     travel_to(r1.start_date)
     r2 = renew_all(1)
@@ -104,6 +107,8 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     logout_user
     log_user 'admin', 'foo'
 
+    t_base = 'settings.issue_recurrences'
+    journal_mode_select = t("#{t_base}.journal_mode")
     configs = [
       {mode: :never, journalized: []},
       {mode: :always, journalized: [@issue1, @issue2]},
@@ -112,12 +117,13 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
 
     configs.each do |config|
       visit plugin_settings_path(id: 'issue_recurring')
-      select t("settings.issue_recurrences.journal_modes.#{config[:mode]}"),
-        from: t('settings.issue_recurrences.journal_mode')
+
+      value = t("#{t_base}.journal_modes.#{config[:mode]}")
+      select value, from: journal_mode_select
       click_button t(:button_apply)
-      assert_text '#flash_notice', t(:notice_successful_update)
+      assert_selector '#flash_notice', exact_text: t(:notice_successful_update)
       assert_equal config[:mode], Setting.plugin_issue_recurring[:journal_mode]
-      # TODO: check selected value as in author_login
+      assert has_select?(journal_mode_select, selected: value)
 
       assert_equal (ir1.last_issue || @issue1).start_date, @issue2.start_date
       travel_to(@issue2.start_date)
