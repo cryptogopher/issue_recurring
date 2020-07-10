@@ -2540,6 +2540,35 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal users(:charlie), r2.author
   end
 
+  def test_renew_logs_warning_for_nonexistent_author_login_exclusively
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    create_recurrence(creation_mode: :copy_first)
+
+    assert_equal users(:bob), @issue1.author
+
+    logout_user
+    log_user 'admin', 'foo'
+    update_plugin_settings(author_id: users(:charlie).id)
+    r = {}
+
+    # User exists
+    travel_to(@issue1.start_date)
+    assert_no_difference 'Journal.count' do
+      r[1] = renew_all(1)
+    end
+    assert_equal users(:charlie), r[1].author
+
+    # User doesn't exist
+    destroy_user(users(:charlie))
+    travel_to(r[1].start_date)
+    assert_difference ['Journal.count', '@issue1.journals.count'], 1 do
+      r[2] = renew_all(1)
+    end
+    assert_equal users(:bob), r[2].author
+    msg = "#{I18n.t(:warning_author, id: r[2].id, login: users(:charlie).login)}\r\n"
+    assert_equal msg, Journal.last.notes
+  end
+
   def test_renew_applies_keep_assignee_configuration_setting
     # NOTE: to be removed when system tests are working with all supported Redmine versions.
     # * corresponding system test: test_settings_keep_assignee
@@ -2563,7 +2592,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal users(:alice), r2.assigned_to
   end
 
-  def test_renew_applies_keep_assignee_only_for_assignable_users_otherwise_logs_error
+  def test_renew_logs_warning_for_unassignable_users_exclusively
     # https://it.michalczyk.pro/issues/26
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
     create_recurrence(creation_mode: :copy_first)

@@ -197,4 +197,12 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
     issue.reload
     assert_equal [assignee], [issue.assigned_to]
   end
+
+  def destroy_user(user)
+    assert_not user.reload.destroyed?
+    assert_difference 'User.count', -1 do
+      delete user_path(user)
+    end
+    assert_raises(ActiveRecord::RecordNotFound) { user.reload }
+  end
 end

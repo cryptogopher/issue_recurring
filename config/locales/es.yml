@@ -34,8 +34,11 @@ es:
                 usuario debe ser futuro'
   issue_recurrences_menu_caption: 'Recurrencias'
   warning_renew: "*Advertencia!* No se puede renovar recurrencia, issue #%{id}: %{errors}."
-  warning_keep_assignee: "*Warning!* Can't assign newly recurred issue #%{id} to @%{login}
-    (default assignment rules will apply)."
+  warning_keep_assignee: "*Warning!* Can't assign newly recurred issue #%{id} to @%{login}.
+    Default assignment rules will apply."
+  warning_author: "*Warning!* Nonexistent user %{login} can't be set as the author of newly
+    recurred issue #%{id}. Keeping author from reference issue. Please select existing user in
+    plugin settings for future recurrences."
   settings:
     issue_recurrences:
       author: 'Establecer autor para nueva recurrencia a'

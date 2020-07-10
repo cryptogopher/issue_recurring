@@ -378,7 +378,8 @@ class IssueRecurrence < ActiveRecord::Base
 
     prev_user = User.current
     author_login = Setting.plugin_issue_recurring[:author_login]
-    User.current = User.find_by(login: author_login) || ref_issue.author
+    author = User.find_by(login: author_login)
+    User.current = author || ref_issue.author
 
     IssueRecurrence.transaction do
       if Setting.plugin_issue_recurring[:journal_mode] == :always ||
@@ -398,13 +399,18 @@ class IssueRecurrence < ActiveRecord::Base
       new_issue.recurrence_of = self.issue
       assignee = new_issue.assigned_to
       is_assignee_valid = assignee.blank? || new_issue.assignable_users.include?(assignee)
-      unless Setting.plugin_issue_recurring[:keep_assignee] && is_assignee_valid
+      keep_assignee = Setting.plugin_issue_recurring[:keep_assignee]
+      unless keep_assignee && is_assignee_valid
         new_issue.default_reassign
       end
       new_issue.save!
+
       # Errors containing issue ID reported only after #save
-      if Setting.plugin_issue_recurring[:keep_assignee] && !is_assignee_valid
+      if keep_assignee && !is_assignee_valid
         log(:warning_keep_assignee, id: new_issue.id, login: assignee.login)
+      end
+      if author_login && !author
+        log(:warning_author, id: new_issue.id, login: author_login)
       end
 
       if self.include_subtasks
@@ -419,12 +425,13 @@ class IssueRecurrence < ActiveRecord::Base
           child.recurrence_of = self.issue
           assignee = child.assigned_to
           is_assignee_valid = assignee.blank? || child.assignable_users.include?(assignee)
-          unless Setting.plugin_issue_recurring[:keep_assignee] && is_assignee_valid
+          unless keep_assignee && is_assignee_valid
             child.default_reassign
           end
           child.save!
+
           # Errors containing issue ID reported only after #save
-          if Setting.plugin_issue_recurring[:keep_assignee] && !is_assignee_valid
+          if keep_assignee && !is_assignee_valid
             log(:warning_keep_assignee, id: child.id, login: assignee.login)
           end
         end
