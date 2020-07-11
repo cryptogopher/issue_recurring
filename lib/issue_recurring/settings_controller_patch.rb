@@ -24,6 +24,11 @@ module IssueRecurring
         settings[:copy_recurrences] =
           params[:settings][:copy_recurrences] == 'true' ? true : false
 
+        settings[:ahead_multiplier] = params[:settings][:ahead_multiplier].to_i.abs
+        ahead_mode = params[:settings][:ahead_mode].to_sym
+        settings[:ahead_mode] = IssueRecurrence::AHEAD_MODES.include?(ahead_mode) ?
+          ahead_mode : IssueRecurrence::AHEAD_MODES.first
+
         params[:settings] = settings
       end
     end

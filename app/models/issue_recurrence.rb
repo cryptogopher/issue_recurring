@@ -42,6 +42,7 @@ class IssueRecurrence < ActiveRecord::Base
   }
 
   JOURNAL_MODES = [:never, :always, :in_place]
+  AHEAD_MODES = [:days, :weeks, :months, :years]
 
   validates :issue, presence: true, associated: true
   validate on: :create do

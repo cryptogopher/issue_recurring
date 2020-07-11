@@ -17,3 +17,10 @@
 <%= check_box_tag 'settings[copy_recurrences]', true, @settings[:copy_recurrences] %>
 <em class="info"><%= t('.copy_recurrences_hint') %></em>
 </p>
+<p>
+<%= label_tag :settings_renew_ahead, t('.renew_ahead') %>
+<%= number_field_tag 'settings[ahead_multiplier]', @settings[:ahead_multiplier], min: 0,
+  step: 1 %>
+<%= select_tag 'settings[ahead_mode]', ahead_mode_options(@settings[:ahead_mode]) %>
+<em class="info"><%= t('.renew_ahead_hint') %></em>
+</p>

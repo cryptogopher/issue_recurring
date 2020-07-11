@@ -34,6 +34,8 @@ Redmine::Plugin.register :issue_recurring do
   settings default: {
     author_login: nil,
     keep_assignee: false,
-    journal_mode: :never
+    journal_mode: :never,
+    ahead_multiplier: 0,
+    ahead_mode: :days
   }, partial: 'settings/issue_recurrences'
 end

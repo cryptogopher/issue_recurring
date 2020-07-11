@@ -12,6 +12,13 @@ module IssueRecurring
         modes = IssueRecurrence::JOURNAL_MODES
         options_for_select(modes.map { |jm| [t(".journal_modes.#{jm}"), jm] }, default)
       end
+
+      def ahead_mode_options(default)
+        modes = IssueRecurrence::AHEAD_MODES
+        options_for_select(
+          modes.map { |am| [t("issues.recurrences.form.delay_modes.#{am}"), am] }, default
+        )
+      end
     end
   end
 end
