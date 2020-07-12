@@ -554,24 +554,17 @@ class IssueRecurrence < ActiveRecord::Base
     return if ref_dates.nil?
 
     case self.anchor_mode.to_sym
-    when :first_issue_fixed
-      new_dates = self.advance(-1, ref_dates)
+    when :first_issue_fixed, :last_issue_fixed
+      settings = Setting.plugin_issue_recurring
+      renew_ahead_to = Date.tomorrow + settings[:ahead_multiplier].send(settings[:ahead_mode])
+
+      new_dates = self.first_issue_fixed? ? self.advance(-1, ref_dates) : ref_dates
       adj = 0
-      while (new_dates[:start] || new_dates[:due]) < Date.tomorrow
+      while (new_dates[:start] || new_dates[:due]) < renew_ahead_to
         new_dates = self.advance(adj, ref_dates)
         break if new_dates.nil?
         yield(new_dates) unless predict
-        adj += 1
-      end
-      predicted_dates = predict ? self.advance(adj, ref_dates) : nil
-      yield(predicted_dates) if predicted_dates
-    when :last_issue_fixed
-      adj = 0
-      while (ref_dates[:start] || ref_dates[:due]) < Date.tomorrow
-        new_dates = self.advance(adj, ref_dates)
-        break if new_dates.nil?
-        yield(new_dates) unless predict
-        ref_dates = new_dates
+        ref_dates = new_dates if self.last_issue_fixed?
         adj += 1
       end
       predicted_dates = predict ? self.advance(adj, ref_dates) : nil
