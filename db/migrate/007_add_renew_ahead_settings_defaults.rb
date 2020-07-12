@@ -3,6 +3,7 @@ class AddRenewAheadSettingsDefaults <
 
   def up
     settings = Setting.plugin_issue_recurring
+    return if settings == Setting.available_settings['plugin_issue_recurring']['default']
     settings[:ahead_multiplier] = 0
     settings[:ahead_mode] = :days
     Setting.plugin_issue_recurring = settings
@@ -10,6 +11,7 @@ class AddRenewAheadSettingsDefaults <
 
   def down
     settings = Setting.plugin_issue_recurring
+    return if settings == Setting.available_settings['plugin_issue_recurring']['default']
     settings.delete(:ahead_multiplier)
     settings.delete(:ahead_mode)
     Setting.plugin_issue_recurring = settings
