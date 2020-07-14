@@ -56,10 +56,10 @@ bg:
       copy_recurrences: 'Копиране на цикличностите при копиране на задачата'
       copy_recurrences_hint: 'прилага се независимо дали задачите се копират директно или
         като резултат от копиране на проект'
-      renew_ahead: 'Renew recurrences ahead for'
+      renew_ahead: 'Renew fixed recurrences ahead for'
       renew_ahead_hint: 'ensures that the last created recurrence is at least that far
-        into the future; applies to recurrences based on fixed schedules only (recurrences
-        based on issue close date are not affected)'
+        into the future (flexible recurrences - which are based on close date - are not
+        affected)'
   issue_recurrences:
     index:
       heading: 'Цикличност на задачите'
