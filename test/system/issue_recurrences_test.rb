@@ -11,7 +11,9 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
       author_id: 0,
       keep_assignee: false,
       journal_mode: :never,
-      copy_recurrences: true
+      copy_recurrences: true,
+      ahead_multiplier: 0,
+      ahead_mode: :days
     }
 
     @project1 = projects(:project_01)
@@ -100,6 +102,7 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
   def test_settings_journal_mode
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
     @issue2.update!(start_date: 10.days.ago, due_date: 5.days.ago)
+
     ir1 = create_recurrence(@issue1, creation_mode: :copy_first, anchor_to_start: true,
                            anchor_mode: :last_issue_fixed)
     ir2 = create_recurrence(@issue2, creation_mode: :in_place, anchor_to_start: true,
@@ -107,13 +110,14 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
     logout_user
     log_user 'admin', 'foo'
 
-    t_base = 'settings.issue_recurrences'
-    journal_mode_select = t("#{t_base}.journal_mode")
     configs = [
       {mode: :never, journalized: []},
       {mode: :always, journalized: [@issue1, @issue2]},
       {mode: :in_place, journalized: [@issue2]}
     ]
+
+    t_base = 'settings.issue_recurrences'
+    journal_mode_select = t("#{t_base}.journal_mode")
 
     configs.each do |config|
       visit plugin_settings_path(id: 'issue_recurring')
@@ -141,5 +145,62 @@ class IssueRecurrencesTest < IssueRecurringSystemTestCase
 
   def test_settings_copy_recurrences
     # TODO: migrate integration test_renew_applies_copy_recurrences_configuration_setting
+  end
+
+  def test_settings_renew_ahead
+    @issue1.update!(start_date: Date.new(2020,7,12), due_date: Date.new(2020,7,17))
+
+    logout_user
+    log_user 'admin', 'foo'
+
+    t_mode_base = 'issues.recurrences.form.delay_modes'
+    label_text = t('settings.issue_recurrences.renew_ahead')
+
+    set_renew_ahead = -> (multiplier, mode) {
+      input_value = multiplier.to_s
+      select_value = t("#{t_mode_base}.#{mode}")
+
+      visit plugin_settings_path(id: 'issue_recurring')
+      within(find('label', exact_text: label_text).ancestor('p')) do
+        fill_in with: input_value
+        select select_value
+      end
+
+      click_button t(:button_apply)
+      assert_selector '#flash_notice', exact_text: t(:notice_successful_update)
+      assert_equal multiplier, Setting.plugin_issue_recurring[:ahead_multiplier]
+      assert_equal mode, Setting.plugin_issue_recurring[:ahead_mode]
+
+      within(find('label', exact_text: label_text).ancestor('p')) do
+        assert has_field?(type: 'number', with: input_value)
+        assert has_select?(selected: select_value)
+      end
+    }
+
+    [:first_issue_fixed, :last_issue_fixed].each do |am|
+      ir = create_recurrence(creation_mode: :copy_first, mode: :weekly, anchor_mode: am)
+
+      set_renew_ahead.(6, :days)
+      travel_to(@issue1.start_date - 1.week)
+      renew_all(0)
+
+      set_renew_ahead.(1, :weeks)
+      r1 = renew_all(1)
+      assert_equal Date.new(2020,7,19), r1.start_date
+      assert_equal Date.new(2020,7,24), r1.due_date
+
+      set_renew_ahead.(1, :months)
+      rest = renew_all(3)
+      assert_equal [Date.new(2020,7,26), Date.new(2020,8,2), Date.new(2020,8,9)],
+        rest.map(&:start_date)
+      assert_equal [Date.new(2020,7,31), Date.new(2020,8,7), Date.new(2020,8,14)],
+        rest.map(&:due_date)
+
+      set_renew_ahead.(0, :months)
+      travel_to(rest.last.start_date - 1.day)
+      renew_all(0)
+
+      destroy_recurrence(ir)
+    end
   end
 end

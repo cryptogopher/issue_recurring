@@ -14,7 +14,9 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     update_plugin_settings(author_id: 0,
                            keep_assignee: false,
                            journal_mode: :never,
-                           copy_recurrences: true)
+                           copy_recurrences: true,
+                           ahead_multiplier: 0,
+                           ahead_mode: :days)
     logout_user
 
     @project1 = projects(:project_01)
@@ -2747,6 +2749,41 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       # Copies are renewed twice and original once (it has already beed renewed
       # once during setup)
       renew_all(5)
+    end
+  end
+
+  def test_renew_applies_renew_ahead_configuration_settings
+    # NOTE: to be removed when system tests are working with all supported Redmine versions.
+    # * corresponding system test: test_settings_renew_ahead
+    @issue1.update!(start_date: Date.new(2020,7,12), due_date: Date.new(2020,7,17))
+
+    logout_user
+    log_user 'admin', 'foo'
+
+    [:first_issue_fixed, :last_issue_fixed].each do |am|
+      ir = create_recurrence(creation_mode: :copy_first, mode: :weekly, anchor_mode: am)
+
+      travel_to(@issue1.start_date - 1.week)
+      update_plugin_settings(ahead_multiplier: 6, ahead_mode: :days)
+      renew_all(0)
+
+      update_plugin_settings(ahead_multiplier: 1, ahead_mode: :weeks)
+      r1 = renew_all(1)
+      assert_equal Date.new(2020,7,19), r1.start_date
+      assert_equal Date.new(2020,7,24), r1.due_date
+
+      update_plugin_settings(ahead_multiplier: 1, ahead_mode: :months)
+      rest = renew_all(3)
+      assert_equal [Date.new(2020,7,26), Date.new(2020,8,2), Date.new(2020,8,9)],
+        rest.map(&:start_date)
+      assert_equal [Date.new(2020,7,31), Date.new(2020,8,7), Date.new(2020,8,14)],
+        rest.map(&:due_date)
+
+      update_plugin_settings(ahead_multiplier: 0, ahead_mode: :months)
+      travel_to(rest.last.start_date - 1.day)
+      renew_all(0)
+
+      destroy_recurrence(ir)
     end
   end
 

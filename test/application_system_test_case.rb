@@ -38,27 +38,46 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
   end
 
   def create_recurrence(issue=issues(:issue_01), **attributes)
+    #attributes[:mode] ||= :weekly
     t_base = 'issues.recurrences.form'
+
     visit issue_path(issue)
-    assert_difference 'all("#recurrences tr").length', 1 do
-      within 'div#issue_recurrences' do
+    assert_difference ['all("#recurrences tr").length', 'IssueRecurrence.count'], 1 do
+      within '#issue_recurrences' do
         click_link t(:button_add)
         attributes.each do |k, v|
-          name = k == :anchor_to_start ? k.to_s : k.to_s.pluralize
-          select strip_tags(t("#{t_base}.#{name}.#{v}")), from: "recurrence_#{k}"
+          value = case k
+                  when :mode
+                    interval = t("#{t_base}.mode_intervals.#{v}")
+                    description = t("#{t_base}.mode_descriptions.#{v}")
+                    "#{interval}(s)" + (description.present? ? ", #{description}" : '')
+                  when :anchor_to_start
+                    t("#{t_base}.#{k.to_s}.#{v}")
+                  else
+                    t("#{t_base}.#{k.to_s.pluralize}.#{v}")
+                  end
+          select strip_tags(value), from: "recurrence_#{k}"
         end
         click_button t(:button_add)
       end
+      # status_code not supported by Selenium
       assert_current_path issue_path(issue)
-      assert_no_text '#recurrence-errors'
+      assert_selector '#recurrence-errors', visible: :all, exact_text: ''
     end
-    #attributes[:anchor_mode] ||= :first_issue_fixed
-    #attributes[:mode] ||= :weekly
-    #attributes[:multiplier] ||= 1
-    #assert_difference 'IssueRecurrence.count', 1 do
-    #  post "#{issue_recurrences_path(issue)}.js", params: {recurrence: attributes}
-    #end
     IssueRecurrence.last
+  end
+
+  def destroy_recurrence(recurrence)
+    visit issue_path(recurrence.issue)
+
+    assert_difference ['all("#recurrences tr").length', 'IssueRecurrence.count'], -1 do
+      within "#recurrences tr[id=recurrence-#{recurrence.id}]" do
+        click_link t(:button_delete)
+      end
+      # status_code not supported by Selenium
+      assert_current_path issue_path(recurrence.issue)
+      assert_selector '#recurrence-errors', visible: :all, exact_text: ''
+    end
   end
 
   def close_issue(issue)
