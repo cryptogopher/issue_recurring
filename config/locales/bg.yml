@@ -57,7 +57,8 @@ bg:
       copy_recurrences_hint: 'прилага се независимо дали задачите се копират директно или
         като резултат от копиране на проект'
       renew_ahead: 'Renew recurrences ahead for'
-      renew_ahead_hint: 'applies to recurrences based on fixed schedules only (recurrences
+      renew_ahead_hint: 'ensures that the last created recurrence is at least that far
+        into the future; applies to recurrences based on fixed schedules only (recurrences
         based on issue close date are not affected)'
   issue_recurrences:
     index:
