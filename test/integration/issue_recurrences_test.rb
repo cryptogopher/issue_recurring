@@ -2915,7 +2915,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
   end
 
-  def test_renew_anchor_mode_fixed_after_dates_removed_should_log_error
+  def test_renew_logs_warning_for_anchor_mode_fixed_after_both_dates_removed
     [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
       @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
@@ -2931,13 +2931,15 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       end
       @issue1.reload
       assert_equal @issue1, Journal.last.journalized
-      assert Journal.last.notes.include?('both dates (start and due) are blank')
+      errors = ir.errors.generate_message(:anchor_mode, :issue_anchor_no_blank_dates)
+      msg = "#{I18n.t(:warning_renew, id: ref_issue.id, errors: errors)}\r\n"
+      assert_equal msg, Journal.last.notes
 
       destroy_recurrence(ir)
     end
   end
 
-  def test_renew_anchor_mode_fixed_after_anchor_date_removed_should_log_error
+  def test_renew_logs_warning_for_anchor_mode_fixed_after_anchor_date_removed
     [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
       @issue1.update!(start_date: Date.new(2018,9,15), due_date: nil)
       ir = create_recurrence(anchor_mode: anchor_mode,
@@ -2954,7 +2956,9 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       end
       @issue1.reload
       assert_equal @issue1, Journal.last.journalized
-      assert Journal.last.notes.include?('created for issue without start date')
+      errors = ir.errors.generate_message(:anchor_to_start, :start_mode_requires_date)
+      msg = "#{I18n.t(:warning_renew, id: ref_issue.id, errors: errors)}\r\n"
+      assert_equal msg, Journal.last.notes
 
       destroy_recurrence(ir)
 
@@ -2974,19 +2978,21 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
         renew_all(0)
       end
       assert_equal @issue1, Journal.last.journalized
-      assert Journal.last.notes.include?('created for issue without due date')
+      errors = ir.errors.generate_message(:anchor_to_start, :due_mode_requires_date)
+      msg = "#{I18n.t(:warning_renew, id: ref_issue.id, errors: errors)}\r\n"
+      assert_equal msg, Journal.last.notes
 
       destroy_recurrence(ir)
     end
   end
 
-  def test_renew_creation_mode_in_place_wo_subtasks_after_child_added_should_log_error
+  def test_renew_logs_warning_for_creation_mode_in_place_wo_subtasks_after_child_added
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: nil)
 
     # No children, recur w/o subtasks, dates derived = should recur
     Setting.parent_issue_dates = 'derived'
     assert_equal [], @issue1.children
-    r = create_recurrence(
+    ir = create_recurrence(
       anchor_to_start: true,
       anchor_mode: :last_issue_flexible,
       creation_mode: :in_place,
@@ -3015,7 +3021,9 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
     [@issue1, @issue2].map(&:reload)
     assert_equal @issue1, Journal.last.journalized
-    assert Journal.last.notes.include?('dates are derived from subtasks')
+    errors = ir.errors.generate_message(:creation_mode, :derived_in_place_requires_subtasks)
+    msg = "#{I18n.t(:warning_renew, id: @issue1.id, errors: errors)}\r\n"
+    assert_equal msg, Journal.last.notes
     assert_equal Date.new(2018,9,29), @issue1.start_date
     assert @issue1.closed?
 
@@ -3034,7 +3042,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     [@issue1, @issue2].map(&:reload)
     assert_equal Date.new(2018,12,9), @issue1.start_date
     assert_equal Date.new(2018,9,29), @issue2.start_date
-    r.update!(include_subtasks: true)
+    ir.update!(include_subtasks: true)
     travel_to(Date.new(2019,1,10))
     assert @issue2.closed?
     close_issue(@issue1)

@@ -474,7 +474,9 @@ class IssueRecurrence < ActiveRecord::Base
 
     self.validate_base_dates
     unless self.errors.empty?
-      log(:warning_renew, id: ref_issue.id, errors: self.errors.messages.values.to_sentence)
+      # Problems are always logged to master issue, so no need to refer to self.issue
+      # Linking ref_issue though, as source of problems (lack of dates etc.) lies in it
+      log(:warning_renew, id: ref_issue.id, errors: errors.messages.values.flatten.to_sentence)
       return nil
     end
 
