@@ -633,7 +633,12 @@ class IssueRecurrence < ActiveRecord::Base
   def self.renew_all
     IssueRecurrence.select(:issue_id).distinct.includes(:issue).each do |r|
       self.issue_dates(r.issue).each do |recurrence, dates_list|
-        dates_list.each { |dates| recurrence.create(dates) }
+        puts "Recurring issue #{r.issue}"
+        dates_list.each do |dates|
+          puts " - creating recurrence at #{dates}"
+          recurrence.create(dates)
+        end
+        puts "...done"
       end
 
       # Problems are always logged to master issue, not recurrences (as opposed
@@ -649,6 +654,10 @@ class IssueRecurrence < ActiveRecord::Base
         User.current = prev_user
       end
     end
+  rescue Exception
+    puts "...exception raised. Check output for errors. Either there is bug you may want" \
+      " to report or your db is corrupted."
+    raise
   end
 
   private

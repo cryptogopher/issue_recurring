@@ -14,4 +14,3 @@ namespace :redmine do
     end
   end
 end
-
