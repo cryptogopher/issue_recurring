@@ -1,6 +1,6 @@
 require File.expand_path('../../application_system_test_case', __FILE__)
 
-class IssueRecurrencesTest < IssueRecurringSystemTestCase
+class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
   def setup
     super
 

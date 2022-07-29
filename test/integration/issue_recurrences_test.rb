@@ -53,9 +53,9 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
     anchor_modes.each_slice(2) do |params, blank_dates_allowed|
       if blank_dates_allowed
-        create_recurrence(params)
+        create_recurrence(**params)
       else
-        errors = create_recurrence_should_fail(params)
+        errors = create_recurrence_should_fail(**params)
         assert errors.added?(:anchor_mode, :issue_anchor_no_blank_dates)
       end
     end
@@ -87,10 +87,10 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     anchor_modes.each_slice(2) do |params, in_place_allowed|
       params.update(creation_mode: :in_place)
       if in_place_allowed
-        r = create_recurrence(params)
+        r = create_recurrence(**params)
         destroy_recurrence(r)
       else
-        errors = create_recurrence_should_fail(params)
+        errors = create_recurrence_should_fail(**params)
         assert errors.added?(:anchor_mode,
                              errors.generate_message(:anchor_mode, :in_place_closed_only))
       end
@@ -109,15 +109,15 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     ]
     anchor_modes.each_slice(2) do |first_params, first_allow_multiple|
       first_params.update(creation_mode: :in_place)
-      r1st = create_recurrence(first_params)
+      r1st = create_recurrence(**first_params)
 
       anchor_modes.each_slice(2) do |second_params, second_allow_multiple|
         second_params.update(creation_mode: :in_place)
         if first_allow_multiple || second_allow_multiple
-          r2nd = create_recurrence(second_params)
+          r2nd = create_recurrence(**second_params)
           destroy_recurrence(r2nd)
         else
-          errors = create_recurrence_should_fail(second_params)
+          errors = create_recurrence_should_fail(**second_params)
           assert errors.added?(:creation_mode,
                                errors.generate_message(:creation_mode, :only_one_in_place))
         end
@@ -146,9 +146,9 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
                     delay_mode: :days,
                     delay_multiplier: 10)
       if delay_allowed
-        create_recurrence(params)
+        create_recurrence(**params)
       else
-        errors = create_recurrence_should_fail(params)
+        errors = create_recurrence_should_fail(**params)
         assert errors.added?(:anchor_mode,
                              errors.generate_message(:anchor_mode, :close_anchor_no_delay))
       end
@@ -169,9 +169,9 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
           params[:anchor_date] = Date.current
         end
 
-        r = create_recurrence(params)
+        r = create_recurrence(**params)
         # create 2nd in-place when allowed; it won't be deleted
-        create_recurrence(params) if anchor_mode == 'date_fixed_after_close'
+        create_recurrence(**params) if anchor_mode == 'date_fixed_after_close'
         # only one in-place allowed
         destroy_recurrence(r) if creation_mode == 'in_place'
       end
@@ -280,8 +280,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   end
 
   def test_show_plugin_settings
-    User.current.admin = true
-    User.current.save!
+    User.find(session[:user_id]).update!(admin: true)
 
     get plugin_settings_path('issue_recurring')
     assert_response :ok
@@ -391,7 +390,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
     configs.each_slice(4) do |issue_dates, r_params, check_date, results|
       @issue1.update!(issue_dates)
-      rs = r_params.map { |params| create_recurrence(params) }
+      rs = r_params.map { |params| create_recurrence(**params) }
 
       travel_to(check_date)
       results.each do |close, dates|
@@ -425,9 +424,9 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     ]
 
     anchor_modes.each do |r_params|
-      r_params. update(mode: :monthly_day_from_first, multiplier: 1,
-                       delay_mode: :days, delay_multiplier: 4, anchor_to_start: true)
-      r = create_recurrence(r_params)
+      r_params.update(mode: :monthly_day_from_first, multiplier: 1,
+                      delay_mode: :days, delay_multiplier: 4, anchor_to_start: true)
+      r = create_recurrence(**r_params)
 
       get issue_path(@issue1)
       assert_response :ok
@@ -994,7 +993,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       }.update(r_params)
 
       travel_to(Date.current+2.weeks)
-      r = create_recurrence(r_issue, params)
+      r = create_recurrence(r_issue, **params)
 
       subtree_count = order.index(r_issue) + 1
       r_count = params[:include_subtasks] ? subtree_count : 1
@@ -1385,7 +1384,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       @issue1.update!(start_date: Date.new(2018,9,15),
                       due_date: Date.new(2018,9,20),
                       closed_on: nil)
-      r = create_recurrence(r_params.update(creation_mode: :in_place))
+      r = create_recurrence(**r_params.update(creation_mode: :in_place))
       travel_to(Date.new(2018,11,12))
 
       assert_equal 0, r.count
@@ -1478,7 +1477,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
         r_params.update(creation_mode: creation_mode)
         travel_to(r_params[:date_limit] - 1.day) if r_params[:date_limit]
-        r = create_recurrence(r_params)
+        r = create_recurrence(**r_params)
 
         r_details.each_slice(3) do |travel_close, travel_renew, r_dates|
           r.reload
@@ -1778,7 +1777,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       @issue1.update!(issue_dates)
       reopen_issue(@issue1) if @issue1.closed?
 
-      r = create_recurrence(r_params.update(mode: :monthly_day_from_first))
+      r = create_recurrence(**r_params.update(mode: :monthly_day_from_first))
 
       travel_to(close_date)
       close_issue(@issue1)
@@ -1845,7 +1844,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       travel_to(issue_dates[:start_date])
       @issue1.update!(issue_dates)
 
-      r = create_recurrence(r_params)
+      r = create_recurrence(**r_params)
 
       r1 = renew_all(1)
       assert_equal r_dates[:start], r1.start_date
@@ -1868,7 +1867,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       travel_to(issue_dates[:start_date])
       @issue1.update!(issue_dates)
 
-      ir = create_recurrence(r_params.update(mode: :yearly))
+      ir = create_recurrence(**r_params.update(mode: :yearly))
 
       r = renew_all(1)
       assert_equal r_dates[:start], r.start_date
@@ -2019,7 +2018,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
                       delay_mode: :days,
                       delay_multiplier: 2)
       travel_to(Date.new(2019,2,1))
-      r = create_recurrence(r_params)
+      r = create_recurrence(**r_params)
 
       close_issue(@issue1) if r_params[:anchor_mode].to_s.include?("_after_close")
       travel_to(Date.new(2019,3,2))
@@ -2343,7 +2342,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       travel_to(Date.new(2019,7,25))
       rs = r_perm.map do |r_params|
         r_params.update(anchor_to_start: true)
-        create_recurrence(r_params)
+        create_recurrence(**r_params)
       end
 
       travel_to(Date.new(2019,8,20))
@@ -2447,7 +2446,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       @issue3.update!(issue3_dates)
       @issue1.reload
 
-      create_recurrence(r_params.update(include_subtasks: true))
+      create_recurrence(**r_params.update(include_subtasks: true))
       travel_to(@issue1.start_date-1)
       renew_all(0)
 

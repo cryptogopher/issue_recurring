@@ -560,25 +560,25 @@ class IssueRecurrence < ActiveRecord::Base
       settings = Setting.plugin_issue_recurring
       renew_ahead_to = Date.tomorrow + settings[:ahead_multiplier].send(settings[:ahead_mode])
 
-      new_dates = self.first_issue_fixed? ? self.advance(-1, ref_dates) : ref_dates
+      new_dates = self.first_issue_fixed? ? self.advance(-1, **ref_dates) : ref_dates
       adj = 0
       while (new_dates[:start] || new_dates[:due]) < renew_ahead_to
-        new_dates = self.advance(adj, ref_dates)
+        new_dates = self.advance(adj, **ref_dates)
         break if new_dates.nil?
         yield(new_dates) unless predict
         ref_dates = new_dates if self.last_issue_fixed?
         adj += 1
       end
-      predicted_dates = predict ? self.advance(adj, ref_dates) : nil
+      predicted_dates = predict ? self.advance(adj, **ref_dates) : nil
       yield(predicted_dates) if predicted_dates
     when :last_issue_flexible, :last_issue_flexible_on_delay
-      new_dates = self.advance(ref_dates)
+      new_dates = self.advance(**ref_dates)
       yield(new_dates) unless new_dates.nil? || (predict && ref_issue.closed?)
     when :last_issue_fixed_after_close
       closed_date = predict ? Date.current : ref_issue.closed_on.to_date
       barrier_date = [closed_date, ref_dates[:start] || ref_dates[:due]].max
       while (ref_dates[:start] || ref_dates[:due]) <= barrier_date
-        new_dates = self.advance(ref_dates)
+        new_dates = self.advance(**ref_dates)
         break if new_dates.nil?
         ref_dates = new_dates
       end
@@ -590,9 +590,9 @@ class IssueRecurrence < ActiveRecord::Base
         closed_date,
         ref_issue.start_date || ref_issue.due_date || ref_dates[:start] || ref_dates[:due]
       ].max
-      new_dates = self.advance(-1, ref_dates)
+      new_dates = self.advance(-1, **ref_dates)
       while (new_dates[:start] || new_dates[:due]) <= barrier_date
-        new_dates = self.advance(adj, ref_dates)
+        new_dates = self.advance(adj, **ref_dates)
         break if new_dates.nil?
         adj += 1
       end
@@ -630,15 +630,15 @@ class IssueRecurrence < ActiveRecord::Base
     issues.map! { |issue| self.issue_dates(issue, predict) }.reduce(:merge)
   end
 
-  def self.renew_all
+  def self.renew_all(quiet=false)
     IssueRecurrence.select(:issue_id).distinct.includes(:issue).each do |r|
       self.issue_dates(r.issue).each do |recurrence, dates_list|
-        puts "Recurring issue #{r.issue}"
+        puts "Recurring issue #{r.issue}" unless quiet
         dates_list.each do |dates|
-          puts " - creating recurrence at #{dates}"
+          puts " - creating recurrence at #{dates}" unless quiet
           recurrence.create(dates)
         end
-        puts "...done"
+        puts "...done" unless quiet
       end
 
       # Problems are always logged to master issue, not recurrences (as opposed

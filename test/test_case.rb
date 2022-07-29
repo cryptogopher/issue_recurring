@@ -20,7 +20,7 @@ ActiveRecord::FixtureSet.create_fixtures(
 module IssueRecurringTestCase
   def renew_all(count=0)
     assert_difference 'Issue.count', count do
-      IssueRecurrence.renew_all
+      IssueRecurrence.renew_all(true)
     end
     count == 1 ? Issue.last : Issue.last(count)
   end
