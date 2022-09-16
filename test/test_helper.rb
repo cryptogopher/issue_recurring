@@ -85,11 +85,7 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
   end
 
   def set_custom_field(issue, field, value)
-    if Redmine::VERSION::MAJOR >= 4
-      assert_nil issue.custom_field_value(field)
-    else
-      assert_empty issue.custom_field_value(field)
-    end
+    assert_nil issue.custom_field_value(field)
     put "/issues/#{issue.id}", params: {issue: {custom_field_values: {field.id => value}}}
     issue.reload
     assert_equal value, issue.custom_field_value(field)

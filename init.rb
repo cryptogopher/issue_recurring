@@ -34,7 +34,6 @@ def load_patches
 
   Project.include IssueRecurring::ProjectPatch
 
-  Setting.singleton_class.prepend IssueRecurring::SettingPatch
   SettingsController.include IssueRecurring::SettingsControllerPatch
   SettingsHelper.include IssueRecurring::SettingsHelperPatch
 end
@@ -44,7 +43,5 @@ if Rails.respond_to?(:autoloaders) && Rails.autoloaders.zeitwerk_enabled?
   load_patches
 else
   require_dependency 'issue_recurring/issue_recurrences_view_listener'
-  (Rails::VERSION::MAJOR < 5 ? ActionDispatch : ActiveSupport)::Reloader.to_prepare do
-    load_patches
-  end
+  ActiveSupport::Reloader.to_prepare { load_patches }
 end

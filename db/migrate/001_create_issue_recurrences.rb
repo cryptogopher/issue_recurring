@@ -1,6 +1,4 @@
-class CreateIssueRecurrences <
-  (Rails::VERSION::MAJOR < 5 ? ActiveRecord::Migration : ActiveRecord::Migration[4.2])
-
+class CreateIssueRecurrences < ActiveRecord::Migration[4.2]
   def change
     create_table :issue_recurrences do |t|
       t.references :issue, foreign: true, index: true

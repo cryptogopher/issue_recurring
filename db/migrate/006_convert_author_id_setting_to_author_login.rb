@@ -1,6 +1,4 @@
-class ConvertAuthorIdSettingToAuthorLogin <
-  (Rails::VERSION::MAJOR < 5 ? ActiveRecord::Migration : ActiveRecord::Migration[4.2])
-
+class ConvertAuthorIdSettingToAuthorLogin < ActiveRecord::Migration[4.2]
   def up
     settings = Setting.plugin_issue_recurring
     return if settings == Setting.available_settings['plugin_issue_recurring']['default']

@@ -1,6 +1,4 @@
-class AddAnchorToStartToIssueRecurrences <
-  (Rails::VERSION::MAJOR < 5 ? ActiveRecord::Migration : ActiveRecord::Migration[4.2])
-
+class AddAnchorToStartToIssueRecurrences < ActiveRecord::Migration[4.2]
   @@old_modes = {
     monthly_start_day_from_first: 200,
     monthly_due_day_from_first: 201,
