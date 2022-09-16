@@ -1,18 +1,14 @@
 # issue_recurring
 
-Redmine plugin: schedule Redmine issue recurrence based on multiple conditions.
+Plugin for Redmine to schedule Redmine issue recurrence according to a schedule (see __Features__ below for possible scheduling options). Plugin creates new issue or reopens existing issue for each new recurrence. Because some boring things have to be done on-time after all.
 
-Issue tracker: https://it.michalczyk.pro/projects/issue-recurring/issues (don't be afraid, you can register/login there with your __Github account__).
+[Issue tracker](https://it.michalczyk.pro/projects/issue-recurring/issues) (you can register and login there with your __Github account__).
 
-Screenshots: https://it.michalczyk.pro/projects/issue-recurring/wiki/Screenshots
+[Screenshots](https://it.michalczyk.pro/projects/issue-recurring/wiki/Screenshots)
 
 ## Motivation
 
 This plugin has been inspired and based on [nutso's](https://github.com/nutso/) plugin [redmine-plugin-recurring-tasks](https://github.com/nutso/redmine-plugin-recurring-tasks). Thank you __nutso__! The code though was rewritten from scratch. It was due to amount of changes would make it impossible to fit into original codebase.
-
-## Purpose
-
-Plugin for Redmine to configure issue recurring according to a schedule. The plugin creates a new issue or reopens closed issue in Redmine for each new recurrence. Because some boring things have to be done on-time after all.
 
 ## Features
 
@@ -31,17 +27,17 @@ The most notable features of this plugin include:
   * years,
 * creation of next issue recurrence as a copy of: first issue; last recurrence; without copying, by in-place modification,
 * next recurrence scheduling based on: original issue dates; last recurrence dates; close date of last recurrence; last recurrence dates if closed on time or close date otherwise; last recurrence dates but only after it has been closed; fixed date after last recurrence has been closed,
-* ability to specify recurrence based on start or due date; for recurrence based on close date: ability to specify which of these dates is inferred from close date,
+* ability to specify recurrence based on start or due date; for recurrence based on close date: ability to specify which of dates - start or due - is inferred from close date,
 * updating both start and due dates according to schedule (if specified),
 * properly handling issue attributes, including keeping: parent, custom fields, priority and resetting: done ratio, time entries and status,
 * ability to recur with or without subtasks,
 * ability to have recurrence schemes copied regardless of whether individual issues or whole projects are copied,
 * ability to delay recurrence against base date to create multiple recurrences of the same frequency with different time offset (e.g. monthly recurrence on 10th, 20th and 30th day of month),
 * ability to limit recurrence by final date or recurrence count,
-* showing last recurrence and dates next/predicted recurrences,
-* logging errors as an issue note when unable to renew issue recurrences (instead of logging into web-inaccessible log file),
+* showing last recurrence and dates of next/predicted recurrences,
+* logging errors as an issue note, when unable to renew issue recurrences (instead of logging into web-inaccessible log file),
 * permissions to view/manage recurrences managed by Redmine roles,
-* per project enabling of issue recurring plugin,
+* per project enabling of issue_recurring plugin,
 * specification of user account under which issue recurrences will be created: any Redmine user or last recurrence author,
 * specification of recurrence issue assignment: assignee can be kept unchanged from previous recurrence or set to Redmine's default.
 
@@ -94,17 +90,22 @@ The most notable features of this plugin include:
 
 ## Installation
 
-1. Check prerequisites. To use this plugin you need to have:
-   * Redmine (https://www.redmine.org) installed. Check that your Redmine version is compatible with plugin. Only [stable Readmine releases](https://redmine.org/projects/redmine/wiki/Download#Stable-releases) are supported by new releases. Currently supported are following versions:
+1. Check prerequisites. To use this plugin you need to have [Redmine](https://www.redmine.org) installed. Check that your Redmine version is compatible with plugin. Only [stable Readmine releases](https://redmine.org/projects/redmine/wiki/Download#Stable-releases) are supported by new releases. Currently supported are following versions:
 
-     |Redmine |Compatible plugin versions|Tested with                                                                                                        |
-     |--------|--------------------------|-------------------------------------------------------------------------------------------------------------------|
-     |5.0     |current                   |Redmine 5.0.2, Ruby 2.7.6p219, Rails 6.1.6                                                                         |
-     |4.2     |current                   |Redmine 4.2.7, Ruby 2.7.6p219, Rails 5.2.8                                                                         |
-     |4.0     |1.2 - 1.6                 |Redmine 4.0.4, Ruby 2.4.6p354, Rails 5.2.3                                                                         |
-     |3.4     |1.0 - 1.6                 |1.5 - 1.6: Redmine 3.4.5, Ruby 2.4.7p357, Rails 4.2.11.1<br/>1.0 - 1.4: Redmine 3.4.5, Ruby 2.3.8p459, Rails 4.2.11|
-     
-     You may try and find this plugin working on other versions too, but be prepared to get error messages. In case it works let everyone know that through issue tracker (send _support_ issue). If it doesn't work, you are welcome to send _feature_ request to make plugin compatible with other version. Keep in mind though, that for more exotic versions there will be more vote power needed to complete such feature request.
+   |Redmine |Compatible plugin versions|Tested with                                                                                                        |
+   |--------|--------------------------|-------------------------------------------------------------------------------------------------------------------|
+   |5.0     |current                   |Redmine 5.0.2, Ruby 2.7.6p219, Rails 6.1.6                                                                         |
+   |4.2     |current                   |Redmine 4.2.7, Ruby 2.7.6p219, Rails 5.2.8                                                                         |
+   |4.0     |1.2 - 1.6                 |Redmine 4.0.4, Ruby 2.4.6p354, Rails 5.2.3                                                                         |
+   |3.4     |1.0 - 1.6                 |1.5 - 1.6: Redmine 3.4.5, Ruby 2.4.7p357, Rails 4.2.11.1<br/>1.0 - 1.4: Redmine 3.4.5, Ruby 2.3.8p459, Rails 4.2.11|
+
+   You may try and find this plugin working on other versions too. The best is to
+   run test suite and if it passes without errors, everything will most
+   probably be ok:
+   ```
+   cd /var/lib/redmine
+   RAILS_ENV=test bundle exec rake redmine:plugins:test NAME=issue_recurring
+   ```
 
 2. Login to shell, change to redmine user, clone plugin to your plugins directory, list and choose which plugin version to install, install gemfiles and migrate database:
    ```
@@ -113,9 +114,9 @@ The most notable features of this plugin include:
    git clone https://github.com/cryptogopher/issue_recurring.git
    
    # Following 2 steps allow you to run particular version of plugin. Generally it is advised to go with the highest
-   # available version, as it is most stable. But you can omit those 2 commands ang go with latest code as well.
+   # available version, as it is most feature rich. But you can omit those 2 commands ang go with latest code as well.
    git -C issue_recurring/ tag
-   # Doing checkout this way you can get "You are in 'detached HEAD' state." warning; it's ok to ignore it
+   # Doing checkout this way you will get "You are in 'detached HEAD' state." warning; it's ok to ignore it
    git -C issue_recurring/ checkout tags/1.4
    
    cd /var/lib/redmine
