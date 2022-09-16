@@ -1,6 +1,7 @@
 bug:
   name: Bug
-  is_in_chlog: true
+  # NOTE: remove field when Redmine < 5 no longer supported
+  <%= 'is_in_chlog: true' if Tracker.column_names.include?('is_in_chlog') %>
   default_status: new
   position: 1
   custom_fields: custom_field_01

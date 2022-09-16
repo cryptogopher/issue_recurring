@@ -2,6 +2,9 @@
 # not work).
 ENV["RACK_ENV"] = "test"
 
+# Avoid preloading Chrome, which is used by Redmine
+ActionDispatch::SystemTestCase.singleton_class.prepend IssueRecurring::SystemTestCasePatch
+
 # Load the Redmine helper
 require File.expand_path('../../../../test/application_system_test_case', __FILE__)
 require File.expand_path('../test_case', __FILE__)
