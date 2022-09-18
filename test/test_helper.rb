@@ -1,6 +1,6 @@
 # Load the Redmine helper
-require File.expand_path(File.dirname(__FILE__) + '/../../../test/test_helper')
-require File.expand_path('../test_case', __FILE__)
+require_relative '../../../test/test_helper'
+require_relative 'test_case'
 
 class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
   fixtures :issues, :issue_statuses,

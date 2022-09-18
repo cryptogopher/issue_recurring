@@ -5,7 +5,7 @@ Example:
   RAILS_ENV=production rake redmine:issue_recurring:renew_all 
 END_DESC
 
-require File.expand_path(File.dirname(__FILE__) + "/../../../../config/environment")
+require_relative '../../../../config/environment'
 
 namespace :redmine do
   namespace :issue_recurring do

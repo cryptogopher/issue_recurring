@@ -6,8 +6,8 @@ ENV["RACK_ENV"] = "test"
 ActionDispatch::SystemTestCase.singleton_class.prepend IssueRecurring::SystemTestCasePatch
 
 # Load the Redmine helper
-require File.expand_path('../../../../test/application_system_test_case', __FILE__)
-require File.expand_path('../test_case', __FILE__)
+require_relative '../../../test/application_system_test_case'
+require_relative 'test_case'
 
 class IssueRecurringSystemTestCase < ApplicationSystemTestCase
   driven_by :selenium, using: :headless_firefox, screen_size: [1280, 1024] do

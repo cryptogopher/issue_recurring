@@ -1,4 +1,4 @@
-require File.expand_path('../../application_system_test_case', __FILE__)
+require_relative '../application_system_test_case'
 
 class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
   def setup
