@@ -1,3 +1,25 @@
+# Load Redmine patches before plugin registration
+# NOTE: simplify when Rails < 6 no longer supported and there is only Zeitwerk
+def load_patches
+  Issue.include IssueRecurring::IssuePatch
+  IssuesController.include IssueRecurring::IssuesControllerPatch
+  IssuesHelper.include IssueRecurring::IssuesHelperPatch
+
+  Project.include IssueRecurring::ProjectPatch
+
+  SettingsController.include IssueRecurring::SettingsControllerPatch
+  SettingsHelper.include IssueRecurring::SettingsHelperPatch
+end
+
+if Rails.respond_to?(:autoloaders) && Rails.autoloaders.zeitwerk_enabled?
+  IssueRecurring::IssueRecurrencesViewListener
+  load_patches
+else
+  require_dependency 'issue_recurring/issue_recurrences_view_listener'
+  ActiveSupport::Reloader.to_prepare { load_patches }
+end
+
+
 Redmine::Plugin.register :issue_recurring do
   name 'Issue recurring plugin'
   author 'cryptogopher'
@@ -24,24 +46,4 @@ Redmine::Plugin.register :issue_recurring do
     ahead_multiplier: 0,
     ahead_mode: :days
   }, partial: 'settings/issue_recurrences'
-end
-
-# NOTE: simplify when Rails < 6 no longer supported and there is only Zeitwerk
-def load_patches
-  Issue.include IssueRecurring::IssuePatch
-  IssuesController.include IssueRecurring::IssuesControllerPatch
-  IssuesHelper.include IssueRecurring::IssuesHelperPatch
-
-  Project.include IssueRecurring::ProjectPatch
-
-  SettingsController.include IssueRecurring::SettingsControllerPatch
-  SettingsHelper.include IssueRecurring::SettingsHelperPatch
-end
-
-if Rails.respond_to?(:autoloaders) && Rails.autoloaders.zeitwerk_enabled?
-  IssueRecurring::IssueRecurrencesViewListener
-  load_patches
-else
-  require_dependency 'issue_recurring/issue_recurrences_view_listener'
-  ActiveSupport::Reloader.to_prepare { load_patches }
 end
