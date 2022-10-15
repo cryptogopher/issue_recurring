@@ -72,9 +72,9 @@ class MigrationsTest < IssueRecurringIntegrationTestCase
     [ir1, ir2].map(&:reload)
 
     assert_equal 212, ir1.mode
-    assert_equal 1, ir1.anchor_to_start
+    assert_includes [1, true], ir1.anchor_to_start
     assert_equal 100, ir2.mode
-    assert_equal 0, ir2.anchor_to_start
+    assert_includes [0, false], ir2.anchor_to_start
 
     assert_no_difference 'IssueRecurrence.count' do
       migrate 2
