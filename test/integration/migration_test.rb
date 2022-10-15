@@ -32,7 +32,7 @@ class MigrationsTest < IssueRecurringIntegrationTestCase
   end
 
   def test_migrate_with_no_recurrences
-    assert IssueRecurrence.count, 0
+    assert 0, IssueRecurrence.count
     migrate 0
     migrate @plugin.latest_migration
   end
@@ -71,19 +71,19 @@ class MigrationsTest < IssueRecurringIntegrationTestCase
     end
     [ir1, ir2].map(&:reload)
 
-    assert_equal ir1.mode, 212
-    assert_equal ir1.anchor_to_start, 1
-    assert_equal ir2.mode, 100
-    assert_equal ir2.anchor_to_start, 0
+    assert_equal 212, ir1.mode
+    assert_equal 1, ir1.anchor_to_start
+    assert_equal 100, ir2.mode
+    assert_equal 0, ir2.anchor_to_start
 
     assert_no_difference 'IssueRecurrence.count' do
       migrate 2
     end
     [ir1, ir2].map(&:reload)
 
-    assert_equal ir1.mode, 210
+    assert_equal 210, ir1.mode
     assert_not ir1.has_attribute?(:anchor_to_start)
-    assert_equal ir2.mode, 100
+    assert_equal 100, ir2.mode
     assert_not ir2.has_attribute?(:anchor_to_start)
   end
 end
