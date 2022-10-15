@@ -1,6 +1,6 @@
 require_relative '../test_helper'
 
-class MigrationsTest < Redmine::IntegrationTest
+class MigrationsTest < IssueRecurringIntegrationTestCase
   self.use_transactional_tests = false
 
   # NOTE: remove when https://www.redmine.org/issues/31116 is fixed
@@ -21,11 +21,26 @@ class MigrationsTest < Redmine::IntegrationTest
   end
 
   def setup
+    super
+
     @plugin = Redmine::Plugin.find('issue_recurring')
+    @issue1 = issues(:issue_01)
   end
 
   def test_migrate_empty_database
     migrate 0
+    migrate @plugin.latest_migration
+  end
+
+  class IssueRecurrence < ActiveRecord::Base
+  end
+
+  def test_migrate_with_recurrences_present
+    migrate 1
+    # Fixed schedule, every 1 week
+    #IssueRecurrence.reset_column_information
+    ir = IssueRecurrence.new(issue_id: @issue1.id, anchor_mode: 0, mode: 100, multiplier: 1)
+    ir.save!
     migrate @plugin.latest_migration
   end
 end

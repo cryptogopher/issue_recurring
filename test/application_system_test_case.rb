@@ -23,6 +23,7 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     config.save_path = './tmp/screenshots/'
   end
 
+  self.fixture_path = File.expand_path('../fixtures/', __FILE__)
   fixtures :issues, :issue_statuses,
     :users, :email_addresses, :trackers, :projects,
     :roles, :members, :member_roles, :enabled_modules, :workflow_transitions,
