@@ -25,22 +25,65 @@ class MigrationsTest < IssueRecurringIntegrationTestCase
 
     @plugin = Redmine::Plugin.find('issue_recurring')
     @issue1 = issues(:issue_01)
-  end
-
-  def test_migrate_empty_database
-    migrate 0
-    migrate @plugin.latest_migration
+    @issue2 = issues(:issue_02)
   end
 
   class IssueRecurrence < ActiveRecord::Base
   end
 
+  def test_migrate_with_no_recurrences
+    assert IssueRecurrence.count, 0
+    migrate 0
+    migrate @plugin.latest_migration
+  end
+
   def test_migrate_with_recurrences_present
     migrate 1
     # Fixed schedule, every 1 week
-    #IssueRecurrence.reset_column_information
     ir = IssueRecurrence.new(issue_id: @issue1.id, anchor_mode: 0, mode: 100, multiplier: 1)
-    ir.save!
-    migrate @plugin.latest_migration
+    assert_difference 'IssueRecurrence.count', 1 do
+      ir.save!
+    end
+    assert_no_difference 'IssueRecurrence.count' do
+      migrate @plugin.latest_migration
+    end
+  end
+
+  def test_migration_003
+    migrate 2
+
+    # Fixed schedule, monthly, day to last day of month based on start date
+    ir1 = IssueRecurrence
+      .new(issue_id: @issue1.id, anchor_mode: 0, mode: 210, multiplier: 1)
+
+    # Flexible schedule, weekly, only due date present
+    @issue2.update!(due_date: Date.current)
+    assert_nil @issue2.start_date
+    ir2 = IssueRecurrence
+      .new(issue_id: @issue2.id, anchor_mode: 2, mode: 100, multiplier: 1)
+
+    assert_difference 'IssueRecurrence.count', 2 do
+      [ir1, ir2].map(&:save!)
+    end
+
+    assert_no_difference 'IssueRecurrence.count' do
+      migrate 3
+    end
+    [ir1, ir2].map(&:reload)
+
+    assert_equal ir1.mode, 212
+    assert_equal ir1.anchor_to_start, 1
+    assert_equal ir2.mode, 100
+    assert_equal ir2.anchor_to_start, 0
+
+    assert_no_difference 'IssueRecurrence.count' do
+      migrate 2
+    end
+    [ir1, ir2].map(&:reload)
+
+    assert_equal ir1.mode, 210
+    assert_not ir1.has_attribute?(:anchor_to_start)
+    assert_equal ir2.mode, 100
+    assert_not ir2.has_attribute?(:anchor_to_start)
   end
 end

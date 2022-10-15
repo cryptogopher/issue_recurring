@@ -55,6 +55,9 @@ class AddAnchorToStartToIssueRecurrences < ActiveRecord::Migration[4.2]
       {mode: @@new_modes[:monthly_wday_to_last], anchor_to_start: false},
   }
 
+  class IssueRecurrence < ActiveRecord::Base
+  end
+
   def up
     add_column :issue_recurrences, :anchor_to_start, :boolean
     IssueRecurrence.reset_column_information
@@ -82,13 +85,10 @@ class AddAnchorToStartToIssueRecurrences < ActiveRecord::Migration[4.2]
       attrs = ir.attributes
       reversion_key = {mode: attrs["mode"], anchor_to_start: attrs["anchor_to_start"]}
       if mode_reversion.has_key?(reversion_key)
-        # update_columns skips enum callbacks and avoids "N is not a valid mode"
-        # error.
-        ir.update_columns(mode: mode_reversion[reversion_key])
+        ir.update_attribute(:mode, mode_reversion[reversion_key])
       end
     end
 
     remove_column :issue_recurrences, :anchor_to_start
   end
 end
-
