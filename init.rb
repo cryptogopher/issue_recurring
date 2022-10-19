@@ -9,6 +9,9 @@ def load_patches
 
   SettingsController.include IssueRecurring::SettingsControllerPatch
   SettingsHelper.include IssueRecurring::SettingsHelperPatch
+
+  ActiveRecord::Schema.prepend IssueRecurring::SchemaPatch
+  ActiveRecord::SchemaDumper.prepend IssueRecurring::SchemaDumperPatch
 end
 
 if Rails.respond_to?(:autoloaders) && Rails.autoloaders.zeitwerk_enabled?
