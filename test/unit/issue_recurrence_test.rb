@@ -1,6 +1,7 @@
 require_relative '../test_helper'
 
 class IssueRecurrenceTest < ActiveSupport::TestCase
+  self.fixture_path = File.expand_path('../../fixtures/', __FILE__)
   fixtures :issues, :users
 
   def setup

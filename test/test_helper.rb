@@ -3,13 +3,13 @@ require_relative '../../../test/test_helper'
 require_relative 'test_case'
 
 class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
-  include IssueRecurringTestCase
-
   self.fixture_path = File.expand_path('../fixtures/', __FILE__)
   fixtures :issues, :issue_statuses,
     :users, :email_addresses, :trackers, :projects,
     :roles, :members, :member_roles, :enabled_modules, :workflow_transitions,
     :custom_fields, :enumerations
+
+  include IssueRecurringTestCase
 
   def logout_user
     post signout_path
