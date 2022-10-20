@@ -4,7 +4,8 @@ module IssueRecurring
     def define_params
       versions = super.present? ? [super] : []
       Redmine::Plugin.all.each do |plugin|
-        versions << "#{plugin.id}: #{plugin.latest_migration}" if plugin.latest_migration
+        current_migration = Redmine::Plugin::Migrator.current_version(plugin)
+        versions << "#{plugin.id}: #{current_migration}" if current_migration > 0
       end
       versions.join(", ")
     end
