@@ -2,7 +2,10 @@ require_relative '../test_helper'
 
 class IssueRecurrenceTest < ActiveSupport::TestCase
   self.fixture_path = File.expand_path('../../fixtures/', __FILE__)
-  fixtures :issues, :users
+  fixtures :issues, :issue_statuses,
+    :users, :email_addresses, :trackers, :projects,
+    :roles, :members, :member_roles, :enabled_modules, :workflow_transitions,
+    :custom_fields, :enumerations
 
   def setup
     @issue1 = issues(:issue_01)

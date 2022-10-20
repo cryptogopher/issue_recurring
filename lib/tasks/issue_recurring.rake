@@ -13,4 +13,14 @@ namespace :redmine do
       IssueRecurrence.renew_all
     end
   end
+
+  namespace :plugins do
+    namespace :test do
+      desc 'Runs the plugins migration tests.'
+      task :migration => "db:test:prepare" do |t|
+        $: << "test"
+        Rails::TestUnit::Runner.rake_run ["plugins/#{ENV['NAME'] || '*'}/test/migration/**/*_test.rb"]
+      end
+    end
+  end
 end
