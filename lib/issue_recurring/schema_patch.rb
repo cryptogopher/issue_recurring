@@ -10,7 +10,7 @@ module IssueRecurring
         versions = plugin.migrations
         inserting = (versions - migrated).select { |v| v <= version }
         if inserting.any?
-          schema_migration.create_table
+          ActiveRecord::SchemaMigration.create_table
           execute insert_versions_sql(inserting.map! { |v| "#{v}-#{plugin_id}" })
         end
       end
