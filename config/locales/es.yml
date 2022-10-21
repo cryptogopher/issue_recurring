@@ -15,8 +15,8 @@ es:
               issue_anchor_no_blank_dates: 'recurrencias basadas en asunto o fechas de
                 última ocurrencia, no pueden ser creadas cuando ambas fechas (inicio y fin)
                 están en blanco'
-              in_place_closed_only: 'solo recurrencias dependientes de fecha de cierre pueden
-                modificar una petición in situ'
+              in_place_closed_only: 'solo recurrencias dependientes de fecha de cierre
+                pueden modificar una petición in situ'
               date_anchor_in_place_only: 'recurrencias basadas en fechas fijas pueden ser
                 utilizadas para modificación in-situ solamente'
             creation_mode:
@@ -38,8 +38,8 @@ es:
   warning_keep_assignee: "*Warning!* Can't assign newly recurred issue #%{id} to @%{login}.
     Default assignment rules will apply."
   warning_author: "*Warning!* Nonexistent user %{login} can't be set as the author of newly
-    recurred issue #%{id}. Keeping author from reference issue. Please select existing user in
-    plugin settings for future recurrences."
+    recurred issue #%{id}. Keeping author from reference issue. Please select existing user
+    in plugin settings for future recurrences."
   settings:
     issue_recurrences:
       author: 'Establecer autor para nueva recurrencia a'
@@ -139,7 +139,8 @@ es:
         anchor_modes:
           first_issue_fixed: 'de esta <b>petición</b>'
           last_issue_fixed: 'de la <b>última recurrencia</b>'
-          last_issue_flexible: 'copiada de la <b>fecha de cierre de la úlimta recurrencia</b>'
+          last_issue_flexible: 'copiada de la <b>fecha de cierre de la úlimta
+            recurrencia</b>'
           last_issue_flexible_on_delay: 'copiada de la <b>última recurrencia si se cerró a
             tiempo,</b> o de la fecha de cierre'
           last_issue_fixed_after_close: 'de la <b>última recurrencia (se crea solo después
@@ -165,4 +166,3 @@ es:
           fixed_date: '<b>fecha fija (incluída):</b>'
           count: '<b>número de recurrencias</b> alcance:'
         recurrence: 'recurrencia'
-

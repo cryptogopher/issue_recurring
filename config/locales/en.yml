@@ -10,8 +10,8 @@ en:
               insufficient_privileges: 'you have insufficient privileges to edit recurrences
                 for this issue'
             anchor_mode:
-              close_anchor_no_delay: 'delay cannot be specified for recurrences based on close
-                date'
+              close_anchor_no_delay: 'delay cannot be specified for recurrences based on
+                close date'
               issue_anchor_no_blank_dates: 'recurrences based on issue or last recurrence
                 dates cannot be created when both dates (start and due) are blank'
               in_place_closed_only: 'only recurrences dependent on close date can
@@ -25,8 +25,8 @@ en:
                 subtasks if start and due dates are derived from subtasks (check
                 Administration -> Settings -> Issue tracking -> Parent tasks attributes)'
             anchor_to_start:
-              start_mode_requires_date: 'recurrence based on start date cannot be created for
-                issue without start date'
+              start_mode_requires_date: 'recurrence based on start date cannot be created
+                for issue without start date'
               due_mode_requires_date: 'recurrence based on due date cannot be created for
                 issue without due date'
             date_limit:
@@ -36,8 +36,8 @@ en:
   warning_keep_assignee: "*Warning!* Can't assign newly recurred issue #%{id} to @%{login}.
     Default assignment rules will apply."
   warning_author: "*Warning!* Nonexistent user %{login} can't be set as the author of newly
-    recurred issue #%{id}. Keeping author from reference issue. Please select existing user in
-    plugin settings for future recurrences."
+    recurred issue #%{id}. Keeping author from reference issue. Please select existing user
+    in plugin settings for future recurrences."
   settings:
     issue_recurrences:
       author: 'Set author of new recurrence to'
@@ -161,4 +161,3 @@ en:
           fixed_date: '<b>fixed date (inclusive):</b>'
           count: '<b>number of recurrences</b> reaches:'
         recurrence: 'recurrence'
-
