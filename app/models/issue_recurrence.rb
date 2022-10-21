@@ -1,8 +1,8 @@
 class IssueRecurrence < ActiveRecord::Base
   include Redmine::Utils::DateCalculation
 
-  belongs_to :issue
-  belongs_to :last_issue, class_name: 'Issue'
+  belongs_to :issue, validate: true
+  belongs_to :last_issue, class_name: 'Issue', validate: true
 
   enum creation_mode: {
     copy_first: 0,
@@ -44,11 +44,9 @@ class IssueRecurrence < ActiveRecord::Base
   JOURNAL_MODES = [:never, :always, :in_place]
   AHEAD_MODES = [:days, :weeks, :months, :years]
 
-  validates :issue, presence: true, associated: true
   validate on: :create do
     errors.add(:issue, :insufficient_privileges) unless editable?
   end
-  validates :last_issue, associated: true
   validates :count, numericality: {greater_than_or_equal: 0, only_integer: true}
   validates :creation_mode, inclusion: creation_modes.keys
   # Locking inside validator is an app level solution to ensuring partial

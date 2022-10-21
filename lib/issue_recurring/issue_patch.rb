@@ -21,11 +21,9 @@ module IssueRecurring
 
       has_many :recurrences, class_name: 'IssueRecurrence', dependent: :destroy
 
-      belongs_to :recurrence_of, class_name: 'Issue'
+      belongs_to :recurrence_of, class_name: 'Issue', validate: true
       has_many :recurrence_copies, class_name: 'Issue', foreign_key: 'recurrence_of_id',
         dependent: :nullify
-
-      validates :recurrence_of, associated: true, unless: -> { recurrence_of == self }
 
       after_destroy :substitute_if_last_issue
     end
