@@ -1,21 +1,21 @@
 module IssueRecurring
-  module IssuePatch
-    module CopyFromWithRecurrences
-      def copy_from(arg, options={})
-        super
+  module CopyFromWithRecurrences
+    def copy_from(arg, options={})
+      super
 
-        unless options[:skip_recurrences]
-          self.recurrence_of = nil
+      unless options[:skip_recurrences]
+        self.recurrence_of = nil
 
-          if Setting.plugin_issue_recurring[:copy_recurrences]
-            self.recurrences = @copied_from.recurrences.map(&:dup)
-          end
+        if Setting.plugin_issue_recurring[:copy_recurrences]
+          self.recurrences = @copied_from.recurrences.map(&:dup)
         end
-
-        self
       end
-    end
 
+      self
+    end
+  end
+
+  module IssuePatch
     Issue.class_eval do
       prepend CopyFromWithRecurrences
 
@@ -28,18 +28,18 @@ module IssueRecurring
       validates :recurrence_of, associated: true, unless: -> { recurrence_of == self }
 
       after_destroy :substitute_if_last_issue
+    end
 
-      def substitute_if_last_issue
-        return if self.recurrence_of.blank?
-        r = self.recurrence_of.recurrences.find_by(last_issue: self)
-        return if r.nil?
-        r.update!(last_issue: r.issue.recurrence_copies.last)
-      end
+    def substitute_if_last_issue
+      return if self.recurrence_of.blank?
+      r = self.recurrence_of.recurrences.find_by(last_issue: self)
+      return if r.nil?
+      r.update!(last_issue: r.issue.recurrence_copies.last)
+    end
 
-      def default_reassign
-        self.assigned_to = nil
-        default_assign
-      end
+    def default_reassign
+      self.assigned_to = nil
+      default_assign
     end
   end
 end
