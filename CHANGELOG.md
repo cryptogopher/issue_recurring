@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.7 [????-??-??]
+## 1.7 [2022-10-21]
 
 New features:
 * Redmine versions supported: 4.2 and 5.0 (#28, #34)

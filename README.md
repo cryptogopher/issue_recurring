@@ -27,8 +27,17 @@ The most notable features of this plugin include:
   * months with dates keeping the same day of week from the beginning or to the end of the month (e.g. 2nd Tuesday of month or 1st to last Friday of month),
   * months with dates keeping the same working day (according to non-working week days specified in Redmine settings) from the beginning or to the end of the month (e.g. 2nd working day of month or 1st to last working day of month),
   * years,
-* creation of next issue recurrence as a copy of: first issue; last recurrence; without copying, by in-place modification,
-* next recurrence scheduling based on: original issue dates; last recurrence dates; close date of last recurrence; last recurrence dates if closed on time or close date otherwise; last recurrence dates but only after it has been closed; fixed date after last recurrence has been closed,
+* creation of next issue recurrence as a copy of:
+  * first issue,
+  * last recurrence,
+  * without copying, by in-place modification
+* next recurrence scheduling based on:
+  * original issue dates,
+  * last recurrence dates,
+  * close date of last recurrence,
+  * last recurrence dates if closed on time or close date otherwise,
+  * last recurrence dates but only after it has been closed,
+  * fixed date after last recurrence has been closed
 * ability to specify recurrence based on start or due date; for recurrence based on close date: ability to specify which of dates - start or due - is inferred from close date,
 * updating both start and due dates according to schedule (if specified),
 * properly handling issue attributes, including keeping: parent, custom fields, priority and resetting: done ratio, time entries and status,
@@ -36,11 +45,12 @@ The most notable features of this plugin include:
 * ability to have recurrence schemes copied regardless of whether individual issues or whole projects are copied,
 * ability to delay recurrence against base date to create multiple recurrences of the same frequency with different time offset (e.g. monthly recurrence on 10th, 20th and 30th day of month),
 * ability to limit recurrence by final date or recurrence count,
+* ability to create recurrences ahead in the future,
 * showing last recurrence and dates of next/predicted recurrences,
 * logging errors as an issue note, when unable to renew issue recurrences (instead of logging into web-inaccessible log file),
 * permissions to view/manage recurrences managed by Redmine roles,
 * per project enabling of issue_recurring plugin,
-* specification of user account under which issue recurrences will be created: any Redmine user or last recurrence author,
+* specification of user account under which issue recurrences will be created: any Redmine user (including Anonymous) or last recurrence author,
 * specification of recurrence issue assignment: assignee can be kept unchanged from previous recurrence or set to Redmine's default.
 
 ## Installation
@@ -49,8 +59,8 @@ The most notable features of this plugin include:
 
    |Redmine |Compatible plugin versions|Tested with                                                                                                        |
    |--------|--------------------------|-------------------------------------------------------------------------------------------------------------------|
-   |5.0     |current                   |Redmine 5.0.2, Ruby 2.7.6p219, Rails 6.1.6                                                                         |
-   |4.2     |current                   |Redmine 4.2.7, Ruby 2.7.6p219, Rails 5.2.8                                                                         |
+   |5.0     |1.7 -                     |Redmine 5.0.2, Ruby 2.7.6p219, Rails 6.1.6                                                                         |
+   |4.2     |1.7 -                     |Redmine 4.2.7, Ruby 2.7.6p219, Rails 5.2.8                                                                         |
    |4.0     |1.2 - 1.6                 |Redmine 4.0.4, Ruby 2.4.6p354, Rails 5.2.3                                                                         |
    |3.4     |1.0 - 1.6                 |1.5 - 1.6: Redmine 3.4.5, Ruby 2.4.7p357, Rails 4.2.11.1<br/>1.0 - 1.4: Redmine 3.4.5, Ruby 2.3.8p459, Rails 4.2.11|
 
