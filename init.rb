@@ -2,8 +2,19 @@
 # NOTE: simplify when Rails < 6 no longer supported and there is only Zeitwerk
 def load_patches
   Issue.include IssueRecurring::IssuePatch
-  IssuesController.include IssueRecurring::IssuesControllerPatch
+  # Helper module has to be patched before Controller is loaded. Loading
+  # Controller causes Helper module to be loaded and included. Any subsequent
+  # inclusions (i.e. change in ancestor chain) in Helper module won't be
+  # reflected in Controller's ancestor structure.
+  # This is immanent feature of Ruby:
+  # '[...] the reason for this, [...] was performance. Ancestor chains are
+  # linearized, and if you add a new ancestor to a module, Ruby does not update
+  # the linearized cached ancestor chains of the affected existing classes or
+  # modules [that have included eariler the module with later-added ancestor].
+  # Ruby does not keep backreferences registering "where was this module included'.
+  # https://github.com/hotwired/turbo-rails/issues/64#issuecomment-778601827
   IssuesHelper.include IssueRecurring::IssuesHelperPatch
+  IssuesController.include IssueRecurring::IssuesControllerPatch
 
   Project.include IssueRecurring::ProjectPatch
 
