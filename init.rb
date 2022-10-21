@@ -1,6 +1,13 @@
 # Load Redmine patches before plugin registration
 # NOTE: simplify when Rails < 6 no longer supported and there is only Zeitwerk
 def load_patches
+  # NOTE: remove when https://www.redmine.org/issues/37803 is fixed
+  ActiveRecord::ConnectionAdapters::SchemaStatements
+    .include IssueRecurring::SchemaStatementsPatch
+  ActiveRecord::Schema.prepend IssueRecurring::SchemaPatch
+  ActiveRecord::SchemaDumper.prepend IssueRecurring::SchemaDumperPatch
+
+  # include()/prepend() assures that each patch is applied only once
   Issue.include IssueRecurring::IssuePatch
   # Helper module has to be patched before Controller is loaded. Loading
   # Controller causes Helper module to be loaded and included. Any subsequent
@@ -18,11 +25,8 @@ def load_patches
 
   Project.include IssueRecurring::ProjectPatch
 
-  SettingsController.include IssueRecurring::SettingsControllerPatch
   SettingsHelper.include IssueRecurring::SettingsHelperPatch
-
-  ActiveRecord::Schema.prepend IssueRecurring::SchemaPatch
-  ActiveRecord::SchemaDumper.prepend IssueRecurring::SchemaDumperPatch
+  SettingsController.include IssueRecurring::SettingsControllerPatch
 end
 
 if Rails.respond_to?(:autoloaders) && Rails.autoloaders.zeitwerk_enabled?

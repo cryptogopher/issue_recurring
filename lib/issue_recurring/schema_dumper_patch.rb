@@ -1,4 +1,3 @@
-# NOTE: remove when https://www.redmine.org/issues/37803 is fixed
 module IssueRecurring
   module SchemaDumperPatch
     def define_params
