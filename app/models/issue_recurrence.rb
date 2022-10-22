@@ -58,15 +58,11 @@ class IssueRecurrence < ActiveRecord::Base
   # Should work as long as validation and saving is in one transaction.
   validates :creation_mode, uniqueness: {
     scope: :issue_id,
-    conditions: -> {
-      lock.in_place.where.not(
-        anchor_mode: IssueRecurrence.anchor_modes[:date_fixed_after_close]
-      )
-    },
+    conditions: -> { lock.in_place.where.not(anchor_mode: :date_fixed_after_close) },
     if: -> {
       ['last_issue_flexible',
        'last_issue_flexible_on_delay',
-       'last_issue_fixed_after_close'].include?(self.anchor_mode)
+       'last_issue_fixed_after_close'].include?(anchor_mode)
     },
     message: :only_one_in_place
   }
@@ -100,17 +96,17 @@ class IssueRecurrence < ActiveRecord::Base
     issue, base = self.base_dates
     date_required = ['last_issue_flexible',
                      'last_issue_flexible_on_delay',
-                     'date_fixed_after_close'].exclude?(self.anchor_mode)
+                     'date_fixed_after_close'].exclude?(anchor_mode)
     if date_required && (base[:start] || base[:due]).blank?
       errors.add(:anchor_mode, :issue_anchor_no_blank_dates)
     end
-    if self.anchor_to_start && base[:start].blank? && base[:due].present?
+    if anchor_to_start && base[:start].blank? && base[:due].present?
       errors.add(:anchor_to_start, :start_mode_requires_date)
     end
-    if !self.anchor_to_start && base[:start].present? && base[:due].blank?
+    if !anchor_to_start && base[:start].present? && base[:due].blank?
       errors.add(:anchor_to_start, :due_mode_requires_date)
     end
-    if self.in_place? && include_subtasks == false && issue.dates_derived?
+    if (creation_mode == 'in_place') && !include_subtasks && issue.dates_derived?
       errors.add(:creation_mode, :derived_in_place_requires_subtasks)
     end
   end
@@ -371,7 +367,7 @@ class IssueRecurrence < ActiveRecord::Base
 
   # Create next recurrence issue at given dates.
   def create(dates)
-    ref_issue = self.last_issue if self.creation_mode == 'copy_last'
+    ref_issue = self.last_issue if self.copy_last?
     ref_issue ||= self.issue
     prev_dates = {start: ref_issue.start_date, due: ref_issue.due_date}
 
@@ -387,7 +383,7 @@ class IssueRecurrence < ActiveRecord::Base
         ref_issue.init_journal(User.current)
       end
 
-      new_issue = (self.creation_mode == 'in_place') ? ref_issue :
+      new_issue = self.in_place? ? ref_issue :
         ref_issue.copy(nil, subtasks: self.include_subtasks, skip_recurrences: true)
 
       new_issue.start_date = dates[:start]
@@ -609,7 +605,7 @@ class IssueRecurrence < ActiveRecord::Base
 
     issue.recurrences.each do |r|
       r.next_dates(predict) do |dates|
-        if (r.creation_mode == 'in_place')
+        if r.in_place?
           current_date = dates[:start] || dates[:due]
           earliest_date = inplace[:dates][:start] || inplace[:dates][:due] if inplace
           inplace = {r: r, dates: dates} if inplace.nil? || (current_date < earliest_date)
