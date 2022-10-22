@@ -1,25 +1,29 @@
 # Load Redmine patches before plugin registration
 # NOTE: simplify when Rails < 6 no longer supported and there is only Zeitwerk
 def load_patches
-  # NOTE: remove when https://www.redmine.org/issues/37803 is fixed
-  ActiveRecord::ConnectionAdapters::SchemaStatements
-    .include IssueRecurring::SchemaStatementsPatch
-  ActiveRecord::Schema.prepend IssueRecurring::SchemaPatch
-  ActiveRecord::SchemaDumper.prepend IssueRecurring::SchemaDumperPatch
-
-  # include()/prepend() assures that each patch is applied only once
-  Issue.include IssueRecurring::IssuePatch
-  # Helper module has to be patched before Controller is loaded. Loading
-  # Controller causes Helper module to be loaded and included. Any subsequent
-  # inclusions (i.e. change in ancestor chain) in Helper module won't be
-  # reflected in Controller's ancestor structure.
-  # This is immanent feature of Ruby:
+  # include()/prepend() assures that each patch is applied only once.
+  # If the class has been included somewhere else prior to patching, it has to
+  # be patched in place with class_eval() instead of mere patch inclusion.
+  # This is because include()'d patch won't be reflected in ancestor structure
+  # in place of previous inclusions. This is immanent feature of Ruby:
   # '[...] the reason for this, [...] was performance. Ancestor chains are
   # linearized, and if you add a new ancestor to a module, Ruby does not update
   # the linearized cached ancestor chains of the affected existing classes or
   # modules [that have included eariler the module with later-added ancestor].
   # Ruby does not keep backreferences registering "where was this module included'.
   # https://github.com/hotwired/turbo-rails/issues/64#issuecomment-778601827
+
+  # NOTE: remove when https://www.redmine.org/issues/37803 is fixed
+  ActiveRecord::ConnectionAdapters::SchemaStatements
+    .include IssueRecurring::SchemaStatementsPatch
+  ActiveRecord::Schema.prepend IssueRecurring::SchemaPatch
+  ActiveRecord::SchemaDumper.prepend IssueRecurring::SchemaDumperPatch
+
+  Issue.include IssueRecurring::IssuePatch
+  # Helper module has to be patched before Controller is loaded. Loading
+  # Controller causes Helper module to be loaded and included. Any subsequent
+  # inclusions (i.e. change in ancestor chain) in Helper module won't be
+  # reflected in Controller's ancestor structure.
   IssuesHelper.include IssueRecurring::IssuesHelperPatch
   IssuesController.include IssueRecurring::IssuesControllerPatch
 
