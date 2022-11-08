@@ -2,6 +2,10 @@
 # not work).
 ENV["RACK_ENV"] = "test"
 
+# NOTE: remove following 2 requires when Rails < 6 no longer supported and
+# autoloading properly loads classes in 'prepend' below
+require 'action_dispatch'
+require_relative '../lib/issue_recurring/system_test_case_patch'
 # Avoid preloading Chrome, which is used by Redmine
 ActionDispatch::SystemTestCase.singleton_class.prepend IssueRecurring::SystemTestCasePatch
 
@@ -40,12 +44,16 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
   end
 
   def create_recurrence(issue=issues(:issue_01), **attributes)
-    #attributes[:mode] ||= :weekly
     t_base = 'issues.recurrences.form'
+    panel_label = t('issues.issue_recurrences_hook.recurrences')
+
+    attributes[:anchor_mode] ||= :first_issue_fixed
+    attributes[:mode] ||= :weekly
+    attributes[:multiplier] ||= 1
 
     visit issue_path(issue)
     assert_difference ['all("#recurrences tr").length', 'IssueRecurrence.count'], 1 do
-      within '#issue_recurrences' do
+      within(:xpath, "//div[p[contains(string(), '#{panel_label}')]]") do
         click_link t(:button_add)
         attributes.each do |k, v|
           value = case k
@@ -55,10 +63,18 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
                     "#{interval}(s)" + (description.present? ? ", #{description}" : '')
                   when :anchor_to_start
                     t("#{t_base}.#{k.to_s}.#{v}")
+                  when :multiplier
+                    v
                   else
                     t("#{t_base}.#{k.to_s.pluralize}.#{v}")
                   end
-          select strip_tags(value), from: "recurrence_#{k}"
+
+          case value
+          when Integer
+            fill_in "recurrence_#{k}", with: value
+          else
+            select strip_tags(value), from: "recurrence_#{k}"
+          end
         end
         click_button t(:button_add)
       end

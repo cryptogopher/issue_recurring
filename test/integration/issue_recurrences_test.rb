@@ -32,11 +32,6 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     logout_user
   end
 
-  def test_create_recurrence
-    @issue1.update!(due_date: Date.new(2018, 10, 1))
-    create_recurrence
-  end
-
   def test_create_anchor_modes_when_issue_dates_not_set
     @issue1.update!(start_date: nil, due_date: nil)
 

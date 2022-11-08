@@ -5,8 +5,13 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     super
 
     Setting.non_working_week_days = [6, 7]
+    Setting.parent_issue_dates = 'derived'
+    Setting.parent_issue_priority = 'derived'
+    Setting.parent_issue_done_ratio = 'derived'
+    Setting.issue_done_ratio == 'issue_field'
 
     # FIXME: settings should be set through controller by admin user
+    # (log_user/logout_user)
     Setting.plugin_issue_recurring = {
       author_id: 0,
       keep_assignee: false,
@@ -27,6 +32,11 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
   def teardown
     logout_user
     super
+  end
+
+  def test_create_recurrence
+    @issue1.update!(due_date: Date.current)
+    create_recurrence
   end
 
   def test_show_issue_recurrences
