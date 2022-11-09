@@ -15,7 +15,7 @@ module IssueRecurrencesHelper
   def anchor_mode(r)
     s = 'issues.recurrences.form'
     t = "#{l("issue_recurrences.index.anchor_modes.#{r.anchor_mode}")}" \
-      " #{sanitize(l("#{s}.anchor_to_start.#{r.anchor_to_start}"), tags:{})}"
+      " #{strip_tags(l("#{s}.anchor_to_start.#{r.anchor_to_start}"))}"
     t += r.delay_multiplier > 0 ? " + #{r.delay_multiplier}" \
       " #{l("#{s}.delay_intervals.#{r.delay_mode}").pluralize(r.delay_multiplier)}" : ''
     t

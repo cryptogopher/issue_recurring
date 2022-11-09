@@ -46,6 +46,9 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
 
   def test_show_issue_recurrences
     visit issue_path(@issue1)
+    within_issue_recurrences_panel do
+      assert_equal @issue1.recurrences.count, all("tr").length
+    end
   end
 
   def test_settings_author_login

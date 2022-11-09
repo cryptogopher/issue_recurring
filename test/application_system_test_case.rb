@@ -36,6 +36,7 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
   include IssueRecurringTestCase
   include AbstractController::Translation
   include ActionView::Helpers::SanitizeHelper
+  include IssueRecurring::IssuesHelperPatch
 
   def logout_user
     click_link t(:label_logout)
@@ -43,37 +44,31 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     assert_link t(:label_login)
   end
 
+  def within_issue_recurrences_panel(&block)
+    panel_label = t('issues.issue_recurrences_hook.recurrences')
+    within :xpath, "//div[p[contains(string(), '#{panel_label}')]]" do
+      yield
+    end
+  end
+
   def create_recurrence(issue=issues(:issue_01), **attributes)
     t_base = 'issues.recurrences.form'
-    panel_label = t('issues.issue_recurrences_hook.recurrences')
 
     attributes[:anchor_mode] ||= :first_issue_fixed
     attributes[:mode] ||= :weekly
     attributes[:multiplier] ||= 1
 
     visit issue_path(issue)
-    assert_difference ['all("#recurrences tr").length', 'IssueRecurrence.count'], 1 do
-      within :xpath, "//div[p[contains(string(), '#{panel_label}')]]" do
+    within_issue_recurrences_panel do
+      assert_difference ['all("tr").length', 'IssueRecurrence.count'], 1 do
         click_link t(:button_add)
         attributes.each do |k, v|
-          value = case k
-                  when :mode
-                    interval = t("#{t_base}.mode_intervals.#{v}")
-                    description = t("#{t_base}.mode_descriptions.#{v}")
-                    "#{interval}(s)" + (description.present? ? ", #{description}" : '')
-                  when :anchor_to_start
-                    t("#{t_base}.#{k.to_s}.#{v}")
-                  when :multiplier
-                    v
-                  else
-                    t("#{t_base}.#{k.to_s.pluralize}.#{v}")
-                  end
-
-          case value
-          when Integer
-            fill_in "recurrence_#{k}", with: value
+          helper_method = "#{k}_options".to_sym
+          if respond_to?(helper_method)
+            v = send(helper_method).to_h { |v,k| [k,v] }[v]
+            select strip_tags(v), from: "recurrence_#{k}"
           else
-            select strip_tags(value), from: "recurrence_#{k}"
+            fill_in "recurrence_#{k}", with: v
           end
         end
         click_button t(:button_add)
@@ -86,16 +81,18 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
   end
 
   def destroy_recurrence(recurrence)
-    description = sanitize(recurrence.to_s, tags: {})
     visit issue_path(recurrence.issue)
 
-    assert_difference ['all("#recurrences tr").length', 'IssueRecurrence.count'], -1 do
-      within :xpath, "//tr[td[contains(string(), '#{description}')]]" do
-        click_link t(:button_delete)
+    within_issue_recurrences_panel do
+      assert_difference ['all("tr").length', 'IssueRecurrence.count'], -1 do
+        description = strip_tags(recurrence.to_s)
+        within :xpath, "//tr[td[contains(string(), '#{description}')]]" do
+          click_link t(:button_delete)
+        end
+        # status_code not supported by Selenium
+        assert_current_path issue_path(recurrence.issue)
+        assert_selector '#recurrence-errors', visible: :all, exact_text: ''
       end
-      # status_code not supported by Selenium
-      assert_current_path issue_path(recurrence.issue)
-      assert_selector '#recurrence-errors', visible: :all, exact_text: ''
     end
   end
 

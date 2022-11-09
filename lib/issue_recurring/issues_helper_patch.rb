@@ -1,5 +1,7 @@
 module IssueRecurring
   module IssuesHelperPatch
+    TRANSLATION_ROOT = 'issues.recurrences.form'
+
     def nameless_error_messages_for(*objects)
       objects = objects.map {|o| o.is_a?(String) ? instance_variable_get("@#{o}") : o}
       errors = objects.compact.map {|o| o.errors.messages.values()}.flatten
@@ -7,54 +9,55 @@ module IssueRecurring
     end
 
     def creation_mode_options
-      translations = t('.creation_modes')
+      translations = t("#{TRANSLATION_ROOT}.creation_modes")
       IssueRecurrence.creation_modes.map do |k,v|
-        [sanitize(translations[k.to_sym], tags:{}), k]
+        [strip_tags(translations[k.to_sym]), k.to_sym]
       end
     end
 
     def include_subtasks_options
       [true, false].map do |v|
-        [sanitize(t(".include_subtasks.#{v}"), tags:{}), v]
+        [strip_tags(t("#{TRANSLATION_ROOT}.include_subtasks.#{v}")), v]
       end
     end
 
     def mode_options
-      intervals = t('.mode_intervals')
-      descriptions = t('.mode_descriptions')
+      intervals = t("#{TRANSLATION_ROOT}.mode_intervals")
+      descriptions = t("#{TRANSLATION_ROOT}.mode_descriptions")
       IssueRecurrence.modes.map do |k,v|
         mode = "#{intervals[k.to_sym]}(s)"
         mode += ", #{descriptions[k.to_sym]}" unless descriptions[k.to_sym].empty?
-        [sanitize(mode, tags:{}), k]
+        [strip_tags(mode), k.to_sym]
       end
     end
 
     def anchor_mode_options
       IssueRecurrence.anchor_modes.map do |k,v|
-        [sanitize(t(".anchor_modes.#{k}"), tags:{}), k]
+        [strip_tags(t("#{TRANSLATION_ROOT}.anchor_modes.#{k}")), k.to_sym]
       end
     end
 
     def anchor_to_start_options
-      options = [true, false].map do |v|
-        [sanitize(t(".anchor_to_start.#{v}"), tags:{}), v]
+      [true, false].map do |v|
+        [strip_tags(t("#{TRANSLATION_ROOT}.anchor_to_start.#{v}")), v]
       end
+    end
+
+    def anchor_to_start_disabled
       disabled = []
       disabled << :true if @issue.start_date.blank? && @issue.due_date.present?
       disabled << :false if @issue.start_date.present? && @issue.due_date.blank?
-      [options, disabled]
     end
 
     def delay_mode_options
-      translations = t('.delay_modes')
+      translations = t("#{TRANSLATION_ROOT}.delay_modes")
       IssueRecurrence.delay_modes.map do |k,v|
-        [translations[k.to_sym], k]
+        [strip_tags(translations[k.to_sym]), k.to_sym]
       end
     end
 
     def limit_mode_options
-      translations = t('.limit_modes')
-      options_for_select(translations.map { |k,v| [sanitize(v, tags:{}), k] })
+      t("#{TRANSLATION_ROOT}.limit_modes").map { |k,v| [strip_tags(v), k] }
     end
 
     def last_recurrence(r, intro=true)
@@ -73,12 +76,11 @@ module IssueRecurring
     end
 
     def next_recurrences(dates_list, intro=true)
-      "#{"#{t ".next_recurrence"} " if intro}#{format_dates(dates_list)}".html_safe
+      "#{"#{t '.next_recurrence'} " if intro}#{format_dates(dates_list)}".html_safe
     end
 
     def predicted_recurrences(dates_list, intro=true)
-      "#{"#{t ".predicted_recurrence"} " if intro}" \
-        "#{format_dates(dates_list)}".html_safe
+      "#{"#{t '.predicted_recurrence'} " if intro}#{format_dates(dates_list)}".html_safe
     end
 
     def delete_button(r)
@@ -87,4 +89,3 @@ module IssueRecurring
     end
   end
 end
-
