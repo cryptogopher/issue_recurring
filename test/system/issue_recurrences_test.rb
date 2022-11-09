@@ -221,4 +221,6 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
       destroy_recurrence(ir)
     end
   end
+
+  # TODO: test form fields hiding depending on recurrence setting selection
 end
