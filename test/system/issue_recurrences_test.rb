@@ -39,6 +39,11 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     create_recurrence
   end
 
+  def test_destroy_recurrence
+    @issue1.update!(due_date: Date.current)
+    destroy_recurrence(create_recurrence)
+  end
+
   def test_show_issue_recurrences
     visit issue_path(@issue1)
   end

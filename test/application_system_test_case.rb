@@ -53,7 +53,7 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
 
     visit issue_path(issue)
     assert_difference ['all("#recurrences tr").length', 'IssueRecurrence.count'], 1 do
-      within(:xpath, "//div[p[contains(string(), '#{panel_label}')]]") do
+      within :xpath, "//div[p[contains(string(), '#{panel_label}')]]" do
         click_link t(:button_add)
         attributes.each do |k, v|
           value = case k
@@ -86,10 +86,11 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
   end
 
   def destroy_recurrence(recurrence)
+    description = sanitize(recurrence.to_s, tags: {})
     visit issue_path(recurrence.issue)
 
     assert_difference ['all("#recurrences tr").length', 'IssueRecurrence.count'], -1 do
-      within "#recurrences tr[id=recurrence-#{recurrence.id}]" do
+      within :xpath, "//tr[td[contains(string(), '#{description}')]]" do
         click_link t(:button_delete)
       end
       # status_code not supported by Selenium
