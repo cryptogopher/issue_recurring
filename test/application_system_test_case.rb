@@ -77,7 +77,14 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
       assert_current_path issue_path(issue)
       assert_selector '#recurrence-errors', visible: :all, exact_text: ''
     end
-    IssueRecurrence.last
+
+    ir = IssueRecurrence.last
+    attributes.each do |attribute, value|
+      value = value.to_s if value.is_a? Symbol
+      assert_equal value, ir.send(attribute)
+    end
+
+    ir
   end
 
   def destroy_recurrence(recurrence)
