@@ -81,13 +81,11 @@ en:
     issue_recurrences_hook:
       recurrences: 'Recurrences'
       this_is_recurrence: 'This is a recurrence of'
-      button_details: 'Details'
     recurrences:
       index:
         last_recurrence: 'Last:'
         next_recurrence: 'Next:'
         predicted_recurrence: 'Predicted:'
-      details:
       form:
         creation_modes:
           copy_first: '<b>Copy</b>'

@@ -11,7 +11,6 @@ module IssueRecurring
       @recurrence = IssueRecurrence.new(
         anchor_to_start: @issue.start_date.present? && @issue.due_date.blank?
       )
-      @recurrence_copies = @issue.recurrence_copies
       @next_dates = IssueRecurrence.issue_dates(@issue)
       @predicted_dates = IssueRecurrence.issue_dates(@issue, true)
     end

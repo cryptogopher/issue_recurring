@@ -94,13 +94,11 @@ es:
     issue_recurrences_hook:
       recurrences: 'Recurrencias'
       this_is_recurrence: 'Esto es una recurrencia de'
-      button_details: 'Detalles'
     recurrences:
       index:
         last_recurrence: 'Última:'
         next_recurrence: 'Próxima:'
         predicted_recurrence: 'Predicted:'
-      details:
       form:
         creation_modes:
           copy_first: '<b>Copiar</b>'

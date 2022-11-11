@@ -99,13 +99,11 @@ bg:
     issue_recurrences_hook:
       recurrences: 'Цикличност'
       this_is_recurrence: 'Това е повторение на'
-      button_details: 'Подробности'
     recurrences:
       index:
         last_recurrence: 'Последно:'
         next_recurrence: 'Следващо:'
         predicted_recurrence: 'Предсказано:'
-      details:
       form:
         creation_modes:
           copy_first: '<b>Копиране</b>'
