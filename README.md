@@ -18,7 +18,7 @@ Greatest emphasis in development is put on reliability. Scheduling algorithms ar
 
 The most notable features of this plugin include:
 * recurrence creation/deletion directly from form on issue page (no separate page, no page reloading when creating/deleting recurrences),
-* multiple recurrence schedules per issue possible (except for in-place recurrences not based on fixed date),
+* multiple recurrence schedules per issue possible (except for reopening recurrence calculated from close date, where only 1 schedule is possible),
 * specification of recurrence frequency by means of:
   * days,
   * working days (according to non-working week days specified in Redmine settings),
@@ -27,10 +27,10 @@ The most notable features of this plugin include:
   * months with dates keeping the same day of week from the beginning or to the end of the month (e.g. 2nd Tuesday of month or 1st to last Friday of month),
   * months with dates keeping the same working day (according to non-working week days specified in Redmine settings) from the beginning or to the end of the month (e.g. 2nd working day of month or 1st to last working day of month),
   * years,
-* creation of next issue recurrence as a copy of:
-  * first issue,
-  * last recurrence,
-  * without copying, by in-place modification
+* creation of next issue recurrence by means of:
+  * copying first issue,
+  * copying last recurrence of issue,
+  * without copying, by reopening issue
 * next recurrence scheduling based on:
   * original issue dates,
   * last recurrence dates,

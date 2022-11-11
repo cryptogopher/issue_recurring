@@ -7,7 +7,7 @@ class IssueRecurrence < ActiveRecord::Base
   enum creation_mode: {
     copy_first: 0,
     copy_last: 1,
-    in_place: 2
+    reopen: 2
   }
 
   enum anchor_mode: {
@@ -41,7 +41,7 @@ class IssueRecurrence < ActiveRecord::Base
     months: 2
   }
 
-  JOURNAL_MODES = [:never, :always, :in_place]
+  JOURNAL_MODES = [:never, :always, :on_reopen]
   AHEAD_MODES = [:days, :weeks, :months, :years]
 
   validate on: :create do
@@ -58,32 +58,31 @@ class IssueRecurrence < ActiveRecord::Base
   # Should work as long as validation and saving is in one transaction.
   validates :creation_mode, uniqueness: {
     scope: :issue_id,
-    conditions: -> { lock.in_place.where.not(anchor_mode: :date_fixed_after_close) },
+    conditions: -> { lock.reopen.where.not(anchor_mode: :date_fixed_after_close) },
     if: -> {
       ['last_issue_flexible',
        'last_issue_flexible_on_delay',
        'last_issue_fixed_after_close'].include?(anchor_mode)
     },
-    message: :only_one_in_place
+    message: :only_one_reopen
   }
   validates :anchor_mode, inclusion: anchor_modes.keys
-  validates :anchor_mode, inclusion: {
-    in: ['first_issue_fixed', 'last_issue_fixed', 'last_issue_fixed_after_close',
-         'date_fixed_after_close'],
+  validates :anchor_mode, exclusion: {
+    in: FLEXIBLE_ANCHORS,
     if: -> { delay_multiplier > 0 },
-    message: :close_anchor_no_delay
+    message: :delay_requires_fixed_anchor
   }
-  # in-place only allowed for schemes that disallow multiple open recurrences
+  # reopen only allowed for schemes that disallow multiple open recurrences
   validates :anchor_mode, inclusion: {
     in: ['last_issue_flexible', 'last_issue_flexible_on_delay',
          'last_issue_fixed_after_close', 'date_fixed_after_close'],
-    if: -> { creation_mode == 'in_place' },
-    message: :in_place_closed_only
+    if: -> { creation_mode == 'reopen' },
+    message: :reopen_requires_close_date_based
   }
   validates :anchor_mode, exclusion: {
     in: ['date_fixed_after_close'],
-    if: -> { creation_mode != 'in_place' },
-    message: :date_anchor_in_place_only
+    if: -> { creation_mode != 'reopen' },
+    message: :date_anchor_requires_reopen
   }
   validates :anchor_to_start, inclusion: [true, false]
   validates :anchor_date, absence: {unless: -> { anchor_mode == 'date_fixed_after_close' }},
@@ -98,7 +97,7 @@ class IssueRecurrence < ActiveRecord::Base
                      'last_issue_flexible_on_delay',
                      'date_fixed_after_close'].exclude?(anchor_mode)
     if date_required && (base[:start] || base[:due]).blank?
-      errors.add(:anchor_mode, :issue_anchor_no_blank_dates)
+      errors.add(:anchor_mode, :blank_issue_dates_require_reopen)
     end
     if anchor_to_start && base[:start].blank? && base[:due].present?
       errors.add(:anchor_to_start, :start_mode_requires_date)
@@ -106,8 +105,8 @@ class IssueRecurrence < ActiveRecord::Base
     if !anchor_to_start && base[:start].present? && base[:due].blank?
       errors.add(:anchor_to_start, :due_mode_requires_date)
     end
-    if (creation_mode == 'in_place') && !include_subtasks && issue.dates_derived?
-      errors.add(:creation_mode, :derived_in_place_requires_subtasks)
+    if (creation_mode == 'reopen') && !include_subtasks && issue.dates_derived?
+      errors.add(:creation_mode, :derived_dates_reopen_requires_subtasks)
     end
   end
   validates :mode, inclusion: modes.keys
@@ -186,7 +185,8 @@ class IssueRecurrence < ActiveRecord::Base
         " #{l("#{s}.recurrence").pluralize(self.count_limit)}</b>."}" : ''
 
     "#{l("#{s}.creation_modes.#{self.creation_mode}")}" \
-    " <b>#{l("#{s}.include_subtasks.true") if self.include_subtasks}</b>" \
+      " #{l("#{s}.issue")}" \
+      " <b>#{l("#{s}.include_subtasks.true") if self.include_subtasks}</b>" \
       " #{l("#{s}.every")}" \
       " <b>#{self.multiplier}" \
       " #{l("#{s}.mode_intervals.#{self.mode}").pluralize(self.multiplier)}</b>," \
@@ -378,12 +378,12 @@ class IssueRecurrence < ActiveRecord::Base
 
     IssueRecurrence.transaction do
       if Setting.plugin_issue_recurring[:journal_mode] == :always ||
-          (Setting.plugin_issue_recurring[:journal_mode] == :in_place && self.in_place?)
+          (Setting.plugin_issue_recurring[:journal_mode] == :on_reopen && self.reopen?)
         # Setting journal on self.issue won't record copy if :copy_last is used
         ref_issue.init_journal(User.current)
       end
 
-      new_issue = self.in_place? ? ref_issue :
+      new_issue = self.reopen? ? ref_issue :
         ref_issue.copy(nil, subtasks: self.include_subtasks, skip_recurrences: true)
 
       new_issue.start_date = dates[:start]
@@ -600,22 +600,22 @@ class IssueRecurrence < ActiveRecord::Base
   #    close based schedules.
   # Return hash: {r1 => dates_array1, r2 => dates_array2, ...}
   def self.issue_dates(issue, predict=false)
-    inplace = nil
+    reopen = nil
     result = Hash.new { |h,k| h[k] = [] }
 
     issue.recurrences.each do |r|
       r.next_dates(predict) do |dates|
-        if r.in_place?
+        if r.reopen?
           current_date = dates[:start] || dates[:due]
-          earliest_date = inplace[:dates][:start] || inplace[:dates][:due] if inplace
-          inplace = {r: r, dates: dates} if inplace.nil? || (current_date < earliest_date)
+          earliest_date = reopen[:dates][:start] || reopen[:dates][:due] if reopen
+          reopen = {r: r, dates: dates} if reopen.nil? || (current_date < earliest_date)
         else
           result[r] << dates
         end
       end
     end
 
-    result[inplace[:r]] << inplace[:dates] if inplace
+    result[reopen[:r]] << reopen[:dates] if reopen
     result
   end
 

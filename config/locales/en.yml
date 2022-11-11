@@ -10,18 +10,19 @@ en:
               insufficient_privileges: 'you have insufficient privileges to edit recurrences
                 for this issue'
             anchor_mode:
-              close_anchor_no_delay: 'delay cannot be specified for recurrences based on
-                close date'
-              issue_anchor_no_blank_dates: 'recurrences based on issue or last recurrence
-                dates cannot be created when both dates (start and due) are blank'
-              in_place_closed_only: 'only recurrences dependent on close date can
-                modify issue in-place'
-              date_anchor_in_place_only: 'recurrences based on fixed date can be used for
-                in-place modification only'
+              delay_requires_fixed_anchor: 'delay cannot be specified for recurrences based
+                on close date'
+              blank_issue_dates_require_reopen: 'recurrences based on issue or last
+                recurrence dates cannot be created when both dates (start and due) are
+                blank'
+              reopen_requires_close_date_based: 'only recurrences dependent on close date
+                can reopen issue'
+              date_anchor_requires_reopen: 'recurrences based on fixed date can be used for
+                issue reopening only'
             creation_mode:
-              only_one_in_place: 'additional in-place recurrences are only allowed if based
-                on fixed date'
-              derived_in_place_requires_subtasks: 'cannot recur issue in-place without
+              only_one_reopen: 'only one reopening recurrence calculated from close date
+                is allowed'
+              derived_dates_reopen_requires_subtasks: 'cannot reopen issue excluding
                 subtasks if start and due dates are derived from subtasks (check
                 Administration -> Settings -> Issue tracking -> Parent tasks attributes)'
             anchor_to_start:
@@ -49,14 +50,13 @@ en:
       journal_modes:
         never: 'never'
         always: 'always'
-        in_place: 'for in-place only'
+        on_reopen: 'on reopen only'
       copy_recurrences: 'Copy recurrences on issue copy'
       copy_recurrences_hint: 'applies regardless of whether issues are copied directly or
         as a result of project copy'
       renew_ahead: 'Renew fixed recurrences ahead for'
       renew_ahead_hint: 'ensures that the last created recurrence is at least that far
-        into the future (flexible recurrences - which are based on close date - are not
-        affected)'
+        into the future (recurrences based on close date are not affected)'
   issue_recurrences:
     index:
       heading: 'Issue recurrences'
@@ -90,9 +90,10 @@ en:
       details:
       form:
         creation_modes:
-          copy_first: 'Copy <b>issue</b>'
-          copy_last: 'Copy <b>last recurrence</b> of issue'
-          in_place: 'Modify issue <b>in-place</b>'
+          copy_first: '<b>Copy</b>'
+          copy_last: 'Copy <b>last recurrence</b> of'
+          reopen: '<b>Reopen</b>'
+        issue: 'issue'
         include_subtasks:
           :true: 'including subtasks'
           :false: 'excluding subtasks'

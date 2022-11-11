@@ -5,6 +5,7 @@
 
   <p>
     <%= f.select :creation_mode, creation_mode_options -%>
+    <%= t '.issue' -%>
     <%= f.select :include_subtasks, include_subtasks_options -%>
     <%= t '.every' -%>
     <%= f.number_field :multiplier, min: 1, step: 1, value: 1 -%>
@@ -36,14 +37,14 @@
     $('#recurrence_anchor_mode option')
       .filter('[value="first_issue_fixed"],[value="last_issue_fixed"]')
       .prop('disabled',
-            $('#recurrence_creation_mode option[value="in_place"]').prop('selected') ||
+            $('#recurrence_creation_mode option[value="reopen"]').prop('selected') ||
             <%= (@issue.start_date || @issue.due_date).blank? ? 'true' : 'false' %>
            )
     $('#recurrence_anchor_mode option:selected:disabled').prop('selected', false);
 
     $('#recurrence_include_subtasks option').filter('[value="false"]')
       .prop('disabled',
-            $('#recurrence_creation_mode option[value="in_place"]').prop('selected') &&
+            $('#recurrence_creation_mode option[value="reopen"]').prop('selected') &&
             <%= @issue.dates_derived? ? 'true' : 'false' %>
            )
     $('#recurrence_include_subtasks option:selected:disabled').prop('selected', false);

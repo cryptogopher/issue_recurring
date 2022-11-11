@@ -123,7 +123,7 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
 
     ir1 = create_recurrence(@issue1, creation_mode: :copy_first, anchor_to_start: true,
                            anchor_mode: :last_issue_fixed)
-    ir2 = create_recurrence(@issue2, creation_mode: :in_place, anchor_to_start: true,
+    ir2 = create_recurrence(@issue2, creation_mode: :reopen, anchor_to_start: true,
                             anchor_mode: :last_issue_flexible)
     logout_user
     log_user 'admin', 'foo'
@@ -131,7 +131,7 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     configs = [
       {mode: :never, journalized: []},
       {mode: :always, journalized: [@issue1, @issue2]},
-      {mode: :in_place, journalized: [@issue2]}
+      {mode: :on_reopen, journalized: [@issue2]}
     ]
 
     t_base = 'settings.issue_recurrences'
