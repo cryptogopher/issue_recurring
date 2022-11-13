@@ -257,23 +257,6 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_select 'div#issue_recurrences', false
   end
 
-  def test_show_issue_shows_recurrence_form_only_when_manage_permission_granted
-    logout_user
-    log_user 'bob', 'foo'
-
-    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
-    assert roles.any? { |role| role.has_permission? :manage_issue_recurrences }
-    get issue_path(@issue1)
-    assert_response :ok
-    assert_select 'form#new-recurrence-form'
-
-    roles.each { |role| role.remove_permission! :manage_issue_recurrences }
-    refute roles.any? { |role| role.has_permission? :manage_issue_recurrences }
-    get issue_path(@issue1)
-    assert_response :ok
-    assert_select 'form#new-recurrence-form', false
-  end
-
   def test_show_plugin_settings
     User.find(session[:user_id]).update!(admin: true)
 
@@ -3037,7 +3020,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     [@issue1, @issue2].map(&:reload)
     assert_equal Date.new(2018,12,9), @issue1.start_date
     assert_equal Date.new(2018,9,29), @issue2.start_date
-    ir.update!(include_subtasks: true)
+    update_recurrence(ir, include_subtasks: true)
     travel_to(Date.new(2019,1,10))
     assert @issue2.closed?
     close_issue(@issue1)

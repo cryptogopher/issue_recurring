@@ -11,7 +11,9 @@
               <nobr><%= predicted_recurrences(@predicted_dates[r]) %></nobr>
             </p>
           </td>
-          <td class="buttons"><%= delete_button(r) %></td>
+          <% if r.editable? %>
+            <td class="buttons"><%= edit_button(r) %><%= delete_button(r) %></td>
+          <% end %>
         </tr>
       <% end %>
     <% end %>

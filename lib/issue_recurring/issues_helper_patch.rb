@@ -83,9 +83,14 @@ module IssueRecurring
       "#{"#{t '.predicted_recurrence'} " if intro}#{format_dates(dates_list)}".html_safe
     end
 
+    def edit_button(r)
+      link_to l(:button_edit), edit_issue_recurrence_path(r), remote: true,
+        class: 'icon icon-edit'
+    end
+
     def delete_button(r)
-      link_to l(:button_delete), recurrence_path(r), method: :delete, remote: true,
-        class: 'icon icon-del' if r.editable?
+      link_to l(:button_delete), issue_recurrence_path(r), method: :delete, remote: true,
+        class: 'icon icon-del'
     end
   end
 end

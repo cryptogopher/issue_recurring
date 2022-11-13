@@ -1,7 +1,9 @@
 class IssueRecurrencesController < ApplicationController
+  include LoadIssueRecurrences
+
   before_action :find_project, only: [:index]
-  before_action :find_issue, only: [:create]
-  before_action :find_recurrence, only: [:destroy]
+  before_action :find_issue, only: [:new, :create]
+  before_action :find_recurrence, only: [:edit, :update, :destroy]
   before_action :authorize
 
   helper :issues
@@ -12,21 +14,36 @@ class IssueRecurrencesController < ApplicationController
     @predicted_dates = IssueRecurrence.recurrences_dates(@recurrences, true)
   end
 
+  def new
+    @recurrence = IssueRecurrence.new(anchor_to_start:
+      @issue.start_date.present? && @issue.due_date.blank?)
+  end
+
   def create
     @recurrence = IssueRecurrence.new(recurrence_params)
     @recurrence.issue = @issue
     @recurrence.save
     raise Unauthorized if @recurrence.errors.added?(:issue, :insufficient_privileges)
-    @recurrences = @issue.reload.recurrences.select {|r| r.visible?}
-    @next_dates = IssueRecurrence.issue_dates(@issue)
-    @predicted_dates = IssueRecurrence.issue_dates(@issue, true)
+    load_issue_recurrences(reload: true)
+    flash.now[:notice] = t('.success')
+  end
+
+  def edit
+    render :new
+  end
+
+  def update
+    @recurrence.update(recurrence_params)
+    raise Unauthorized if @recurrence.errors.added?(:issue, :insufficient_privileges)
+    load_issue_recurrences(reload: true)
+    flash.now[:notice] = t('.success')
+    render :create
   end
 
   def destroy
     raise Unauthorized unless @recurrence.destroy
-    @recurrences = @issue.reload.recurrences.select {|r| r.visible?}
-    @next_dates = IssueRecurrence.issue_dates(@issue)
-    @predicted_dates = IssueRecurrence.issue_dates(@issue, true)
+    load_issue_recurrences(reload: true)
+    flash.now[:notice] = t('.success')
   end
 
   private

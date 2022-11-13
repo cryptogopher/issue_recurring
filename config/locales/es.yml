@@ -90,6 +90,12 @@ es:
         last_issue_flexible_on_delay: 'última petición si se retrasa como'
         last_issue_fixed_after_close: 'última petición (después de fecha de cierre) como'
         date_fixed_after_close: 'fecha fija (después de fecha de cierre) como'
+    create:
+      success: 'New issue recurrence created'
+    update:
+      success: 'Issue recurrence updated'
+    destroy:
+      success: 'Issue recurrence deleted'
   issues:
     issue_recurrences_hook:
       recurrences: 'Recurrencias'

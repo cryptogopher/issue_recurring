@@ -51,6 +51,31 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     end
   end
 
+  def test_show_issue_shows_recurrence_form_only_when_manage_permission_granted
+    logout_user
+    log_user 'bob', 'foo'
+
+    roles = users(:bob).members.find_by(project: @issue1.project_id).roles
+    assert roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    visit issue_path(@issue1)
+    assert_current_path issue_path(@issue1)
+    within_issue_recurrences_panel do
+      assert_selector 'a', text: t(:button_add)
+      assert_no_selector 'form#recurrence-form'
+      click_link t(:button_add)
+      assert_selector 'form#recurrence-form'
+    end
+
+    roles.each { |role| role.remove_permission! :manage_issue_recurrences }
+    refute roles.any? { |role| role.has_permission? :manage_issue_recurrences }
+    visit issue_path(@issue1)
+    assert_current_path issue_path(@issue1)
+    within_issue_recurrences_panel do
+      assert_no_selector 'a', text: t(:button_add)
+      assert_no_selector 'form#recurrence-form'
+    end
+  end
+
   def test_settings_author_login
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
     create_recurrence(creation_mode: :copy_first)

@@ -43,9 +43,19 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
     end
   end
 
+  def update_recurrence(recurrence, **attributes)
+    attributes.stringify_keys!
+    assert_changes 'recurrence.attributes.extract!(*attributes.keys)', to: attributes do
+      patch "#{issue_recurrence_path(recurrence)}.js", params: {recurrence: attributes}
+      assert_response :ok
+      assert_empty assigns(:recurrence).errors
+      recurrence.reload
+    end
+  end
+
   def destroy_recurrence(recurrence)
     assert_difference 'IssueRecurrence.count', -1 do
-      delete "#{recurrence_path(recurrence)}.js"
+      delete "#{issue_recurrence_path(recurrence)}.js"
       assert_response :ok
       assert_empty assigns(:recurrence).errors
     end
@@ -54,7 +64,7 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
   def destroy_recurrence_should_fail(recurrence, **attributes)
     error_code = attributes.delete(:error_code) || :ok
     assert_no_difference 'IssueRecurrence.count' do
-      delete "#{recurrence_path(recurrence)}.js"
+      delete "#{issue_recurrence_path(recurrence)}.js"
       assert_response error_code
     end
     if error_code == :ok

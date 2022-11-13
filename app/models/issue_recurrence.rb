@@ -44,7 +44,7 @@ class IssueRecurrence < ActiveRecord::Base
   JOURNAL_MODES = [:never, :always, :on_reopen]
   AHEAD_MODES = [:days, :weeks, :months, :years]
 
-  validate on: :create do
+  validate on: [:create, :update] do
     errors.add(:issue, :insufficient_privileges) unless editable?
   end
   validates :count, numericality: {greater_than_or_equal: 0, only_integer: true}

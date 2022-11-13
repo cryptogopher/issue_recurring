@@ -1,7 +1,9 @@
-<%= form_for @recurrence, :remote => true,
-  :url => issue_recurrences_path(@issue),
-  :html => {:id => 'new-recurrence-form', :style => 'display: none;'},
-  :as => :recurrence do |f| %>
+<div id='recurrence-errors'>
+  <%= nameless_error_messages_for 'recurrence' %>
+</div>
+
+<%= form_for @recurrence, as: :recurrence, remote: true,
+  html: {id: 'recurrence-form'} do |f| %>
 
   <p>
     <%= f.select :creation_mode, creation_mode_options -%>
@@ -27,8 +29,8 @@
   </p>
 
   <p>
-    <%= submit_tag l(:button_add) -%>
-    <%= link_to_function l(:button_cancel), '$("#new-recurrence-form").hide();' -%>
+    <%= submit_tag l(:button_submit) -%>
+    <%= link_to_function l(:button_cancel), '$("#new-recurrence").empty();' -%>
   </p>
 <% end %>
 
@@ -51,7 +53,7 @@
 
     anchorModeChange();
   }
-  $('#new-recurrence-form').on('click', '#recurrence_creation_mode', creationModeChange);
+  $('#recurrence-form').on('click', '#recurrence_creation_mode', creationModeChange);
 
   function anchorModeChange() {
     if ( $('#recurrence_anchor_mode option:selected').val().includes('_flexible') ) {
@@ -65,7 +67,7 @@
       $('#recurrence_anchor_date').prop('disabled', true).fadeOut(250);
     }
   }
-  $('#new-recurrence-form').on('click', '#recurrence_anchor_mode', anchorModeChange);
+  $('#recurrence-form').on('click', '#recurrence_anchor_mode', anchorModeChange);
 
   function limitModeChange() {
     if ( $('#limit_mode option:selected').val() == 'forever' ) {
@@ -80,7 +82,7 @@
       $('[id$=_count_limit]').prop('disabled', false).fadeIn(250);
     }
   }
-  $('#new-recurrence-form').on('click', '#limit_mode', limitModeChange);
+  $('#recurrence-form').on('click', '#limit_mode', limitModeChange);
 
   $(document).ready(function() {
     creationModeChange();

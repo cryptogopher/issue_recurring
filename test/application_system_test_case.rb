@@ -53,6 +53,7 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
 
   def create_recurrence(issue=issues(:issue_01), **attributes)
     t_base = 'issues.recurrences.form'
+    recurrence = nil
 
     attributes[:anchor_mode] ||= :first_issue_fixed
     attributes[:mode] ||= :weekly
@@ -71,20 +72,23 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
             fill_in "recurrence_#{k}", with: v
           end
         end
-        click_button t(:button_add)
+        click_button t(:button_submit)
       end
       # status_code not supported by Selenium
       assert_current_path issue_path(issue)
-      assert_selector '#recurrence-errors', visible: :all, exact_text: ''
+      recurrence = IssueRecurrence.last
+      assert_selector :xpath,
+        "//tr[td[contains(string(), '#{strip_tags(recurrence.to_s)}')]]"
+      assert_no_selector '#new-recurrence *', visible: :all
     end
+    assert_selector 'div#flash_notice', exact_text: t('issue_recurrences.create.success')
 
-    ir = IssueRecurrence.last
     attributes.each do |attribute, value|
       value = value.to_s if value.is_a? Symbol
-      assert_equal value, ir.send(attribute)
+      assert_equal value, recurrence.send(attribute)
     end
 
-    ir
+    recurrence
   end
 
   def destroy_recurrence(recurrence)
@@ -98,9 +102,10 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
         end
         # status_code not supported by Selenium
         assert_current_path issue_path(recurrence.issue)
-        assert_selector '#recurrence-errors', visible: :all, exact_text: ''
+        assert_no_selector :xpath, "//tr[td[contains(string(), '#{description}')]]"
       end
     end
+    assert_selector 'div#flash_notice', exact_text: t('issue_recurrences.destroy.success')
   end
 
   def close_issue(issue)

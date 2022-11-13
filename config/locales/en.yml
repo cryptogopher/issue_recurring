@@ -77,6 +77,12 @@ en:
         last_issue_flexible_on_delay: 'last issue close if delayed as'
         last_issue_fixed_after_close: 'last issue (after close date) as'
         date_fixed_after_close: 'fixed date (after close date) as'
+    create:
+      success: 'New issue recurrence created'
+    update:
+      success: 'Issue recurrence updated'
+    destroy:
+      success: 'Issue recurrence deleted'
   issues:
     issue_recurrences_hook:
       recurrences: 'Recurrences'

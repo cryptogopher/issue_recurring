@@ -31,7 +31,7 @@
           <td class="anchor"><%= anchor_mode(r) %></td>
           <td class="limit"><%= limit_condition(r) %></td>
           <td class="count"><%= r.count %></td>
-          <td class="buttons"><%= delete_button(r) %></td>
+          <td class="buttons"><%= delete_button(r) if r.editable? %></td>
         </tr>
       <% end %>
     <% end %>
