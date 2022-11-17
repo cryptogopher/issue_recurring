@@ -96,11 +96,11 @@ bg:
         last_issue_fixed_after_close: 'последната задача (след датата на затваряне) като'
         date_fixed_after_close: 'фиксирана задача (след датата на затваряне) като'
     create:
-      success: 'New issue recurrence created'
+      success: 'New issue recurrence created.'
     update:
-      success: 'Issue recurrence updated'
+      success: 'Issue recurrence updated.'
     destroy:
-      success: 'Issue recurrence deleted'
+      success: 'Issue recurrence deleted.'
   issues:
     issue_recurrences_hook:
       recurrences: 'Цикличност'
