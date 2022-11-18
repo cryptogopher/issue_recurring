@@ -51,7 +51,7 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     end
   end
 
-  def create_recurrence(issue=issues(:issue_01), **attributes)
+  def create_recurrence(issue: issues(:issue_01), **attributes)
     t_base = 'issues.recurrences.form'
     recurrence = nil
 
@@ -74,9 +74,10 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
         end
         click_button t(:button_submit)
       end
+
+      recurrence = IssueRecurrence.last
       # status_code not supported by Selenium
       assert_current_path issue_path(issue)
-      recurrence = IssueRecurrence.last
       assert_selector :xpath,
         "//tr[td[contains(string(), '#{strip_tags(recurrence.to_s)}')]]"
       assert_no_selector '#new-recurrence *', visible: :all
@@ -91,6 +92,45 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     recurrence
   end
 
+  def update_recurrence(recurrence, **attributes, &block)
+    t_base = 'issues.recurrences.form'
+    attributes.stringify_keys!
+
+    visit issue_path(recurrence.issue)
+    within_issue_recurrences_panel do
+      assert_changes 'recurrence.attributes' do
+        within :xpath, "//tr[td[contains(string(), '#{strip_tags(recurrence.to_s)}')]]" do
+          click_link t(:button_edit)
+        end
+
+        attributes.each do |k, v|
+          helper_method = "#{k}_options".to_sym
+          if respond_to?(helper_method)
+            v = send(helper_method).to_h { |v,k| [k,v] }[v]
+            select strip_tags(v), from: "recurrence_#{k}"
+          else
+            fill_in "recurrence_#{k}", with: v
+          end
+        end
+
+        yield
+
+        click_button t(:button_submit)
+        recurrence.reload
+
+        # status_code not supported by Selenium
+        assert_current_path issue_path(recurrence.issue)
+        assert_no_selector '#new-recurrence *', visible: :all
+        assert_selector :xpath,
+          "//tr[td[contains(string(), '#{strip_tags(recurrence.to_s)}')]]"
+        assert_equal attributes, recurrence.attributes.extract!(*attributes.keys)
+      end
+    end
+    assert_selector 'div#flash_notice', exact_text: t('issue_recurrences.update.success')
+
+    recurrence
+  end
+
   def destroy_recurrence(recurrence)
     visit issue_path(recurrence.issue)
 
@@ -100,9 +140,11 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
         within :xpath, "//tr[td[contains(string(), '#{description}')]]" do
           click_link t(:button_delete)
         end
+
         # status_code not supported by Selenium
         assert_current_path issue_path(recurrence.issue)
         assert_no_selector :xpath, "//tr[td[contains(string(), '#{description}')]]"
+        assert_raises(ActiveRecord::RecordNotFound) { recurrence.reload }
       end
     end
     assert_selector 'div#flash_notice', exact_text: t('issue_recurrences.destroy.success')

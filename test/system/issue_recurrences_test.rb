@@ -39,6 +39,18 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     create_recurrence
   end
 
+  def test_update_recurrence
+    @issue1.update!(start_date: Date.current - 4.days, due_date: Date.current)
+    ir = create_recurrence
+    update_recurrence ir do
+      all('select', visible: :all).each do |s|
+        s.all('option:not(:checked)').sample&.select_option
+      end
+      all('input[type=number]').each { |i| i.fill_in with: rand(11) }
+      # NOTE: for now date fields - if visible - are left with default values
+    end
+  end
+
   def test_destroy_recurrence
     @issue1.update!(due_date: Date.current)
     destroy_recurrence(create_recurrence)
@@ -146,9 +158,11 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
     @issue2.update!(start_date: 10.days.ago, due_date: 5.days.ago)
 
-    ir1 = create_recurrence(@issue1, creation_mode: :copy_first, anchor_to_start: true,
+    ir1 = create_recurrence(issue: @issue1,
+                            creation_mode: :copy_first, anchor_to_start: true,
                            anchor_mode: :last_issue_fixed)
-    ir2 = create_recurrence(@issue2, creation_mode: :reopen, anchor_to_start: true,
+    ir2 = create_recurrence(issue: @issue2,
+                            creation_mode: :reopen, anchor_to_start: true,
                             anchor_mode: :last_issue_flexible)
     logout_user
     log_user 'admin', 'foo'
