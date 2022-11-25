@@ -17,8 +17,8 @@ en:
                 blank'
               reopen_requires_close_date_based: 'only recurrences dependent on close date
                 can reopen issue'
-              date_anchor_requires_reopen: 'recurrences based on fixed date can be used for
-                issue reopening only'
+              date_anchor_requires_reopen: 'recurrences based on fixed date can only be used
+                for issue reopening'
             creation_mode:
               only_one_reopen: 'only one reopening recurrence calculated from close date
                 is allowed'
