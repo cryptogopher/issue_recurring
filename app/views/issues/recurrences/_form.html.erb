@@ -10,7 +10,7 @@
     <%= t '.issue' -%>
     <%= f.select :include_subtasks, include_subtasks_options -%>
     <%= t '.every' -%>
-    <%= f.number_field :multiplier, min: 1, step: 1, value: 1 -%>
+    <%= f.number_field :multiplier, min: 1, step: 1, value: 1, size: 3 -%>
     <%= f.select :mode, mode_options -%>
     <%= t '.based_on' -%>
     <%= f.select :anchor_to_start, anchor_to_start_options,
@@ -18,13 +18,13 @@
     <%= f.select :anchor_mode, anchor_mode_options -%>
     <%= f.date_field :anchor_date, value: Date.current -%>
     <span id='recurrence_delay'><%= t '.delayed_by' -%></span>
-    <%= f.number_field :delay_multiplier, min: 0, step: 1, value: 0 -%>
+    <%= f.number_field :delay_multiplier, min: 0, step: 1, value: 0, size: 3 -%>
     <%= f.select :delay_mode, delay_mode_options -%>
     <%= t '.until' -%>
     <%= select_tag :limit_mode, options_for_select(limit_mode_options) -%>
     <%= f.date_field :date_limit, disabled: true, min: Date.current,
       value: Date.current.next_month -%>
-    <%= f.number_field :count_limit, disabled: true, min: 1, step: 1, value: 1 -%>
+    <%= f.number_field :count_limit, disabled: true, min: 1, step: 1, value: 1, size: 3 -%>
     <%= '.' -%>
   </p>
 

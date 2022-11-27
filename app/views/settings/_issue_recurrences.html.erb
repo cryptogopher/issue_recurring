@@ -20,7 +20,7 @@
 <p>
 <%= label_tag :settings_renew_ahead, t('.renew_ahead') %>
 <%= number_field_tag 'settings[ahead_multiplier]', @settings[:ahead_multiplier], min: 0,
-  step: 1 %>
+  step: 1, size: 3 %>
 <%= select_tag 'settings[ahead_mode]', ahead_mode_options(@settings[:ahead_mode]) %>
 <em class="info"><%= t('.renew_ahead_hint') %></em>
 </p>
