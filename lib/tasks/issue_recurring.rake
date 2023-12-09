@@ -10,7 +10,7 @@ require_relative '../../../../config/environment'
 namespace :redmine do
   namespace :issue_recurring do
     task :renew_all => :environment do
-      IssueRecurrence.renew_all
+      Mailer.with_synched_deliveries { IssueRecurrence.renew_all }
     end
   end
 
