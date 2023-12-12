@@ -35,15 +35,14 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   def test_create_anchor_modes_when_issue_dates_not_set
     @issue1.update!(start_date: nil, due_date: nil)
 
-    # params, blank_dates_allowed?
+    # params, blank dates allowed?
     anchor_modes = [
       {anchor_mode: :first_issue_fixed}, false,
       {anchor_mode: :last_issue_fixed}, false,
       {anchor_mode: :last_issue_flexible}, true,
       {anchor_mode: :last_issue_flexible_on_delay}, true,
       {anchor_mode: :last_issue_fixed_after_close}, false,
-      {anchor_mode: :date_fixed_after_close, creation_mode: :reopen,
-       anchor_date: Date.current}, true
+      {anchor_mode: :date_fixed_after_close, anchor_date: Date.current}, true
     ]
 
     anchor_modes.each_slice(2) do |params, blank_dates_allowed|
@@ -69,7 +68,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   def test_create_anchor_modes_with_creation_mode_reopen
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    # params, reopen_allowed?
+    # params, reopen allowed?
     anchor_modes = [
       {anchor_mode: :first_issue_fixed}, false,
       {anchor_mode: :last_issue_fixed}, false,
@@ -96,6 +95,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     # issue: https://it.michalczyk.pro/issues/14
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
+    # params, multiple reopen allowed?
     anchor_modes = [
       {anchor_mode: :last_issue_flexible}, false,
       {anchor_mode: :last_issue_flexible_on_delay}, false,
@@ -125,15 +125,14 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   def test_create_anchor_modes_with_delay
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
-    # params, delay_allowed?
+    # params, delay allowed?
     anchor_modes = [
       {anchor_mode: :first_issue_fixed}, true,
       {anchor_mode: :last_issue_fixed}, true,
       {anchor_mode: :last_issue_flexible}, false,
       {anchor_mode: :last_issue_flexible_on_delay}, false,
       {anchor_mode: :last_issue_fixed_after_close}, true,
-      {anchor_mode: :date_fixed_after_close, creation_mode: :reopen,
-       anchor_date: Date.current}, true
+      {anchor_mode: :date_fixed_after_close, anchor_date: Date.current}, true
     ]
     anchor_modes.each_slice(2) do |params, delay_allowed|
       params.update(anchor_to_start: true,
@@ -160,15 +159,14 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
         when 'first_issue_fixed', 'last_issue_fixed'
           next if creation_mode == 'reopen'
         when 'date_fixed_after_close'
-          next if creation_mode != 'reopen'
           params[:anchor_date] = Date.current
         end
 
         r = create_recurrence(**params)
-        # create 2nd reopen when allowed; it won't be deleted
-        create_recurrence(**params) if anchor_mode == 'date_fixed_after_close'
-        # only one reopen allowed
-        destroy_recurrence(r) if creation_mode == 'reopen'
+        # multiple reopen allowed only for :date_fixed_after_close
+        if (creation_mode == 'reopen') && (anchor_mode != 'date_fixed_after_close')
+          destroy_recurrence(r)
+        end
       end
     end
   end
@@ -392,13 +390,11 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   def test_show_issue_shows_description_based_on_reference_date_without_delay
     @issue1.update!(start_date: Date.new(2019,8,15), due_date: Date.new(2019,8,20))
 
-    # params, delay_allowed?
     anchor_modes = [
       {anchor_mode: :first_issue_fixed},
       {anchor_mode: :last_issue_fixed},
       {anchor_mode: :last_issue_fixed_after_close},
-      {anchor_mode: :date_fixed_after_close, creation_mode: :reopen,
-       anchor_date: Date.new(2019,8,15)},
+      {anchor_mode: :date_fixed_after_close, anchor_date: Date.new(2019,8,15)},
     ]
 
     anchor_modes.each do |r_params|
@@ -842,6 +838,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   end
 
   def test_renew_anchor_mode_date_fixed_after_close_mode_weekly
+    # TODO: add creation_mode 'copy' through process_recurrences
+    # like: test_renew_anchor_mode_last_issue_flexible_issue_dates_set_and_unset
     @issue1.update!(start_date: Date.new(2019,7,8), due_date: Date.new(2019,7,13))
 
     travel_to(Date.new(2019,7,1))
@@ -1660,7 +1658,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       # date_fixed_after_close, both dates set
       {start_date: Date.new(2018,9,13), due_date: Date.new(2018,10,2)},
       {anchor_mode: :date_fixed_after_close, mode: :monthly_day_from_first,
-       anchor_to_start: true, creation_mode: :reopen, anchor_date: Date.new(2018,9,5)},
+       anchor_to_start: true, anchor_date: Date.new(2018,9,5)},
       [
         Date.new(2018,12,15), Date.new(2018,12,24),
           [{start: Date.new(2019,1,5), due: Date.new(2019,1,24)}],
@@ -1671,7 +1669,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       # date_fixed_after_close, only one date set
       {start_date: Date.new(2018,10,10), due_date: nil},
       {anchor_mode: :date_fixed_after_close, mode: :monthly_dow_from_first,
-       anchor_to_start: true, creation_mode: :reopen, anchor_date: Date.new(2018,11,5)},
+       anchor_to_start: true, anchor_date: Date.new(2018,11,5)},
       [
         nil, Date.new(2018,12,9), [],
         Date.new(2019,1,9), Date.new(2019,1,9),
@@ -1682,7 +1680,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
       {start_date: nil, due_date: Date.new(2018,10,15)},
       {anchor_mode: :date_fixed_after_close, mode: :monthly_dow_to_last,
-       anchor_to_start: false, creation_mode: :reopen, anchor_date: Date.new(2018,12,31)},
+       anchor_to_start: false, anchor_date: Date.new(2018,12,31)},
       [
         Date.new(2018,12,30), Date.new(2018,12,30),
           [{start: nil, due: Date.new(2018,12,31)}],
@@ -1696,7 +1694,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       # date_fixed_after_close, both dates unset
       {start_date: nil, due_date: nil},
       {anchor_mode: :date_fixed_after_close, mode: :weekly,
-       anchor_to_start: true, creation_mode: :reopen, anchor_date: Date.new(2019,6,7)},
+       anchor_to_start: true, anchor_date: Date.new(2019,6,7)},
       [
         nil, Date.new(2019,7,17), [],
         Date.new(2019,7,18), Date.new(2019,7,18),
@@ -1705,7 +1703,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
       {start_date: nil, due_date: nil},
       {anchor_mode: :date_fixed_after_close, mode: :weekly,
-       anchor_to_start: false, creation_mode: :reopen, anchor_date: Date.new(2019,6,7)},
+       anchor_to_start: false, anchor_date: Date.new(2019,6,7)},
       [
         nil, Date.new(2019,7,17), [],
         Date.new(2019,7,18), Date.new(2019,7,18),
@@ -1715,7 +1713,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       ]
     ]
 
-    process_recurrences(configs, [:reopen])
+    process_recurrences(configs, [:copy_first, :reopen])
   end
 
   def test_renew_anchor_mode_flexible_anchor_to_start_varies
@@ -2851,7 +2849,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal Date.new(2019,9,11), @issue1.due_date
   end
 
-  def test_renew_multiple_anchor_mode_date_fixed_after_close_with_additional_reopen
+  def test_renew_multiple_creation_mode_reopen_anchor_mode_date_fixed_after_close
     @issue1.update!(start_date: Date.new(2019,7,12), due_date: Date.new(2019,7,13))
 
     # Recur every 15th and last day of month, but not less often than every 10 days.
@@ -2873,6 +2871,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
                      multiplier: 10,
                      creation_mode: :reopen)
 
+    # close date, recurrence dates
     dates = [
       Date.new(2019,7,14), {start: Date.new(2019,7,15), due: Date.new(2019,7,16)},
       Date.new(2019,7,15), {start: Date.new(2019,7,25), due: Date.new(2019,7,26)},

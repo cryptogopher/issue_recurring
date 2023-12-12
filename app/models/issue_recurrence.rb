@@ -79,11 +79,6 @@ class IssueRecurrence < ActiveRecord::Base
     if: -> { creation_mode == 'reopen' },
     message: :reopen_requires_close_date_based
   }
-  validates :anchor_mode, exclusion: {
-    in: ['date_fixed_after_close'],
-    if: -> { creation_mode != 'reopen' },
-    message: :date_anchor_requires_reopen
-  }
   validates :anchor_to_start, inclusion: [true, false]
   validates :anchor_date, absence: {unless: -> { anchor_mode == 'date_fixed_after_close' }},
     presence: {if: -> { anchor_mode == 'date_fixed_after_close' }}
