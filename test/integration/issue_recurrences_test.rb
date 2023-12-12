@@ -149,6 +149,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
   end
 
+  # TODO: should be based on random sample pairs [creation_mode, anchor_mode]
+  # of random length
   def test_create_multiple_recurrences
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
@@ -1370,7 +1372,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       assert 0, r.reload.count
       assert !@issue1.reload.closed?
 
-      # closed_on set to non-nil value while issue status is not closed should
+      # Issue.closed_on set to non-nil value while issue status is not closed should
       # not cause recurrence as well.
       @issue1.update!(closed_on: Date.new(2018,9,17))
       assert !@issue1.closed?
@@ -1447,7 +1449,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
   def process_recurrences(configs, creation_modes)
     creation_modes.each do |creation_mode|
-      configs.each_slice(3) do |issue_dates, r_params, r_details|
+      configs.each_slice(3) do |issue_dates, r_params, renewals|
         reopen_issue(@issue1) if @issue1.closed?
         @issue1.update!(issue_dates)
 
@@ -1455,22 +1457,22 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
         travel_to(r_params[:date_limit] - 1.day) if r_params[:date_limit]
         r = create_recurrence(**r_params)
 
-        r_details.each_slice(3) do |travel_close, travel_renew, r_dates|
+        renewals.each_slice(3) do |travel_close, travel_renew, r_dates|
           r.reload
           if travel_close
-            travel_to(travel_close) if travel_close
+            travel_to(travel_close)
             close_issue(r.last_issue || @issue1)
           end
           travel_to(travel_renew)
-          rs = if r.reopen?
-                 old_attrs = @issue1.reload.attributes
-                 renew_all(0)
-                 old_attrs != @issue1.reload.attributes ? [@issue1] : []
-               else
-                 Array(renew_all(r_dates.length))
-               end
-          assert_equal r_dates.length, rs.length
-          rs.each_with_index do |ir, i|
+          irs = if r.reopen?
+                  old_attrs = @issue1.reload.attributes
+                  renew_all(0)
+                  old_attrs != @issue1.reload.attributes ? [@issue1] : []
+                else
+                  Array(renew_all(r_dates.length))
+                end
+          assert_equal r_dates.length, irs.length
+          irs.each_with_index do |ir, i|
             assert_equal [r_dates[i][:start]], [ir.start_date]
             assert_equal [r_dates[i][:due]], [ir.due_date]
           end
