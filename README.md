@@ -153,3 +153,17 @@ Database downgrade (```VERSION``` number ```<NNN>``` is a number taken from migr
    RAILS_ENV=production bundle exec rake redmine:plugins:migrate VERSION=<NNN> NAME=issue_recurring
    ```
 Keep in mind though, that downgrading database might cause some information to be lost irreversibly. This is because some downgrades may require deletion of tables/columns that were introduced in higher version. Also structure of the data may not be compatible between versions, so the automatic conversion can be lossy.
+
+## Development
+
+Running tests:
+* all, including system tests:
+
+  ```
+  cd /var/lib/redmine
+  RAILS_ENV=test bundle exec rake redmine:plugins:test NAME=issue_recurring
+  ```
+* single test, optionally with seed
+  ```
+  RAILS_ENV=test bundle exec ruby plugins/issue_recurring/test/system/issue_recurrences_test.rb --name test_update_recurrence --seed 63157
+  ```
