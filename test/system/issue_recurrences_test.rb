@@ -35,7 +35,7 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
   end
 
   def test_create_recurrence
-    @issue1.update!(due_date: Date.current)
+    @issue1.update!(random_dates)
     create_recurrence
   end
 
