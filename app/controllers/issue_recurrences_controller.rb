@@ -49,16 +49,17 @@ class IssueRecurrencesController < ApplicationController
   private
 
   def recurrence_params
+    # In order of appearance on the form
     params.require(:recurrence).permit(
       :creation_mode,
       :include_subtasks,
-      :anchor_mode,
-      :anchor_to_start,
-      :anchor_date,
-      :mode,
       :multiplier,
-      :delay_mode,
+      :mode,
+      :anchor_to_start,
+      :anchor_mode,
+      :anchor_date,
       :delay_multiplier,
+      :delay_mode,
       :date_limit,
       :count_limit
     )
