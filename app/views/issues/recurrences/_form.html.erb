@@ -21,7 +21,7 @@
     <%= f.number_field :delay_multiplier, min: 0, step: 1, value: 0, size: 3 -%>
     <%= f.select :delay_mode, delay_mode_options -%>
     <%= t '.until' -%>
-    <%= select_tag :limit_mode, options_for_select(limit_mode_options) -%>
+    <%= select_tag :recurrence_limit_mode, options_for_select(limit_mode_options) -%>
     <%= f.date_field :date_limit, disabled: true, min: Date.current,
       value: Date.current.next_month -%>
     <%= f.number_field :count_limit, disabled: true, min: 1, step: 1, value: 1, size: 3 -%>
@@ -70,19 +70,19 @@
   $('#recurrence-form').on('click', '#recurrence_anchor_mode', anchorModeChange);
 
   function limitModeChange() {
-    if ( $('#limit_mode option:selected').val() == 'forever' ) {
+    if ( $('#recurrence_limit_mode option:selected').val() == 'forever' ) {
       $('[id$=_limit]').prop('disabled', true).fadeOut(250);
     }
-    if ( $('#limit_mode option:selected').val() == 'fixed_date' ) {
+    if ( $('#recurrence_limit_mode option:selected').val() == 'date_limit' ) {
       $('[id$=_count_limit]').prop('disabled', true).hide();
       $('[id$=_date_limit]').prop('disabled', false).fadeIn(250);
     }
-    if ( $('#limit_mode option:selected').val() == 'count' ) {
+    if ( $('#recurrence_limit_mode option:selected').val() == 'count_limit' ) {
       $('[id$=_date_limit]').prop('disabled', true).hide();
       $('[id$=_count_limit]').prop('disabled', false).fadeIn(250);
     }
   }
-  $('#recurrence-form').on('click', '#limit_mode', limitModeChange);
+  $('#recurrence-form').on('click', '#recurrence_limit_mode', limitModeChange);
 
   $(document).ready(function() {
     creationModeChange();

@@ -95,27 +95,51 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     end
   end
 
+  def fill_in_form(attributes)
+    helper_attrs = {}
+    attributes.keys.grep(/_limit$/) { |k| helper_attrs[:limit_mode] = k.to_sym }
+
+    field = first(:field)
+    begin
+      id = field[:id].delete_prefix('recurrence_').to_sym
+      if field.tag_name == 'select'
+        helper_method = "#{id}_options".to_sym
+        value = send(helper_method).to_h.invert[attributes[id] || helper_attrs[id]]
+        field.select value
+      else
+        field.fill_in with: attributes[id]
+      end
+      field = field.find(:xpath, 'following-sibling::*[self::input or self::select]',
+                         match: :first)
+    rescue Capybara::ElementNotFound
+      break
+    end while true
+  end
+
+  # Create recurrence by filling out the form with:
+  # * attributes, filled with missing required keys if necessary,
+  # * block,
+  # or randomly generated attributes when no attributes or block given.
   def create_recurrence(issue: issues(:issue_01), **attributes)
     t_base = 'issues.recurrences.form'
     recurrence = nil
 
-    attributes[:anchor_mode] ||= :first_issue_fixed
-    attributes[:mode] ||= :weekly
-    attributes[:multiplier] ||= 1
+    if attributes.empty?
+      attributes = random_recurrence unless block_given?
+    else
+      attributes[:anchor_mode] ||= :first_issue_fixed
+      attributes[:mode] ||= :weekly
+      attributes[:multiplier] ||= 1
+    end
 
     visit issue_path(issue)
     within_issue_recurrences_panel do
       assert_difference ['all("tr").length', 'IssueRecurrence.count'], 1 do
         click_link t(:button_add)
-        attributes.each do |k, v|
-          helper_method = "#{k}_options".to_sym
-          if respond_to?(helper_method)
-            v = send(helper_method).to_h { |v,k| [k,v] }[v]
-            select strip_tags(v), from: "recurrence_#{k}"
-          else
-            fill_in "recurrence_#{k}", with: v
-          end
-        end
+
+        fill_in_form attributes
+        yield if block_given?
+
         click_button t(:button_submit)
       end
 
@@ -125,13 +149,10 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
       assert_selector :xpath,
         "//tr[td[contains(string(), '#{strip_tags(recurrence.to_s)}')]]"
       assert_no_selector '#new-recurrence *', visible: :all
+      attributes = attributes.map { |k,v| [k.to_s, v.is_a?(Symbol) ? v.to_s : v] }.to_h
+      assert_equal attributes, recurrence.attributes.extract!(*attributes.keys)
     end
     assert_selector 'div#flash_notice', exact_text: t('issue_recurrences.create.success')
-
-    attributes.each do |attribute, value|
-      value = value.to_s if value.is_a? Symbol
-      assert_equal value, recurrence.send(attribute)
-    end
 
     recurrence
   end

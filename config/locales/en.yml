@@ -161,6 +161,6 @@ en:
         until: 'and repeat until'
         limit_modes:
           forever: '<b>forever</b>'
-          fixed_date: '<b>fixed date (inclusive):</b>'
-          count: '<b>number of recurrences</b> reaches:'
+          date_limit: '<b>fixed date (inclusive):</b>'
+          count_limit: '<b>number of recurrences</b> reaches:'
         recurrence: 'recurrence'

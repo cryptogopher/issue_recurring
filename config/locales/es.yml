@@ -172,6 +172,6 @@ es:
         until: 'y repetir hasta'
         limit_modes:
           forever: '<b>siempre</b>'
-          fixed_date: '<b>fecha fija (incluída):</b>'
-          count: '<b>número de recurrencias</b> alcance:'
+          date_limit: '<b>fecha fija (incluída):</b>'
+          count_limit: '<b>número de recurrencias</b> alcance:'
         recurrence: 'recurrencia'
