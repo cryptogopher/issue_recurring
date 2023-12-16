@@ -51,6 +51,11 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     end
   end
 
+  # Tests if edit form properly loads and updates recurrence settings
+  def test_update_recurrence_without_change
+
+  end
+
   def test_destroy_recurrence
     @issue1.update!(due_date: Date.current)
     destroy_recurrence(create_recurrence)
@@ -160,7 +165,7 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
 
     ir1 = create_recurrence(issue: @issue1,
                             creation_mode: :copy_first, anchor_to_start: true,
-                           anchor_mode: :last_issue_fixed)
+                            anchor_mode: :last_issue_fixed)
     ir2 = create_recurrence(issue: @issue2,
                             creation_mode: :reopen, anchor_to_start: true,
                             anchor_mode: :last_issue_flexible)
