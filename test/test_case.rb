@@ -1,4 +1,18 @@
 module IssueRecurringTestCase
+  if ENV['PROFILE']
+    RubyProf.start
+
+    Minitest.after_run do
+      File.open('tmp/screenshots/profile.out', 'w') do |file|
+        result = RubyProf.stop
+        #printer = RubyProf::GraphHtmlPrinter.new(result)
+        printer = RubyProf::FlatPrinter.new(result)
+        #printer.print(STDOUT, min_percent: 0.1)
+        printer.print(file)
+      end
+    end
+  end
+
   def renew_all(count=0)
     assert_difference 'Issue.count', count do
       IssueRecurrence.renew_all(true)

@@ -7,3 +7,6 @@ group :development, :test do
   gem 'byebug'
 end
 
+group :test do
+  gem 'ruby-prof'
+end

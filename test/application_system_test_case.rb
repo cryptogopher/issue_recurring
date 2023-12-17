@@ -25,6 +25,7 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
 
   Capybara.configure do |config|
     config.save_path = './tmp/screenshots/'
+    config.default_max_wait_time = 0
   end
 
   self.fixture_path = File.expand_path('../fixtures/', __FILE__)
