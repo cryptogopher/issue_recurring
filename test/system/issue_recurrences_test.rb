@@ -40,7 +40,7 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
   end
 
   def test_update_recurrence
-    @issue1.update!(start_date: Date.current - 4.days, due_date: Date.current)
+    @issue1.update!(random_dates)
     ir = create_recurrence
     update_recurrence ir do
       all('select', visible: :all).each do |s|
@@ -57,11 +57,12 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
   end
 
   def test_destroy_recurrence
-    @issue1.update!(due_date: Date.current)
+    @issue1.update!(random_dates)
     destroy_recurrence(create_recurrence)
   end
 
   def test_show_issue_recurrences
+    # TODO: randomize # of recurrences 0..N
     visit issue_path(@issue1)
     within_issue_recurrences_panel do
       assert_equal @issue1.recurrences.count, all("tr").length
