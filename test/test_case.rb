@@ -28,6 +28,10 @@ module IssueRecurringTestCase
     Date.current + random_datespan * [-1, 1].sample
   end
 
+  def random_future_date
+    Date.current + random_datespan + 1.day
+  end
+
   def random_dates
     dates = {start_date: random_date}
     dates.update(due_date: dates[:start_date] + random_datespan)

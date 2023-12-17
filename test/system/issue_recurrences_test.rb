@@ -36,12 +36,28 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
 
   def test_create_recurrence
     @issue1.update!(random_dates)
+
+    # Verify that every valid random recurrence can be entered into form
     create_recurrence
+
+    # Verify that every recurrence that can be entered into form is valid
+    create_recurrence do
+      all('select', visible: :all).each { |s| s.all('option').sample&.select_option }
+      all('input[type=number]').each do |i|
+        min = i[:min].to_i || 0
+        i.fill_in with: rand([min..min, (min+1)..5, 6..1000].sample)
+      end
+      all('input[type=date]', visible: :all).each { |i| i.fill_in with: random_future_date }
+    end
   end
 
   def test_update_recurrence
     @issue1.update!(random_dates)
     ir = create_recurrence
+
+    # TODO: Verify that every valid random udate can be entered into form
+
+    # Verify that every update that can be entered into form is valid
     update_recurrence ir do
       all('select', visible: :all).each do |s|
         s.all('option:not(:checked)').sample&.select_option
@@ -49,11 +65,9 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
       all('input[type=number]').each { |i| i.fill_in with: rand(11) }
       # NOTE: for now date fields - if visible - are left with default values
     end
-  end
 
-  # Tests if edit form properly loads and updates recurrence settings
-  def test_update_recurrence_without_change
-
+    # TODO: Verify that update with no change yields the same recurrence
+    # assert_no_change 'r.reload.attributes'
   end
 
   def test_destroy_recurrence
