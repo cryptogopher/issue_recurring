@@ -40,34 +40,25 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     # Verify that every valid random recurrence can be entered into form
     create_recurrence
 
-    # Verify that every recurrence that can be entered into form is valid
-    create_recurrence do
-      all('select', visible: :all).each { |s| s.all('option').sample&.select_option }
-      all('input[type=number]').each do |i|
-        min = i[:min].to_i || 0
-        i.fill_in with: rand([min..min, (min+1)..5, 6..1000].sample)
-      end
-      all('input[type=date]', visible: :all).each { |i| i.fill_in with: random_future_date }
-    end
+    # Verify that every recurrence that can be entered into form is valid.
+    # Implicitly tests form fields hiding depending on recurrence setting selection.
+    create_recurrence { fill_in_randomly }
   end
 
   def test_update_recurrence
     @issue1.update!(random_dates)
-    ir = create_recurrence
+    r = create_recurrence
 
-    # TODO: Verify that every valid random udate can be entered into form
+    # Verify that every valid random update can be entered into form
+    update_recurrence r
 
     # Verify that every update that can be entered into form is valid
-    update_recurrence ir do
-      all('select', visible: :all).each do |s|
-        s.all('option:not(:checked)').sample&.select_option
-      end
-      all('input[type=number]').each { |i| i.fill_in with: rand(11) }
-      # NOTE: for now date fields - if visible - are left with default values
-    end
+    update_recurrence r { fill_in_randomly }
 
-    # TODO: Verify that update with no change yields the same recurrence
-    # assert_no_change 'r.reload.attributes'
+    # Verify that update with no change yields the same recurrence
+    assert_no_changes 'r.reload.attributes' do
+      update_recurrence r { }
+    end
   end
 
   def test_destroy_recurrence
@@ -280,6 +271,4 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
       destroy_recurrence(ir)
     end
   end
-
-  # TODO: test form fields hiding depending on recurrence setting selection
 end

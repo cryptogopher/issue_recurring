@@ -75,6 +75,15 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     end while true
   end
 
+  def fill_in_randomly
+    all('select', visible: :all).each { |s| s.all('option').sample&.select_option }
+    all('input[type=number]').each do |i|
+      min = i[:min].to_i || 0
+      i.fill_in with: rand([min..min, (min+1)..5, 6..1000].sample)
+    end
+    all('input[type=date]', visible: :all).each { |i| i.fill_in with: random_future_date }
+  end
+
   # Create recurrence by filling out the form with:
   # * attributes, filled with missing required keys if necessary,
   # * block,
@@ -116,39 +125,34 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     recurrence
   end
 
-  def update_recurrence(recurrence, **attributes, &block)
+  def update_recurrence(recurrence, **attributes)
     t_base = 'issues.recurrences.form'
-    attributes.stringify_keys!
+
+    if attributes.empty? && !block_given?
+      attributes = random_recurrence
+    end
 
     visit issue_path(recurrence.issue)
     within_issue_recurrences_panel do
-      assert_changes 'recurrence.attributes' do
+      assert_no_difference ['all("tr").length', 'IssueRecurrence.count'] do
         within :xpath, "//tr[td[contains(string(), '#{strip_tags(recurrence.to_s)}')]]" do
           click_link t(:button_edit)
         end
 
-        attributes.each do |k, v|
-          helper_method = "#{k}_options".to_sym
-          if respond_to?(helper_method)
-            v = send(helper_method).to_h { |v,k| [k,v] }[v]
-            select strip_tags(v), from: "recurrence_#{k}"
-          else
-            fill_in "recurrence_#{k}", with: v
-          end
-        end
-
-        yield
+        fill_in_form attributes
+        yield if block_given?
 
         click_button t(:button_submit)
-        recurrence.reload
-
-        # status_code not supported by Selenium
-        assert_current_path issue_path(recurrence.issue)
-        assert_no_selector '#new-recurrence *', visible: :all
-        assert_selector :xpath,
-          "//tr[td[contains(string(), '#{strip_tags(recurrence.to_s)}')]]"
-        assert_equal attributes, recurrence.attributes.extract!(*attributes.keys)
       end
+
+      recurrence.reload
+      # status_code not supported by Selenium
+      assert_current_path issue_path(recurrence.issue)
+      assert_selector :xpath,
+        "//tr[td[contains(string(), '#{strip_tags(recurrence.to_s)}')]]"
+      assert_no_selector '#new-recurrence *', visible: :all
+      attributes = attributes.map { |k,v| [k.to_s, v.is_a?(Symbol) ? v.to_s : v] }.to_h
+      assert_equal attributes, recurrence.attributes.extract!(*attributes.keys)
     end
     assert_selector 'div#flash_notice', exact_text: t('issue_recurrences.update.success')
 
