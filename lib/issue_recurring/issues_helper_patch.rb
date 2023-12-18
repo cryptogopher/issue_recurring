@@ -2,6 +2,13 @@ module IssueRecurring
   module IssuesHelperPatch
     TRANSLATION_ROOT = 'issues.recurrences.form'
 
+    # Don't use Redmine's #error_messages_for, which displays attribute names.
+    # Errors for single attributes should never be visible to the
+    # user, as he should not be able to fill the form with invalid attributes.
+    # The errors that will be displayed are more complex: they depend on
+    # attributes of recurrence AND issue or multiple recurrences. Displaying
+    # recurrence attribute names would only be misleading to users.
+    # See error messages: 'activerecord.errors.models.issue_recurrence.attributes.*'.
     def nameless_error_messages_for(*objects)
       objects = objects.map {|o| o.is_a?(String) ? instance_variable_get("@#{o}") : o}
       errors = objects.compact.map {|o| o.errors.messages.values()}.flatten
