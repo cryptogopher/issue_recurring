@@ -93,7 +93,7 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     recurrence = nil
 
     if attributes.empty?
-      attributes = random_recurrence unless block_given?
+      attributes = random_recurrence(issue) unless block_given?
     else
       attributes[:anchor_mode] ||= :first_issue_fixed
       attributes[:mode] ||= :weekly
@@ -129,7 +129,7 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     t_base = 'issues.recurrences.form'
 
     if attributes.empty? && !block_given?
-      attributes = random_recurrence
+      attributes = random_recurrence(recurrence.issue)
     end
 
     visit issue_path(recurrence.issue)

@@ -33,18 +33,27 @@ module IssueRecurringTestCase
   end
 
   def random_dates
-    dates = {start_date: random_date}
-    dates.update(due_date: dates[:start_date] + random_datespan)
+    base_date = random_date
+    [
+      {start_date: nil, due_date: nil},
+      {start_date: base_date, due_date: nil},
+      {start_date: nil, due_date: base_date},
+      {start_date: base_date, due_date: base_date + random_datespan}
+    ].sample
   end
 
-  def random_recurrence
+  def random_recurrence(issue)
     r = {
       creation_mode: IssueRecurrence.creation_modes.keys.sample.to_sym,
       include_subtasks: [true, false].sample,
       multiplier: rand([1..4, 5..100, 101..1000].sample),
       mode: IssueRecurrence.modes.keys.sample.to_sym,
-      anchor_to_start: [true, false].sample
     }
+
+    anchor_to_start = []
+    anchor_to_start << false unless (issue.start_date.present? && issue.due_date.blank?)
+    anchor_to_start << true unless (issue.start_date.blank? && issue.due_date.present?)
+    r[:anchor_to_start] = anchor_to_start.sample
 
     disallowed = (r[:creation_mode] == :reopen) ? [:first_issue_fixed, :last_issue_fixed] : []
     r[:anchor_mode] = (IssueRecurrence.anchor_modes.keys.map(&:to_sym) - disallowed).sample
