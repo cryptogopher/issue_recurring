@@ -41,6 +41,8 @@ bg:
                 създадена за задача без крайна дата'
             date_limit:
               not_in_future: 'Крайната дата на цикличност трябва да бъде в бъдещето'
+              not_after_anchor_date: 'user provided limit date has to be later than the
+                fixed date the recurrence is based on'
   issue_recurrences_menu_caption: 'Цикличност'
   warning_renew: "*Warning!* Can't renew recurrence referring to issue #%{id}: %{errors}."
   # changed from: "<b>Внимание</b>: не е възможно да се поднови цикличност #%{id}: %{errors}."

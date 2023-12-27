@@ -149,6 +149,15 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
   end
 
+  def test_create_date_limit_before_anchor_date_should_fail
+    @issue1.update!(random_dates)
+    anchor_date = random_date
+    errors = create_recurrence_should_fail(anchor_mode: :date_fixed_after_close,
+                                           anchor_date: anchor_date,
+                                           date_limit: anchor_date)
+    assert errors.added?(:date_limit, :not_after_anchor_date)
+  end
+
   # TODO: should be based on random sample pairs [creation_mode, anchor_mode]
   # of random length
   def test_create_multiple_recurrences

@@ -110,6 +110,9 @@ class IssueRecurrence < ActiveRecord::Base
   validates :delay_multiplier, numericality: {greater_than_or_equal_to: 0, only_integer: true}
   validates :include_subtasks, inclusion: [true, false]
   validates :date_limit, absence: {if: -> { count_limit.present? } }
+  validate if: -> { date_limit.present? && date_fixed_after_close? } do
+    errors.add(:date_limit, :not_after_anchor_date) unless anchor_date < date_limit
+  end
   validate on: :create, if: -> { date_limit.present? } do
     errors.add(:date_limit, :not_in_future) unless Date.current < date_limit
   end

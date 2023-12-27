@@ -30,6 +30,8 @@ en:
                 issue without due date'
             date_limit:
               not_in_future: 'user provided recurrence limit date has to be in future'
+              not_after_anchor_date: 'user provided limit date has to be later than the
+                fixed date the recurrence is based on'
   issue_recurrences_menu_caption: 'Issue recurrences'
   warning_renew: "*Warning!* Can't renew recurrence referring to issue #%{id}: %{errors}."
   warning_keep_assignee: "*Warning!* Can't assign newly recurred issue #%{id} to @%{login}.

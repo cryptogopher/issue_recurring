@@ -69,6 +69,17 @@
   }
   $('#recurrence-form').on('click', '#recurrence_anchor_mode', anchorModeChange);
 
+  function anchorDateChange() {
+    var date_limit = new Date($('#recurrence_anchor_date').val());
+    date_limit.setDate(date_limit.getDate() + 1);
+    var date_limit_string = date_limit.toISOString().split("T")[0];
+    $('#recurrence_date_limit').prop('min', date_limit_string);
+    if ( new Date($('#recurrence_date_limit').val()) < date_limit ) {
+      $('#recurrence_date_limit').val(date_limit_string);
+    }
+  }
+  $('#recurrence-form').on('change', '#recurrence_anchor_date', anchorDateChange);
+
   function limitModeChange() {
     if ( $('#recurrence_limit_mode option:selected').val() == 'forever' ) {
       $('[id$=_limit]').prop('disabled', true).fadeOut(250);
