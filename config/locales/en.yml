@@ -162,7 +162,7 @@ en:
           months: 'month'
         until: 'and repeat until'
         limit_modes:
-          forever: '<b>forever</b>'
+          no_limit: '<b>forever</b>'
           date_limit: '<b>fixed date (inclusive):</b>'
           count_limit: '<b>number of recurrences</b> reaches:'
         recurrence: 'recurrence'

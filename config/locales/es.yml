@@ -173,7 +173,7 @@ es:
           months: 'mes'
         until: 'y repetir hasta'
         limit_modes:
-          forever: '<b>siempre</b>'
+          no_limit: '<b>siempre</b>'
           date_limit: '<b>fecha fija (incluída):</b>'
           count_limit: '<b>número de recurrencias</b> alcance:'
         recurrence: 'recurrencia'

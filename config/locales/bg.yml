@@ -178,7 +178,7 @@ bg:
           months: 'месец'
         until: 'и повтаряне до'
         limit_modes:
-          forever: '<b>завинаги</b>'
+          no_limit: '<b>завинаги</b>'
           date_limit: '<b>фиксирана дата (включително):</b>'
           count_limit: '<b>броят на повторенията</b> достигне:'
         recurrence: 'повторение'

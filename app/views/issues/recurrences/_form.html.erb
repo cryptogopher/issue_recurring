@@ -10,21 +10,34 @@
     <%= t '.issue' -%>
     <%= f.select :include_subtasks, include_subtasks_options -%>
     <%= t '.every' -%>
-    <%= f.number_field :multiplier, min: 1, step: 1, value: 1, size: 3 -%>
+    <%= f.number_field :multiplier, size: 3, min: 1, step: 1 -%>
     <%= f.select :mode, mode_options -%>
     <%= t '.based_on' -%>
     <%= f.select :anchor_to_start, anchor_to_start_options,
       disabled: anchor_to_start_disabled -%>
     <%= f.select :anchor_mode, anchor_mode_options -%>
-    <%= f.date_field :anchor_date, value: Date.current -%>
+
+    <%# All unused fields need to be unset on update. Hidden fields ensure
+      that these optional values will be sent correctly as either nil or 0. %>
+    <%# Fields that don't have model-defined default value, will have some
+      value assigned for convenience. %>
+    <%= f.hidden_field :anchor_date, value: '', id: nil -%>
+    <%= f.date_field :anchor_date, value: f.object.anchor_date || Date.current -%>
+
     <span id='recurrence_delay'><%= t '.delayed_by' -%></span>
-    <%= f.number_field :delay_multiplier, min: 0, step: 1, value: 0, size: 3 -%>
+    <%= f.hidden_field :delay_multiplier, value: 0, id: nil -%>
+    <%= f.number_field :delay_multiplier, size: 3, min: 0, step: 1 -%>
     <%= f.select :delay_mode, delay_mode_options -%>
+
     <%= t '.until' -%>
-    <%= select_tag :recurrence_limit_mode, options_for_select(limit_mode_options) -%>
-    <%= f.date_field :date_limit, disabled: true, min: Date.current,
-      value: Date.current.next_month -%>
-    <%= f.number_field :count_limit, disabled: true, min: 1, step: 1, value: 1, size: 3 -%>
+    <%= f.select :limit_mode, limit_mode_options -%>
+    <%= f.hidden_field :date_limit, value: '', id: nil -%>
+    <%= f.date_field :date_limit, disabled: true,
+      min: (f.object.anchor_date || Date.current) + 1.day,
+      value: f.object.date_limit || Date.current.next_month -%>
+    <%= f.hidden_field :count_limit, value: '', id: nil -%>
+    <%= f.number_field :count_limit, disabled: true, size: 3, min: 1, step: 1,
+      value: f.object.count_limit || 1 -%>
     <%= '.' -%>
   </p>
 
@@ -81,7 +94,7 @@
   $('#recurrence-form').on('change', '#recurrence_anchor_date', anchorDateChange);
 
   function limitModeChange() {
-    if ( $('#recurrence_limit_mode option:selected').val() == 'forever' ) {
+    if ( $('#recurrence_limit_mode option:selected').val() == 'no_limit' ) {
       $('[id$=_limit]').prop('disabled', true).fadeOut(250);
     }
     if ( $('#recurrence_limit_mode option:selected').val() == 'date_limit' ) {

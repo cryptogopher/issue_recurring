@@ -200,6 +200,17 @@ class IssueRecurrence < ActiveRecord::Base
       "#{count_limit_info}".html_safe
   end
 
+  def limit_mode
+    return case
+      when self.date_limit.present?
+        :date_limit
+      when self.count_limit.present?
+        :count_limit
+      else
+        :no_limit
+      end
+  end
+
   def initialize_dup(other)
     self.last_issue = nil
     self.count = 0
