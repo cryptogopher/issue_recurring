@@ -573,18 +573,16 @@ class IssueRecurrence < ActiveRecord::Base
       end
       yield(ref_dates) unless new_dates.nil? || (predict && ref_issue.closed?)
     when :date_fixed_after_close
-      adj = 0
       closed_date = predict ? Date.current : ref_issue.closed_on.to_date
       barrier_date = [
         closed_date,
         ref_issue.start_date || ref_issue.due_date || ref_dates[:start] || ref_dates[:due]
       ].max
-      new_dates = self.advance(-1, **ref_dates)
-      while (new_dates[:start] || new_dates[:due]) <= barrier_date
+      adj = -1
+      begin
         new_dates = self.advance(adj, **ref_dates)
-        break if new_dates.nil?
         adj += 1
-      end
+      end until new_dates.nil? || ((new_dates[:start] || new_dates[:due]) > barrier_date)
       yield(new_dates) unless new_dates.nil? || (predict && ref_issue.closed?)
     end
   end
