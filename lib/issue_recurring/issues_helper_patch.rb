@@ -52,8 +52,9 @@ module IssueRecurring
 
     def anchor_to_start_disabled
       disabled = []
-      disabled << :true if @issue.start_date.blank? && @issue.due_date.present?
-      disabled << :false if @issue.start_date.present? && @issue.due_date.blank?
+      disabled << true if @issue.start_date.blank? && @issue.due_date.present?
+      disabled << false if @issue.start_date.present? && @issue.due_date.blank?
+      disabled
     end
 
     def delay_mode_options
