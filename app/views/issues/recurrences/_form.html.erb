@@ -21,6 +21,7 @@
       that these optional values will be sent correctly as either nil or 0. %>
     <%# Fields that don't have model-defined default value, will have some
       value assigned for convenience. %>
+    <%# TODO: set INPUT 'display' properly to avoid form flickering on load %>
     <%= f.hidden_field :anchor_date, value: '', id: nil -%>
     <%= f.date_field :anchor_date, value: f.object.anchor_date || Date.current -%>
 
@@ -71,14 +72,14 @@
 
   function anchorModeChange() {
     if ( $('#recurrence_anchor_mode option:selected').val().includes('_flexible') ) {
-      $('[id^=recurrence_delay]').prop('disabled', true).fadeOut(250);
+      $('[id^=recurrence_delay]').prop('disabled', true).hide();
     } else {
-      $('[id^=recurrence_delay]').prop('disabled', false).fadeIn(250);
+      $('[id^=recurrence_delay]').prop('disabled', false).show();
     }
     if ( $('#recurrence_anchor_mode option:selected').val() == 'date_fixed_after_close' ) {
-      $('#recurrence_anchor_date').prop('disabled', false).fadeIn(250);
+      $('#recurrence_anchor_date').prop('disabled', false).show();
     } else {
-      $('#recurrence_anchor_date').prop('disabled', true).fadeOut(250);
+      $('#recurrence_anchor_date').prop('disabled', true).hide();
     }
   }
   $('#recurrence-form').on('click', '#recurrence_anchor_mode', anchorModeChange);
@@ -96,15 +97,15 @@
 
   function limitModeChange() {
     if ( $('#recurrence_limit_mode option:selected').val() == 'no_limit' ) {
-      $('[id$=_limit]').prop('disabled', true).fadeOut(250);
+      $('[id$=_limit]').prop('disabled', true).hide();
     }
     if ( $('#recurrence_limit_mode option:selected').val() == 'date_limit' ) {
       $('[id$=_count_limit]').prop('disabled', true).hide();
-      $('[id$=_date_limit]').prop('disabled', false).fadeIn(250);
+      $('[id$=_date_limit]').prop('disabled', false).show();
     }
     if ( $('#recurrence_limit_mode option:selected').val() == 'count_limit' ) {
       $('[id$=_date_limit]').prop('disabled', true).hide();
-      $('[id$=_count_limit]').prop('disabled', false).fadeIn(250);
+      $('[id$=_count_limit]').prop('disabled', false).show();
     }
   }
   $('#recurrence-form').on('click', '#recurrence_limit_mode', limitModeChange);
