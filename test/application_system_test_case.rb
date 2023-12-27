@@ -59,7 +59,8 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     field = first(:field)
     begin
       id = field[:id].delete_prefix('recurrence_').to_sym
-      if key = (attributes[id] || helper_attrs[id])
+      key = helper_attrs[id] || attributes[id]
+      unless key.nil?
         if field.tag_name == 'select'
           helper_method = "#{id}_options".to_sym
           value = send(helper_method).to_h.invert[key]
@@ -81,7 +82,9 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
       min = i[:min].to_i || 0
       i.fill_in with: rand([min..min, (min+1)..5, 6..1000].sample)
     end
-    all('input[type=date]', visible: :all).each { |i| i.fill_in with: random_future_date }
+    all('input[type=date]', visible: :all).each do |i|
+      i.fill_in with: i[:min].present? ? i[:min].to_date + random_datespan : random_date
+    end
   end
 
   # Create recurrence by filling out the form with:

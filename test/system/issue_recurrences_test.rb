@@ -53,11 +53,11 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     update_recurrence r
 
     # Verify that every update that can be entered into form is valid
-    update_recurrence r { fill_in_randomly }
+    update_recurrence(r) { fill_in_randomly }
 
     # Verify that update with no change yields the same recurrence
     assert_no_changes 'r.reload.attributes' do
-      update_recurrence r { }
+      update_recurrence(r) { }
     end
   end
 
