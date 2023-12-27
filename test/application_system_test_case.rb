@@ -77,12 +77,15 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
   end
 
   def fill_in_randomly
-    all('select', visible: :all).each { |s| s.all('option').sample&.select_option }
+    # SELECT visibility may change due to selection of specific OPTIONS
+    all('select', visible: :all).filter(&:visible?).each do |s|
+      s.all('option').sample&.select_option
+    end
     all('input[type=number]').each do |i|
       min = i[:min].to_i || 0
       i.fill_in with: rand([min..min, (min+1)..5, 6..1000].sample)
     end
-    all('input[type=date]', visible: :all).each do |i|
+    all('input[type=date]').each do |i|
       i.fill_in with: i[:min].present? ? i[:min].to_date + random_datespan : random_date
     end
   end

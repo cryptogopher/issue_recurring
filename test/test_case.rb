@@ -70,9 +70,9 @@ module IssueRecurringTestCase
 
     conditions[:anchor_to_start] =
       case conditions
-      in start_date: Date, due_date: nil
+      in start_date: ::Date, due_date: nil
         true
-      in start_date: nil, due_date: Date
+      in start_date: nil, due_date: ::Date
         false
       else
         [true, false].sample
@@ -83,7 +83,7 @@ module IssueRecurringTestCase
       in start_date: nil, due_date: nil
         [:last_issue_flexible, :last_issue_flexible_on_delay, :date_fixed_after_close].sample
       in creation_mode: :copy_first | :copy_last
-        IssueRecurence.anchor_modes.keys.sample.to_sym
+        IssueRecurrence.anchor_modes.keys.sample.to_sym
       in creation_mode: :reopen
         [:last_issue_flexible, :last_issue_flexible_on_delay,
          :last_issue_fixed_after_close, :date_fixed_after_close].sample

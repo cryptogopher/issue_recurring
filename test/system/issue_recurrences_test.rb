@@ -34,11 +34,15 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     super
   end
 
-  def test_create_recurrence
+  def test_create_recurrence_from_randomized_params
     @issue1.update!(random_dates)
 
     # Verify that every valid random recurrence can be entered into form
     create_recurrence
+  end
+
+  def test_create_recurrence_from_randomized_form
+    @issue1.update!(random_dates)
 
     # Verify that every recurrence that can be entered into form is valid.
     # Implicitly tests form fields hiding depending on recurrence setting selection.
