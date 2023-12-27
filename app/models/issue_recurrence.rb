@@ -217,8 +217,12 @@ class IssueRecurrence < ActiveRecord::Base
     super
   end
 
+  # TODO: make methods private as appropriate
+
   # Advance 'dates' according to recurrence mode and adjustment (+/- # of periods).
   # Return advanced 'dates' or nil if recurrence limit reached.
+  # TODO: change internals so that adj == -1 is never used and [adj -1 -> adj 0].
+  # Current choice is not intuitive.
   def advance(adj=0, **dates)
     adj_count = self.count + adj
     adj_count = [self.count, adj_count].min if self.date_fixed_after_close?

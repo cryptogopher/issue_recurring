@@ -274,6 +274,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   end
 
   def test_show_issue_shows_next_and_predicted_dates
+    # issue dates, recurrence params, check date, {close?: recurrence dates}
     configs = [
       # fixed with single 'next'
       {start_date: Date.new(2019,8,6), due_date: Date.new(2019,8,7)},
