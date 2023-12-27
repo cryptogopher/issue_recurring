@@ -42,39 +42,73 @@ module IssueRecurringTestCase
     ].sample
   end
 
+  # TODO: add auxiliary information regarding what conditions can be changed and
+  # in what way to obtain invalid recurrence - then test if UI disallows such
+  # settings
+  # TODO: allow passing some conditions which then will be 'pinned' (not
+  # randomized)
   def random_recurrence(issue)
-    r = {
-      creation_mode: IssueRecurrence.creation_modes.keys.sample.to_sym,
-      include_subtasks: [true, false].sample,
-      multiplier: rand([1..4, 5..100, 101..1000].sample),
-      mode: IssueRecurrence.modes.keys.sample.to_sym,
+    conditions = {
+      start_date: issue.start_date,
+      due_date: issue.due_date,
+      dates_derived: issue.dates_derived?,
+      creation_mode: IssueRecurrence.creation_modes.keys.sample.to_sym
     }
 
-    anchor_to_start = []
-    anchor_to_start << false unless (issue.start_date.present? && issue.due_date.blank?)
-    anchor_to_start << true unless (issue.start_date.blank? && issue.due_date.present?)
-    r[:anchor_to_start] = anchor_to_start.sample
+    conditions[:include_subtasks] =
+      case conditions
+      in creation_mode: :reopen, dates_derived: true
+        true
+      else
+        [true, false].sample
+      end
 
-    disallowed = (r[:creation_mode] == :reopen) ? [:first_issue_fixed, :last_issue_fixed] : []
-    r[:anchor_mode] = (IssueRecurrence.anchor_modes.keys.map(&:to_sym) - disallowed).sample
+    conditions.merge(
+      multiplier: rand([1..4, 5..100, 101..1000].sample),
+      mode: IssueRecurrence.modes.keys.sample.to_sym
+    )
 
-    r[:anchor_date] = random_date if r[:anchor_mode] == :date_fixed_after_close
+    conditions[:anchor_to_start] =
+      case conditions
+      in start_date: Date, due_date: nil
+        true
+      in start_date: nil, due_date: Date
+        false
+      else
+        [true, false].sample
+      end
 
-    unless IssueRecurrence::FLEXIBLE_ANCHORS.map(&:to_sym).include? r[:anchor_mode]
-      r[:delay_multiplier] = rand([0..0, 1..366].sample)
-      r[:delay_mode] = IssueRecurrence.delay_modes.keys.sample.to_sym
+    conditions[:anchor_mode] =
+      case conditions
+      in start_date: nil, due_date: nil
+        [:last_issue_flexible, :last_issue_flexible_on_delay, :date_fixed_after_close].sample
+      in creation_mode: :copy_first | :copy_last
+        IssueRecurence.anchor_modes.keys.sample.to_sym
+      in creation_mode: :reopen
+        [:last_issue_flexible, :last_issue_flexible_on_delay,
+         :last_issue_fixed_after_close, :date_fixed_after_close].sample
+      end
+
+    if conditions[:anchor_mode] == :date_fixed_after_close
+      conditions[:anchor_date] = random_date
+    end
+
+    if [:last_issue_flexible, :last_issue_flexible_on_delay].exclude? conditions[:anchor_mode]
+      conditions[:delay_multiplier] = rand([0..0, 1..366].sample)
+      conditions[:delay_mode] = IssueRecurrence.delay_modes.keys.sample.to_sym
     end
 
     case rand(1..4)
     when 1
-      r[:date_limit] = Date.current + rand([1..31, 32..3650].sample).days
+      conditions[:date_limit] = (conditions[:anchor_date] || Date.current) +
+        rand([1..31, 32..3650].sample).days
     when 2
-      r[:count_limit] = rand([0..12, 13..1000].sample)
+      conditions[:count_limit] = rand([0..12, 13..1000].sample)
     else
       # 50% times do not set the limit
     end
 
-    r
+    conditions.except(:start_date, :due_date, :dates_derived)
   end
 
   class Date < ::Date
