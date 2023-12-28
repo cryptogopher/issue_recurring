@@ -109,6 +109,19 @@ The most notable features of this plugin include:
 
 8. Have fun!
 
+## Troubleshooting
+
+Problems often arise when there are multiple plugins installed. If you notice issues, please follow steps:
+
+1. Uninstall all plugins except issue_recurring. Check if problem persist. If yes, go to step 3. 
+
+2. Install & remove other plugins one by one, each time trying to reproduce the issue. There can be more than 1 plugin causing issues, so it's best to test one by one to identify all of them. Once you'll find plugin(s) responsible for problems, go to step 3.
+
+3. [Fill bug report](https://it.michalczyk.pro/projects/issue-recurring/issues) sharing your discoveries. You may want to additionally attach:
+   * Redmine log file (_log/production.log_), with log level set to :debug if possible,
+   * Redmine Info page contents (http(s)://your.redmine.com/admin/info, you need to be logged in as Administrator),
+   * command line output - if problem occurs during cron job.
+
 ## Upgrade
 
 1. Read [Changelog](https://github.com/cryptogopher/issue_recurring/blob/master/CHANGELOG.md) to know what to expect from upgrade. Sometimes upgrade may require additional steps to be taken. Exact information will be given there.
