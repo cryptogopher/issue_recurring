@@ -17,7 +17,7 @@ This plugin has been inspired and based on [nutso's](https://github.com/nutso/) 
 Greatest emphasis in development is put on reliability. Scheduling algorithms are tested for accuracy. Unusual situations are reported to user in a visible manner during use. Avoiding regressions and eliminating bugs is valued over new functionalities.
 
 The most notable features of this plugin include:
-* recurrence creation/deletion directly from form on issue page (no separate page, no page reloading when creating/deleting recurrences),
+* recurrence creation/edition/deletion directly from form on issue page (no page reloading),
 * multiple recurrence schedules per issue possible (except for reopening recurrence calculated from close date, where only 1 schedule is possible),
 * specification of recurrence frequency by means of:
   * days,
@@ -133,7 +133,6 @@ Problems often arise when there are multiple plugins installed. If you notice is
    tar czvf /backup/issue_recurring-$(date +%Y%m%d).tar.gz -C plugins/issue_recurring/ .
    mysqldump --host <DB hostname> --user <DB username> -p <DB name> > /backup/issue_recurring-$(date +%Y%m%d).sql
    # start Redmine instance before continuing
-   
    ```
    
 3. Using redmine user update plugin code to desired version (version number is at the end of ```git checkout``` command) , check gem requirements and migrate database:
