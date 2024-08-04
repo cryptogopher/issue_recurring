@@ -3,17 +3,17 @@
 ## 1.7 [2022-10-21]
 
 New features:
-* Redmine versions supported: 4.2 and 5.0 (#28, #34)
+* Redmine versions supported: 4.2 and 5.0 ([#28](https://it.michalczyk.pro/issues/28), [#34](https://it.michalczyk.pro/issues/34))
 * obsolete Redmine versions: 3.4, 4.0
 * more than one future recurrence for fixed schedules can be created by setting
-  renew ahead period (#27)
-* Bulgarian translation, thanks to @jwalkerbg
+  renew ahead period ([#27](https://it.michalczyk.pro/issues/27))
+* Bulgarian translation, thanks to [jwalkerbg](https://github.com/jwalkerbg)
 
 Improvements:
 * when previous assignee is no longer assignable (e.g. due to account being
   blocked or any other reason recognized by Redmine) and ```keep_assignee``` setting
   is used, default Redmine assignment applies and warning is recorded in
-  issue's note (#26)
+  issue's note ([#26](https://it.michalczyk.pro/issues/26))
 * when author of new recurrence is given in settings and user does not exist
   (e.g. he because was deleted in the meantime), author is set to that of
   reference issue and warning is recorded in issue's note
@@ -23,13 +23,13 @@ Improvements:
 Fixes:
 * formatting of warning messages in journal
 * migrations no longer depend on model, which caused some of them to
-  fail on upgrade (#35)
+  fail on upgrade ([#35](https://it.michalczyk.pro/issues/35))
 
 ## 1.6 [2020-04-11]
 
 * upgraded wording of anchor modes in recurrence form
-* added new value for option specifying whether to add journal for new recurrence; now journal can not only be enabled/diabled, but also enabled selectively for _in-place_ recurrences; if you use this option, you can eliminate email notifications on (less important) journal updates on reference issues with _copy_ recurrences, while still getting notifications on: a) new issues created from _copy_ recurrences and b) journal updates on issues with _in-place_ recurrences (#24)
-* issue recurrence schemes are now copied along with issue, regardless of whether you copy individual issues or projects; this behavior can be controlled by plugin setting (#21); if recurrence copy fails on project copy (e.g. because issue recurring module is not enabled for project) it is silently ignored; if recurrence copy fails on issue (e.g. because required issue date has been removed) - issue copy is aborted and error reported
+* added new value for option specifying whether to add journal for new recurrence; now journal can not only be enabled/diabled, but also enabled selectively for _in-place_ recurrences; if you use this option, you can eliminate email notifications on (less important) journal updates on reference issues with _copy_ recurrences, while still getting notifications on: a) new issues created from _copy_ recurrences and b) journal updates on issues with _in-place_ recurrences ([#24](https://it.michalczyk.pro/issues/24))
+* issue recurrence schemes are now copied along with issue, regardless of whether you copy individual issues or projects; this behavior can be controlled by plugin setting ([#21](https://it.michalczyk.pro/issues/21)); if recurrence copy fails on project copy (e.g. because issue recurring module is not enabled for project) it is silently ignored; if recurrence copy fails on issue (e.g. because required issue date has been removed) - issue copy is aborted and error reported
 
 ## 1.5 [2019-11-29]
 
@@ -38,7 +38,7 @@ Fixes:
 
 ## 1.4 [2019-08-19]
 
-* added Spanish translation, thanks to [lupa18](https://github.com/lupa18/)!
+* added Spanish translation, thanks to [lupa18](https://github.com/lupa18/)
 * introduced order independent recurrence scheduling when there is more than 1 recurrence schedule assigned to issue; this is rare configuration and situations where order does really matter are even more rare (e.g. when there is non-inplace and inplace schedule or when there are multiple inplace schedules)
 * fixed display of _Next_ recurrence dates; _Next_ dates show what recurrences will be created if the renewal process is executed _now_
 * added display of _Predicted_ recurrence dates; _Predicted_ dates show what recurrences will be created in future given that no issue dates will change and assuming that non-closed issues will be closed today; this is to give you overview how your schedule(s) work(s) and in future may be extended to show more than 1 future date at a time
