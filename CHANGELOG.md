@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.8 [coming soon]
+
+New features:
+* recurrence editing ([#11](https://it.michalczyk.pro/issues/11))
+* successful operations on issue page confirmed by flash messages
+* enabled _copy_ recurrences based on fixed date (previously only _reopen_ was allowed) ([#36](https://it.michalczyk.pro/issues/36))
+
+Improvements:
+* migration and system tests ([#16](https://it.michalczyk.pro/issues/16))
+* reworded 'in-place' to 'reopen' for better understanding
+
+Fixes:
+* email notifications not delivered after recurrence renewal by cron task ([#42](https://it.michalczyk.pro/issues/42))
+* handling of recurrences based on fixed date when limit is set could generate errors ([#48](https://it.michalczyk.pro/issues/48))
+
 ## 1.7 [2022-10-21]
 
 New features:
