@@ -1,24 +1,25 @@
 # README
 
-Plugin for Redmine to schedule Redmine issue recurrence according to a schedule (see __Features__ below for possible scheduling options). Plugin creates new issue or reopens existing issue for each new recurrence. Because some boring things have to be done on-time after all.
+Plugin to schedule Redmine issue recurrence (see __Features__ below for possible scheduling options). Plugin creates new issue or reopens existing issue for each recurrence.
 
 [Changelog](https://github.com/cryptogopher/issue_recurring/blob/master/CHANGELOG.md)
 
 [Issue tracker](https://it.michalczyk.pro/projects/issue-recurring/issues) (you can register and login there with your __Github account__).
 
-[Screenshots](https://it.michalczyk.pro/projects/issue-recurring/wiki/Screenshots)
-
-## Motivation
-
-This plugin has been inspired and based on [nutso's](https://github.com/nutso/) plugin [redmine-plugin-recurring-tasks](https://github.com/nutso/redmine-plugin-recurring-tasks). Thank you __nutso__! The code though was rewritten from scratch. It was due to amount of changes would make it impossible to fit into original codebase.
+[Screenshots](https://it.michalczyk.pro/projects/issue-recurring/wiki/Screenshots) (outdated)
 
 ## Features
 
 Greatest emphasis in development is put on reliability. Scheduling algorithms are tested for accuracy. Unusual situations are reported to user in a visible manner during use. Avoiding regressions and eliminating bugs is valued over new functionalities.
 
 The most notable features of this plugin include:
-* recurrence creation/edition/deletion directly from form on issue page (no page reloading),
-* multiple recurrence schedules per issue possible (except for reopening recurrence calculated from close date, where only 1 schedule is possible),
+* seamless integration with Redmine regarding look and workflow,
+* recurrence schedule creation/edition/deletion directly from form on issue page (no page reloading),
+* multiple recurrence schedules per issue possible (except for _reopen_ recurrence based on close date, where only 1 schedule is possible),
+* creation of next recurrence by means of:
+  * copying first issue,
+  * copying last recurrence of issue,
+  * without copying, by reopening issue
 * specification of recurrence frequency by means of:
   * days,
   * working days (according to non-working week days specified in Redmine settings),
@@ -27,31 +28,26 @@ The most notable features of this plugin include:
   * months with dates keeping the same day of week from the beginning or to the end of the month (e.g. 2nd Tuesday of month or 1st to last Friday of month),
   * months with dates keeping the same working day (according to non-working week days specified in Redmine settings) from the beginning or to the end of the month (e.g. 2nd working day of month or 1st to last working day of month),
   * years,
-* creation of next issue recurrence by means of:
-  * copying first issue,
-  * copying last recurrence of issue,
-  * without copying, by reopening issue
-* next recurrence scheduling based on:
-  * original issue dates,
-  * last recurrence dates,
+* ability to decide whether start or due date is inferred from base date (the other date is calculated to keep datespan of issue unchanged),
+* setting next recurrence date based on:
+  * original issue date,
+  * last recurrence date,
   * close date of last recurrence,
-  * last recurrence dates if closed on time or close date otherwise,
-  * last recurrence dates but only after it has been closed,
+  * last recurrence date if closed on time or close date otherwise,
+  * last recurrence date but only after it has been closed,
   * fixed date after last recurrence has been closed
-* ability to specify recurrence based on start or due date; for recurrence based on close date: ability to specify which of dates - start or due - is inferred from close date,
-* updating both start and due dates according to schedule (if specified),
-* properly handling issue attributes, including keeping: parent, custom fields, priority and resetting: done ratio, time entries and status,
+* ability to delay recurrence against base date to create multiple recurrences of the same frequency with different time offset (e.g. monthly recurrence on 10th, 20th and 30th day of month),
+* handling recurrence attributes, including keeping _parent_, _custom fields_, _priority_ and resetting _done ratio_, _time entries_ and _status_,
 * ability to recur with or without subtasks,
 * ability to have recurrence schemes copied regardless of whether individual issues or whole projects are copied,
-* ability to delay recurrence against base date to create multiple recurrences of the same frequency with different time offset (e.g. monthly recurrence on 10th, 20th and 30th day of month),
-* ability to limit recurrence by final date or recurrence count,
+* ability to limit recurrence schedule by final date or recurrence count,
 * ability to create recurrences ahead in the future,
 * showing last recurrence and dates of next/predicted recurrences,
-* logging errors as an issue note, when unable to renew issue recurrences (instead of logging into web-inaccessible log file),
-* permissions to view/manage recurrences managed by Redmine roles,
-* per project enabling of issue_recurring plugin,
-* specification of user account under which issue recurrences will be created: any Redmine user (including Anonymous) or last recurrence author,
-* specification of recurrence issue assignment: assignee can be kept unchanged from previous recurrence or set to Redmine's default.
+* logging errors as an issue note if unable to renew recurrence (instead of logging into web-inaccessible log file),
+* permissions to view/manage recurrence schedules managed by Redmine roles,
+* per project enabling of plugin,
+* specification of recurrence author: selected Redmine user (including Anonymous) or author of previous recurrence,
+* specification of recurrence assignment: keep unchanged from previous recurrence or set to Redmine's default.
 
 ## Installation
 
