@@ -13,6 +13,12 @@ module IssueRecurringTestCase
     end
   end
 
+  # TODO: make changes to Issue, so it will renew on next renew_all
+  # def make_renewable(issue)
+  # end
+
+  # TODO: treat count as all created + reopened issues to simplify testing
+  # also: return all reopened and created issues
   def renew_all(count=0)
     assert_difference 'Issue.count', count do
       IssueRecurrence.renew_all(true)

@@ -98,6 +98,7 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     t_base = 'issues.recurrences.form'
     recurrence = nil
 
+    # TODO: replace `attributes` argument with `defaults` and always generate random
     if attributes.empty?
       attributes = random_recurrence(issue) unless block_given?
     else

@@ -16,7 +16,8 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
     assert_nil session[:user_id]
   end
 
-  def create_recurrence(issue=issues(:issue_01), **attributes)
+  # TODO: replace uses of create_recurrence with create_random_recurrence
+  def create_recurrence(issue = issues(:issue_01), **attributes)
     attributes[:anchor_mode] ||= :first_issue_fixed
     attributes[:mode] ||= :weekly
     attributes[:multiplier] ||= 1

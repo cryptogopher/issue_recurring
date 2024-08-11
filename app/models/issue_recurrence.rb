@@ -14,7 +14,7 @@ class IssueRecurrence < ActiveRecord::Base
     first_issue_fixed: 0,
     last_issue_fixed: 1,
     last_issue_flexible: 2,
-    last_issue_flexible_on_delay: 3,
+    last_issue_flexible_on_delay: 3, # TODO: rename to _flexible_if_late ?
     last_issue_fixed_after_close: 4,
     date_fixed_after_close: 5,
   }
