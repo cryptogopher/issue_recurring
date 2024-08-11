@@ -44,6 +44,7 @@ class IssueRecurrence < ActiveRecord::Base
   JOURNAL_MODES = [:never, :always, :on_reopen]
   AHEAD_MODES = [:days, :weeks, :months, :years]
 
+  # Don't check privileges on :renew
   validate on: [:create, :update] do
     errors.add(:issue, :insufficient_privileges) unless editable?
   end
@@ -445,9 +446,11 @@ class IssueRecurrence < ActiveRecord::Base
         end
       end
 
+      # Renewal should happen irrespective of author's (= User.current) privileges.
+      # No user-assignable attribues are/should be changed.
       self.last_issue = new_issue
       self.count += 1
-      self.save!
+      self.save!(context: :renew)
     end
 
     User.current = prev_user

@@ -266,6 +266,26 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_select 'div#issue_recurrences', false
   end
 
+  def test_renew_even_when_issue_author_has_no_permission_granted
+    dates = random_dates
+    @issue1.update!(dates)
+    ir = create_random_recurrence(@issue1, date_limit: nil)
+
+    close_issue(@issue1)
+    travel_to([dates[:due_date] || dates[:start_date], Date.current].max) unless ir.reopen?
+
+    plugin_perms = Redmine::AccessControl.permissions
+      .select{ |p| p.project_module == :issue_recurring }.map(&:name)
+    roles = @issue1.author.members.find_by(project: @issue1.project_id).roles
+    roles.each { |role| role.remove_permission! *plugin_perms }
+    refute roles.any? { |role| plugin_perms.any? { |p| role.has_permission? p } }
+
+    # Make sure at least one renewal took place
+    assert_changes -> { ir.reopen? ? @issue1.reload.closed? : Issue.count } do
+      IssueRecurrence.renew_all(true)
+    end
+  end
+
   def test_show_plugin_settings
     User.find(session[:user_id]).update!(admin: true)
 
