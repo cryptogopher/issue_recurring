@@ -13,9 +13,18 @@ module IssueRecurringTestCase
     end
   end
 
-  # TODO: make changes to Issue, so it will renew on next renew_all
-  # def make_renewable(issue)
-  # end
+  def renew_once(recurrence, &block)
+    issue = recurrence.issue
+    close_issue_tree(issue)
+    travel_to([issue.due_date || issue.start_date, Date.current].max) unless recurrence.reopen?
+
+    yield if block_given?
+
+    # Make sure at least one renewal took place
+    assert_changes -> { recurrence.reopen? ? issue.reload.closed? : Issue.count } do
+      IssueRecurrence.renew_all(true)
+    end
+  end
 
   # TODO: treat count as all created + reopened issues to simplify testing
   # also: return all reopened and created issues

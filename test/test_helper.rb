@@ -146,6 +146,11 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
     assert issue.closed?
   end
 
+  def close_issue_tree(root)
+    root.self_and_descendants.reverse_each { |issue| close_issue(issue) }
+    root.reload
+  end
+
   def destroy_issue(issue)
     project = issue.project
     assert_not issue.reload.destroyed?

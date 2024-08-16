@@ -267,22 +267,15 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   end
 
   def test_renew_even_when_issue_author_has_no_permission_granted
-    dates = random_dates
-    @issue1.update!(dates)
-    ir = create_random_recurrence(@issue1, date_limit: nil)
+    @issue1.update!(random_dates)
+    recurrence = create_random_recurrence(@issue1, date_limit: nil)
 
-    close_issue(@issue1)
-    travel_to([dates[:due_date] || dates[:start_date], Date.current].max) unless ir.reopen?
-
-    plugin_perms = Redmine::AccessControl.permissions
-      .select{ |p| p.project_module == :issue_recurring }.map(&:name)
-    roles = @issue1.author.members.find_by(project: @issue1.project_id).roles
-    roles.each { |role| role.remove_permission! *plugin_perms }
-    refute roles.any? { |role| plugin_perms.any? { |p| role.has_permission? p } }
-
-    # Make sure at least one renewal took place
-    assert_changes -> { ir.reopen? ? @issue1.reload.closed? : Issue.count } do
-      IssueRecurrence.renew_all(true)
+    renew_once(recurrence) do
+      plugin_perms = Redmine::AccessControl.permissions
+        .select{ |p| p.project_module == :issue_recurring }.map(&:name)
+      roles = @issue1.author.members.find_by(project: @issue1.project_id).roles
+      roles.each { |role| role.remove_permission! *plugin_perms }
+      refute roles.any? { |role| plugin_perms.any? { |p| role.has_permission? p } }
     end
   end
 
@@ -3063,7 +3056,30 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_not @issue2.closed?
   end
 
-  def test_deleting_first_issue_destroys_recurrence_and_nullifies_recurrence_of
+  def test_delete_issue_with_recurrence_after_renewal
+    renew_and_delete = lambda do |issue|
+      recurrence = create_random_recurrence(issue, date_limit: nil)
+      puts recurrence.inspect
+      renew_once(recurrence)
+
+      assert_difference -> { IssueRecurrence.count }, -1 do
+        destroy_issue(issue)
+      end
+      assert_raises(ActiveRecord::RecordNotFound) { recurrence.reload }
+    end
+
+    # Single issue
+    @issue3.update!(random_dates)
+    renew_and_delete.call(@issue3)
+
+    # Issue with subtasks
+    @issue2.update!(random_dates)
+    set_parent_issue(@issue1, @issue2)
+    @issue1.reload
+    renew_and_delete.call(@issue1)
+  end
+
+  def test_deleting_issue_with_copy_recurrence_nullifies_recurrence_of
     [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
       @issue1 = Issue.first
       @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
@@ -3071,11 +3087,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       recurrence = create_recurrence(@issue1, anchor_mode: anchor_mode)
       travel_to(Date.new(2018,9,22))
       r1, r2 = renew_all(2)
-
-      assert_difference 'IssueRecurrence.count', -1 do
-        destroy_issue(@issue1)
-      end
-      assert_raises(ActiveRecord::RecordNotFound) { recurrence.reload }
+      destroy_issue(@issue1)
 
       [r1, r2].map(&:reload)
       assert_nil r1.recurrence_of
@@ -3083,7 +3095,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
   end
 
-  def test_deleting_last_issue_sets_previous_or_nullifies_last_issue
+  def test_deleting_last_issue_of_copy_recurrence_sets_previous_or_nullifies_last_issue
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
@@ -3112,7 +3124,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
   end
 
-  def test_deleting_not_first_nor_last_issue_keeps_recurrence_and_reference_of_unchanged
+  def test_deleting_middle_issue_of_copy_recurrence_keeps_last_issue_and_recurrence_of_unchanged
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 
     [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
