@@ -182,3 +182,5 @@ bg:
           date_limit: '<b>фиксирана дата (включително):</b>'
           count_limit: '<b>броят на повторенията</b> достигне:'
         recurrence: 'повторение'
+  label_recurs_in: Recurs in
+  label_recurrence_of: Recurrence of

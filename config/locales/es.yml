@@ -177,3 +177,5 @@ es:
           date_limit: '<b>fecha fija (incluída):</b>'
           count_limit: '<b>número de recurrencias</b> alcance:'
         recurrence: 'recurrencia'
+  label_recurs_in: Recurs in
+  label_recurrence_of: Recurrence of

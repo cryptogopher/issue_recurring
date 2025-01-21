@@ -20,6 +20,7 @@ def load_patches
   ActiveRecord::SchemaDumper.prepend IssueRecurring::SchemaDumperPatch
 
   Issue.include IssueRecurring::IssuePatch
+  IssueRelation.include IssueRecurring::IssueRelationPatch
   # Helper module has to be patched before Controller is loaded. Loading
   # Controller causes Helper module to be loaded and included. Any subsequent
   # inclusions (i.e. change in ancestor chain) in Helper module won't be

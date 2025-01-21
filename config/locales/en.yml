@@ -166,3 +166,5 @@ en:
           date_limit: '<b>fixed date (inclusive):</b>'
           count_limit: '<b>number of recurrences</b> reaches:'
         recurrence: 'recurrence'
+  label_recurs_in: Recurs in
+  label_recurrence_of: Recurrence of
