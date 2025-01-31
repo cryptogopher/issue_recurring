@@ -9,14 +9,6 @@
 
     <p><strong><%= t('.recurrences') %></strong></p>
 
-    <% if @issue.recurrence_of.present? %>
-      <p>
-      <%= "#{t('.this_is_recurrence')} " %>
-      <%= link_to "##{@issue.recurrence_of.id}: #{@issue.recurrence_of.subject}",
-        issue_path(@issue.recurrence_of) %>
-      </p>
-    <% end %>
-
     <div id="recurrences">
       <%= render partial: 'issues/recurrences/index' %>
     </div>

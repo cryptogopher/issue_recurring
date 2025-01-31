@@ -86,10 +86,8 @@ en:
   issues:
     issue_recurrences_hook:
       recurrences: 'Recurrences'
-      this_is_recurrence: 'This is a recurrence of'
     recurrences:
       index:
-        last_recurrence: 'Last:'
         next_recurrence: 'Next:'
         predicted_recurrence: 'Predicted:'
       form:

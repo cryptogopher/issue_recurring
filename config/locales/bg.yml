@@ -101,10 +101,8 @@ bg:
   issues:
     issue_recurrences_hook:
       recurrences: 'Цикличност'
-      this_is_recurrence: 'Това е повторение на'
     recurrences:
       index:
-        last_recurrence: 'Последно:'
         next_recurrence: 'Следващо:'
         predicted_recurrence: 'Предсказано:'
       form:

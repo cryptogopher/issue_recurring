@@ -68,14 +68,8 @@ module IssueRecurring
       t("#{TRANSLATION_ROOT}.limit_modes").map { |k,v| [strip_tags(v), k] }
     end
 
-    def last_recurrence(r, intro=true)
-      s = intro ? "#{t '.last_recurrence'} " : ""
-      if r.last_issue.present?
-        s += "#{link_to("##{r.last_issue.id}", issue_path(r.last_issue))}"
-      else
-        s += "-"
-      end
-      s.html_safe
+    def last_recurrence(r)
+      r.last_issue? ? link_to("##{r.last_issue.id}", issue_path(r.last_issue)) : '-'
     end
 
     def format_dates(dates_list)

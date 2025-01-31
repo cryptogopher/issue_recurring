@@ -4,7 +4,6 @@
       <% if r.visible? %>
         <tr id="recurrence-<%= r.id %>" class="<%= cycle('odd', 'even') %>">
           <td class="description"><%= r.to_s %></td>
-          <td class="description"><%= last_recurrence(r) %></td>
           <td class="description">
             <p id="next"><nobr><%= next_recurrences(@next_dates[r]) %></nobr></p>
             <p id="predicted">
