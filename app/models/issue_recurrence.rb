@@ -401,6 +401,15 @@ class IssueRecurrence < ActiveRecord::Base
       new_issue = self.reopen? ? ref_issue :
         ref_issue.copy(nil, subtasks: self.include_subtasks, skip_recurrences: true)
 
+      if Setting.plugin_issue_recurring[:journal_mode] == :always && !self.reopen?
+        self.issue.init_journal(User.current) if ref_issue != self.issue
+        # Historically journals were not created on new issue, so skip it for now,
+        # also for descendants. Notifications are sent on new issue creation
+        # anyway and adding property changes history for newly created issue is
+        # too bureaucratic.
+        #new_issue.init_journal(User.current)
+      end
+
       new_issue.start_date = dates[:start]
       new_issue.due_date = dates[:due]
       new_issue.parent = ref_issue.parent
@@ -415,6 +424,18 @@ class IssueRecurrence < ActiveRecord::Base
       end
       new_issue.save!
 
+      # IssueRelations serve only informational purpose, can be freely
+      # modified by users and recurrence schemes don't depend on them.
+      # IssueRelation cannot replace Issue <-> IssueRecurrence association as it
+      # stores references to Issues only.
+      unless self.reopen?
+        # TYPE_COPIED_* relation can already exist
+        relation = IssueRelation
+          .find_or_initialize_by(issue_from: self.issue, issue_to: new_issue)
+        relation.relation_type = IssueRelation::TYPE_RECURS_IN
+        relation.save!
+      end
+
       # Errors containing issue ID reported only after #save
       if keep_assignee && !is_assignee_valid
         log(:warning_keep_assignee, id: new_issue.id, login: assignee.login)
@@ -425,24 +446,37 @@ class IssueRecurrence < ActiveRecord::Base
 
       if self.include_subtasks
         target_label = self.anchor_to_start ? :start : :due
-        new_issue.children.each do |child|
-          child_dates = self.offset(dates[target_label], :parent, 
-            {parent: prev_dates[target_label], start: child.start_date, due: child.due_date})
-          child.start_date = child_dates[:start] 
-          child.due_date = child_dates[:due]
-          child.done_ratio = 0
-          child.status = child.tracker.default_status
-          # Do not set child.recurrence_of, see Issue.recurrence_of comment for details
-          assignee = child.assigned_to
-          is_assignee_valid = assignee.blank? || child.assignable_users.include?(assignee)
+        # Reload issue to refresh :lft and :rgt required to query #descendants.
+        # #children didn't require reload, as they are queried with :parent_id.
+        new_issue.reload.descendants.each do |descendant|
+          descendant_dates = self.offset(dates[target_label], :base,
+                                         {base: prev_dates[target_label],
+                                          start: descendant.start_date,
+                                          due: descendant.due_date})
+          descendant.start_date = descendant_dates[:start]
+          descendant.due_date = descendant_dates[:due]
+          descendant.done_ratio = 0
+          descendant.status = descendant.tracker.default_status
+          # Do not set descendant.recurrence_of, see Issue.recurrence_of comment
+          # for details
+          assignee = descendant.assigned_to
+          is_assignee_valid = assignee.blank? ||
+            descendant.assignable_users.include?(assignee)
           unless keep_assignee && is_assignee_valid
-            child.default_reassign
+            descendant.default_reassign
           end
-          child.save!
+
+          descendant.save!
+
+          # Except :reopen because descendant relations are disallowed
+          unless self.reopen?
+            IssueRelation.create!(issue_from: self.issue, issue_to: descendant,
+                                  relation_type: IssueRelation::TYPE_RECURS_IN)
+          end
 
           # Errors containing issue ID reported only after #save
           if keep_assignee && !is_assignee_valid
-            log(:warning_keep_assignee, id: child.id, login: assignee.login)
+            log(:warning_keep_assignee, id: descendant.id, login: assignee.login)
           end
         end
       end

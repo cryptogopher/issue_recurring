@@ -156,7 +156,7 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
   def destroy_issue(issue)
     project = issue.project
     assert_not issue.reload.destroyed?
-    assert_difference 'Issue.count', -1 do
+    assert_difference 'Issue.count', -issue.self_and_descendants.count do
       delete issue_path(issue)
       assert_redirected_to project_issues_path(project)
     end

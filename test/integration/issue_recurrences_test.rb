@@ -1375,24 +1375,26 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
   def test_renew_creation_mode_reopen_if_issue_not_closed_should_not_recur
     anchor_modes = [
-      {anchor_mode: :last_issue_flexible},
-      {anchor_mode: :last_issue_flexible_on_delay},
-      {anchor_mode: :last_issue_fixed_after_close},
-      {anchor_mode: :date_fixed_after_close, anchor_date: Date.new(2018,11,12)},
+      {anchor_mode: :last_issue_flexible},          Date.new(2018,9,20),
+      {anchor_mode: :last_issue_flexible_on_delay}, Date.new(2018,9,22),
+      {anchor_mode: :last_issue_fixed_after_close}, Date.new(2018,9,22),
+      {anchor_mode: :date_fixed_after_close,
+       anchor_date: Date.new(2018,11,1)},           Date.new(2018,10,27)
     ]
 
-    anchor_modes.each do |r_params|
+    anchor_modes.each_slice(2) do |r_params, r_start|
       @issue1.update!(start_date: Date.new(2018,9,15),
                       due_date: Date.new(2018,9,20),
                       closed_on: nil)
       r = create_recurrence(**r_params.update(creation_mode: :reopen))
-      travel_to(Date.new(2018,11,12))
+      travel_to(Date.new(2018,9,18))
 
       assert_equal 0, r.count
       assert !@issue1.closed?
       assert_nil @issue1.closed_on
       renew_all(0)
-      assert 0, r.reload.count
+      assert_equal 0, r.reload.count
+      assert_nil r.last_issue
       assert !@issue1.reload.closed?
 
       # Issue.closed_on set to non-nil value while issue status is not closed should
@@ -1401,17 +1403,20 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       assert !@issue1.closed?
       assert_not_nil @issue1.closed_on
       renew_all(0)
-      assert 0, r.reload.count
+      assert_equal 0, r.reload.count
+      assert_nil r.last_issue
       assert !@issue1.reload.closed?
 
       assert_equal Date.new(2018,9,15), @issue1.start_date
       assert_equal Date.new(2018,9,20), @issue1.due_date
 
-      close_issue(@issue1)
-      assert @issue1.reload.closed?
+      close_issue!(@issue1)
       renew_all(0)
-      assert 1, r.reload.count
+      assert_equal 1, r.reload.count
+      assert_nil r.last_issue
       assert !@issue1.reload.closed?
+      assert_equal r_start, @issue1.start_date
+      assert_equal r_start + 5.days, @issue1.due_date
 
       destroy_recurrence(r)
     end
@@ -2442,60 +2447,6 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
   end
 
-  def test_renew_creation_mode_copy_first
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
-
-    create_recurrence(creation_mode: :copy_first)
-    travel_to(@issue1.start_date)
-    r1 = renew_all(1)
-    travel_to(r1.start_date)
-    r2 = renew_all(1)
-
-    no_rel = IssueRelation.find_by(issue_from: r1, relation_type: 'copied_to')
-    assert_nil no_rel
-    rel = IssueRelation.find_by(issue_to: r2, relation_type: 'copied_to')
-    assert_not_nil rel
-    assert_equal rel.issue_from, @issue1
-  end
-
-  def test_renew_creation_mode_copy_last
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
-
-    create_recurrence(creation_mode: :copy_last)
-    travel_to(@issue1.start_date)
-    r1 = renew_all(1)
-    travel_to(r1.start_date)
-    r2 = renew_all(1)
-
-    rel1 = IssueRelation.find_by(issue_from: @issue1, relation_type: 'copied_to')
-    assert_not_nil rel1
-    assert_equal rel1.issue_to, r1
-    rel2 = IssueRelation.find_by(issue_from: r1, relation_type: 'copied_to')
-    assert_not_nil rel2
-    assert_equal rel2.issue_to, r2
-  end
-
-  def test_renew_creation_mode_reopen
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
-
-    r = create_recurrence(creation_mode: :reopen, anchor_mode: :last_issue_flexible)
-    travel_to(Date.new(2018,9,18))
-    renew_all(0)
-    @issue1.reload
-    assert_equal Date.new(2018,9,15), @issue1.start_date
-    r.reload
-    assert_nil r.last_issue
-
-    close_issue(@issue1)
-    renew_all(0)
-    @issue1.reload
-    assert_equal Date.new(2018,9,20), @issue1.start_date
-    assert_equal Date.new(2018,9,25), @issue1.due_date
-    assert !@issue1.closed?
-    r.reload
-    assert_equal r.last_issue, @issue1
-  end
-
   def test_renew_applies_author_login_configuration_setting
     # NOTE: to be removed when system tests are working with all supported Redmine versions.
     # * corresponding system test: test_settings_author_login
@@ -3110,6 +3061,74 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       else
         assert_nil recurrence.reload.last_issue
       end
+    end
+  end
+
+  def test_renew_creates_issue_relations
+    @issue3.update!(random_dates)
+    set_parent_issue(@issue2, @issue3)
+    set_parent_issue(@issue1, @issue2)
+
+    def relation_count(type)
+      ->{ IssueRelation.where(relation_type: type).count }
+    end
+
+    [:copy_first, :copy_last, :reopen].product([false, true]).shuffle.each do |cm, is|
+      Setting.parent_issue_dates =
+        (cm == :reopen && is == false) ? 'independent' : 'derived'
+      # Sync issue dates according to above setting
+      @issue3.update!(start_date: @issue3[:start_date], due_date: @issue3[:due_date])
+
+      recurrence = create_random_recurrence(@issue1.reload,
+                                            count_limit: nil, date_limit: nil,
+                                            creation_mode: cm,
+                                            include_subtasks: is)
+
+      recurs_in_from = case [cm, is]
+                       in :copy_first, false; [@issue1]
+                       in :copy_first, true; [@issue1, @issue1, @issue1]
+                       in :copy_last, false; [@issue1]
+                       in :copy_last, true; [@issue1, @issue1, @issue1]
+                       else; []; end
+
+      copied_to_from = case [cm, is]
+                       in :copy_first, true; [@issue2, @issue3]
+                       in :copy_last, true; [@issue2, @issue3]
+                       else; []; end
+
+      2.times.each do |n|
+        #[:copy_first, false] => {recurs_in: 1, copied_to: 0},
+        #[:copy_first, true] => {recurs_in: 3, copied_to: 2},
+        #[:copy_last, false] => {recurs_in: 1, copied_to: n},
+        #[:copy_last, true] => {recurs_in: 3, copied_to: n+2},
+        #[:reopen, false] => {recurs_in: 0, copied_to: 0},
+        #[:reopen, true] => {recurs_in: 0, copied_to: 0}
+
+        renewed =
+          assert_difference relation_count('copied_to') => copied_to_from.size,
+                            relation_count('recurs_in') => recurs_in_from.size do
+            renew_once!(recurrence, count: recurrence.include_subtasks ? 3 : 1)
+          end
+
+        recurs_in_from.zip(renewed).each do |f, t|
+          IssueRelation.find_by!(issue_from: f, issue_to: t, relation_type: 'recurs_in')
+        end
+
+        copied_to_to = case [cm, is]
+                       in :copy_first, true; renewed.last(2)
+                       in :copy_last, false; renewed*n
+                       in :copy_last, true; [renewed.first]*n + renewed.last(2)
+                       else; []; end
+        copied_to_from.zip(copied_to_to).each do |f, t|
+          IssueRelation.find_by!(issue_from: f, issue_to: t, relation_type: 'copied_to')
+        end
+        copied_to_from = case [cm, is]
+                         in :copy_first, true; [@issue2, @issue3]
+                         in :copy_last, false; renewed
+                         in :copy_last, true; renewed
+                         else; []; end
+      end
+      destroy_recurrence(recurrence)
     end
   end
 end
