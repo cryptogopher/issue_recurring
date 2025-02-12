@@ -9,7 +9,7 @@ class IssueRecurrencesController < ApplicationController
   helper :issues
 
   def index
-    @recurrences = @project.recurrences.select {|r| r.visible?}
+    @recurrences = @project.issue_recurrences.select {|r| r.visible?}
     @next_dates = IssueRecurrence.recurrences_dates(@recurrences)
     @predicted_dates = IssueRecurrence.recurrences_dates(@recurrences, true)
   end

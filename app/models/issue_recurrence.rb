@@ -617,7 +617,7 @@ class IssueRecurrence < ActiveRecord::Base
     reopen = nil
     result = Hash.new { |h,k| h[k] = [] }
 
-    issue.recurrences.each do |r|
+    issue.issue_recurrences.each do |r|
       r.next_dates(predict) do |dates|
         if r.reopen?
           current_date = dates[:start] || dates[:due]
@@ -651,7 +651,7 @@ class IssueRecurrence < ActiveRecord::Base
 
       # Problems are always logged to master issue, not recurrences (as opposed
       # to normal journal entries, which go to the ref_issues)
-      journal_notes = r.issue.recurrences.map(&:journal_notes).join
+      journal_notes = r.issue.issue_recurrences.map(&:journal_notes).join
       if journal_notes.present?
         prev_user = User.current
         author_login = Setting.plugin_issue_recurring[:author_login]

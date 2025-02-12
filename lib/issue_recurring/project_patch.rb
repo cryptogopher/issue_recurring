@@ -1,8 +1,7 @@
 module IssueRecurring
   module ProjectPatch
     Project.class_eval do
-      has_many :recurrences, class_name: 'IssueRecurrence', dependent: :destroy,
-        through: :issues
+      has_many :issue_recurrences, dependent: :destroy, through: :issues
     end
   end
 end

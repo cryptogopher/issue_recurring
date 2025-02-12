@@ -1050,7 +1050,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       when :post_renew
         issue = issues.first
         assert_nil issue.parent
-        if @issue2.reload.recurrences.first.reopen?
+        if @issue2.reload.issue_recurrences.first.reopen?
           assert_equal [@issue3.reload], issue.children
           assert_equal [], @issue3.children
         else
@@ -1073,7 +1073,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       when :post_renew
         child, parent, grandparent = issues + [@issue1.reload]
         assert_nil grandparent.parent
-        if @issue2.reload.recurrences.first.reopen?
+        if @issue2.reload.issue_recurrences.first.reopen?
           assert_equal [parent], grandparent.children
         else
           assert_equal [@issue2.reload, parent], grandparent.children
@@ -1297,7 +1297,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
         issues.each { |i| assert_not_equal 0, i.done_ratio; assert_not_nil i.done_ratio }
       when :post_renew
         issues.each { |i| assert_equal 0, i.done_ratio }
-        if @issue2.reload.recurrences.first.reopen?
+        if @issue2.reload.issue_recurrences.first.reopen?
           assert_equal 0, @issue1.reload.done_ratio
         else
           # @issue1 has 2 children now: 1 closed and 1 open
@@ -1331,7 +1331,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     tree = {@issue3 => nil}
     process_issue_tree(tree, @issue3) do |stage, issues|
       # Timelog entries are left intact when reopening
-      if stage == :pre_renew || @issue3.recurrences.first.reopen?
+      if stage == :pre_renew || @issue3.issue_recurrences.first.reopen?
         issues.each { |i| assert_operator 0.0, :<, i.spent_hours }
       else
         issues.each { |i| assert_equal 0.0, i.spent_hours }
@@ -1341,7 +1341,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     # Issue with child
     tree = {@issue2 => @issue3, @issue3 => nil}
     process_issue_tree(tree, @issue2) do |stage, issues|
-      if stage == :pre_renew || @issue2.recurrences.first.reopen?
+      if stage == :pre_renew || @issue2.issue_recurrences.first.reopen?
         issues.each { |i| assert_operator 0.0, :<, i.spent_hours }
       else
         issues.each { |i| assert_equal 0.0, i.spent_hours }
@@ -1352,7 +1352,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     Setting.parent_issue_dates = 'independent'
     tree = {@issue2 => @issue3, @issue3 => nil}
     process_issue_tree(tree, @issue2, include_subtasks: false) do |stage, issues|
-      if stage == :pre_renew || @issue2.recurrences.first.reopen?
+      if stage == :pre_renew || @issue2.issue_recurrences.first.reopen?
         issues.each { |i| assert_operator 0.0, :<, i.spent_hours }
       else
         assert_equal 0.0, issues.first.spent_hours
@@ -1364,7 +1364,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     # Issue with child and parent
     tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
     process_issue_tree(tree, @issue2) do |stage, issues|
-      if stage == :pre_renew || @issue2.recurrences.first.reopen?
+      if stage == :pre_renew || @issue2.issue_recurrences.first.reopen?
         issues.each { |i| assert_operator 0.0, :<, i.spent_hours }
       else
         issues.each { |i| assert_equal 0.0, i.spent_hours }
@@ -2408,10 +2408,10 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     ir = create_recurrence(anchor_to_start: false)
 
     issue1_copy = copy_issue(@issue1, @project1)
-    refute_empty issue1_copy.recurrences
+    refute_empty issue1_copy.issue_recurrences
 
     errors = copy_issue_should_fail(@issue1, @project1, due_date: nil)
-    assert errors.added?(:recurrences, :invalid)
+    assert errors.added?(:issue_recurrences, :invalid)
   end
 
   def test_renew_subtasks

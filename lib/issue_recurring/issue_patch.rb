@@ -7,7 +7,7 @@ module IssueRecurring
         self.recurrence_of = nil
 
         if Setting.plugin_issue_recurring[:copy_recurrences]
-          self.recurrences = @copied_from.recurrences.map(&:dup)
+          self.issue_recurrences = @copied_from.issue_recurrences.map(&:dup)
         end
       end
 
@@ -19,7 +19,7 @@ module IssueRecurring
     Issue.class_eval do
       prepend CopyFromWithRecurrences
 
-      has_many :recurrences, class_name: 'IssueRecurrence', dependent: :destroy
+      has_many :issue_recurrences, dependent: :destroy
 
       belongs_to :recurrence_of, class_name: 'Issue', validate: true
       has_many :recurrence_copies, class_name: 'Issue', foreign_key: 'recurrence_of_id',
