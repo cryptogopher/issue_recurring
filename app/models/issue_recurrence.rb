@@ -328,10 +328,11 @@ class IssueRecurrence < ActiveRecord::Base
     dates
   end
 
-  # Offset 'dates' so date with 'label' is equal 'target'.
-  # Return offset 'dates' or nil if 'dates' does not include 'label'.
+  # Return offset `dates`, so date with `target_label` is equal `target_date`.
   def offset(target_date, target_label, dates)
-    nil if dates[target_label].nil?
+    raise ArgumentError, 'dates[target_label] required' if !dates[target_label] &&
+      dates.values.any?
+
     dates.each do |label, date|
       next if (label == target_label) || date.nil?
       if WDAY_MODES.include?(self.mode)
@@ -447,10 +448,14 @@ class IssueRecurrence < ActiveRecord::Base
         # Reload issue to refresh :lft and :rgt required to query #descendants.
         # #children didn't require reload, as they are queried with :parent_id.
         new_issue.reload.descendants.each do |descendant|
-          descendant_dates = self.offset(dates[target_label], :base,
-                                         {base: prev_dates[target_label],
-                                          start: descendant.start_date,
-                                          due: descendant.due_date})
+          descendant_dates = {start: descendant.start_date, due: descendant.due_date}
+          if descendant_dates[:start] || descendant_dates[:due] ||
+              !self.issue.dates_derived?
+            descendant_dates[:supertask] = prev_dates[target_label]
+            self.offset(dates[target_label], :supertask, descendant_dates)
+          else
+            descendant_dates[target_label] = dates[target_label]
+          end
           descendant.start_date = descendant_dates[:start]
           descendant.due_date = descendant_dates[:due]
           descendant.done_ratio = 0

@@ -2447,6 +2447,21 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
   end
 
+  def test_renew_with_descendants_having_nil_dates_and_dates_derived
+    # Subtask of issue with derived_dates? cannot have dates set to nil after renewal
+    @issue3.update!(start_date: nil, due_date: nil)
+    set_parent_issue(@issue2, @issue3)
+    set_parent_issue(@issue1, @issue2)
+    @issue1.reload
+    assert_nil @issue1[:start_date] || @issue1[:due_date]
+
+    recurrence = create_random_recurrence(@issue1, date_limit: nil,
+                                          include_subtasks: true)
+    renew_once!(recurrence)
+    issue = recurrence.last_issue || @issue1.reload
+    assert_not_nil issue[:start_date] || issue[:due_date]
+  end
+
   def test_renew_applies_author_login_configuration_setting
     # NOTE: to be removed when system tests are working with all supported Redmine versions.
     # * corresponding system test: test_settings_author_login
