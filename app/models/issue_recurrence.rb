@@ -46,11 +46,9 @@ class IssueRecurrence < ActiveRecord::Base
   JOURNAL_MODES = [:never, :always, :on_reopen]
   AHEAD_MODES = [:days, :weeks, :months, :years]
 
-  # Don't check privileges on :renew
-  validate on: [:create, :update] do
+  validate do
     errors.add(:issue, :insufficient_privileges) unless editable?
   end
-  validates :count, numericality: {greater_than_or_equal: 0, only_integer: true}
   validates :creation_mode, inclusion: creation_modes.keys
   # Locking inside validator is an app level solution to ensuring partial
   # uniqueness of creation_mode. Partial indexes are currently not
@@ -481,10 +479,9 @@ class IssueRecurrence < ActiveRecord::Base
         end
       end
 
-      # Renewal should happen irrespective of author's (= User.current) privileges.
-      # No user-assignable attribues are/should be changed.
-      self.count += 1
-      self.save!(context: :renew)
+      # All conditions that make renewal impossible should be verified earlier
+      # and appropriate errors logged, no need to validate on save.
+      self.increment!(:count, 1, touch: true)
     end
 
     User.current = prev_user
