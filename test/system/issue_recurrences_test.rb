@@ -203,7 +203,7 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
 
       assert_equal (ir1.last_issue || @issue1).start_date, @issue2.start_date
       travel_to(@issue2.start_date)
-      close_issue(@issue2)
+      close_issue!(@issue2)
       count = config[:journalized].length
       r2 = assert_difference 'Journal.count', count do renew_all(1) end
       [ir1, @issue1, @issue2].map(&:reload)

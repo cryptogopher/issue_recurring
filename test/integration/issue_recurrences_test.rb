@@ -395,7 +395,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
       travel_to(check_date)
       results.each do |close, dates|
-        close_issue(@issue1) if !@issue1.closed? && close
+        close_issue!(@issue1) if !@issue1.closed? && close
         reopen_issue(@issue1) if @issue1.closed? && !close
 
         get issue_path(@issue1)
@@ -755,27 +755,27 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     renew_all(0)
     travel_to(Date.new(2018,10,7))
     # closed after due
-    close_issue(@issue1)
+    close_issue!(@issue1)
     r1 = renew_all(1)
     assert_equal Date.new(2018,10,13), r1.start_date
     assert_equal Date.new(2018,10,17), r1.due_date
     travel_to(Date.new(2018,10,15))
     renew_all(0)
     # closed between start and due
-    close_issue(r1)
+    close_issue!(r1)
     r2 = renew_all(1)
     assert_equal Date.new(2018,10,21), r2.start_date
     assert_equal Date.new(2018,10,25), r2.due_date
     travel_to(Date.new(2018,10,19))
     renew_all(0)
     # closed before start
-    close_issue(r2)
+    close_issue!(r2)
     travel_to(Date.new(2018,10,22))
     r3 = renew_all(1)
     assert_equal Date.new(2018,10,25), r3.start_date
     assert_equal Date.new(2018,10,29), r3.due_date
     travel_to(Date.new(2018,11,18))
-    close_issue(r3)
+    close_issue!(r3)
     travel_to(Date.new(2018,12,31))
     renew_all(1)
     renew_all(0)
@@ -793,27 +793,27 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     renew_all(0)
     travel_to(Date.new(2018,10,7))
     # closed after due
-    close_issue(@issue1)
+    close_issue!(@issue1)
     r1 = renew_all(1)
     assert_equal Date.new(2018,10,13), r1.start_date
     assert_equal Date.new(2018,10,17), r1.due_date
     travel_to(Date.new(2018,10,15))
     renew_all(0)
     # closed between start and due
-    close_issue(r1)
+    close_issue!(r1)
     r2 = renew_all(1)
     assert_equal Date.new(2018,10,23), r2.start_date
     assert_equal Date.new(2018,10,27), r2.due_date
     travel_to(Date.new(2018,10,21))
     renew_all(0)
     # closed before start
-    close_issue(r2)
+    close_issue!(r2)
     travel_to(Date.new(2018,10,25))
     r3 = renew_all(1)
     assert_equal Date.new(2018,11,2), r3.start_date
     assert_equal Date.new(2018,11,6), r3.due_date
     travel_to(Date.new(2018,11,18))
-    close_issue(r3)
+    close_issue!(r3)
     travel_to(Date.new(2018,12,31))
     renew_all(1)
     renew_all(0)
@@ -830,33 +830,33 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     travel_to(Date.new(2019,7,13))
     renew_all(0)
     # closed after due, before recurrence period
-    close_issue(@issue1)
+    close_issue!(@issue1)
     r1 = renew_all(1)
     assert_equal Date.new(2019,7,19), r1.start_date
     assert_equal Date.new(2019,7,24), r1.due_date
     travel_to(Date.new(2019,7,21))
     renew_all(0)
     # closed between start and due
-    close_issue(r1)
+    close_issue!(r1)
     r2 = renew_all(1)
     assert_equal Date.new(2019,8,2), r2.start_date
     assert_equal Date.new(2019,8,7), r2.due_date
     travel_to(Date.new(2019,8,1))
     renew_all(0)
     # closed before start
-    close_issue(r2)
+    close_issue!(r2)
     r3 = renew_all(1)
     assert_equal Date.new(2019,8,16), r3.start_date
     assert_equal Date.new(2019,8,21), r3.due_date
     travel_to(Date.new(2019,9,18))
     # closed after due, after 2 full recurrence periods + few days
-    close_issue(r3)
+    close_issue!(r3)
     r4 = renew_all(1)
     assert_equal Date.new(2019,9,27), r4.start_date
     assert_equal Date.new(2019,10,2), r4.due_date
 
     travel_to(Date.new(2019,11,30))
-    close_issue(r4)
+    close_issue!(r4)
     travel_to(Date.new(2019,12,31))
     renew_all(1)
     renew_all(0)
@@ -885,7 +885,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal Date.new(2019,7,8), @issue1.start_date
     assert_equal Date.new(2019,7,13), @issue1.due_date
     # closed after due, before recurrence period
-    close_issue(@issue1)
+    close_issue!(@issue1)
     renew_all(0)
     @issue1.reload
     assert_equal Date.new(2019,7,19), @issue1.start_date
@@ -897,7 +897,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal Date.new(2019,7,19), @issue1.start_date
     assert_equal Date.new(2019,7,24), @issue1.due_date
     # closed before start
-    close_issue(@issue1)
+    close_issue!(@issue1)
     renew_all(0)
     @issue1.reload
     assert_equal Date.new(2019,8,2), @issue1.start_date
@@ -909,7 +909,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal Date.new(2019,8,2), @issue1.start_date
     assert_equal Date.new(2019,8,7), @issue1.due_date
     # closed before anchor date multiple
-    close_issue(@issue1)
+    close_issue!(@issue1)
     renew_all(0)
     @issue1.reload
     assert_equal Date.new(2019,8,16), @issue1.start_date
@@ -921,7 +921,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal Date.new(2019,8,16), @issue1.start_date
     assert_equal Date.new(2019,8,21), @issue1.due_date
     # closed after due, after 2 full recurrence periods + few days
-    close_issue(@issue1)
+    close_issue!(@issue1)
     renew_all(0)
     @issue1.reload
     assert_equal Date.new(2019,9,27), @issue1.start_date
@@ -1000,7 +1000,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       r_count = params[:include_subtasks] ? subtree_count : 1
 
       # Child issue has to be closed first
-      order[0...subtree_count].each { |i| close_issue(i); assert i.reload.closed? }
+      order[0...subtree_count].each { |i| close_issue!(i); assert i.reload.closed? }
       order[subtree_count..r_count].map(&:reload)
       yield(:pre_renew, order)
       issues = if r.reopen?
@@ -1484,7 +1484,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
           r.reload
           if travel_close
             travel_to(travel_close)
-            close_issue(r.last_issue || @issue1)
+            close_issue!(r.last_issue || @issue1)
           end
           travel_to(travel_renew)
           irs = if r.reopen?
@@ -1781,7 +1781,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       r = create_recurrence(**r_params.update(mode: :monthly_day_from_first))
 
       travel_to(close_date)
-      close_issue(@issue1)
+      close_issue!(@issue1)
       r1 = renew_all(1)
       assert_equal r_dates[:start], r1.start_date
       assert_equal r_dates[:due], r1.due_date
@@ -2021,7 +2021,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       travel_to(Date.new(2019,2,1))
       r = create_recurrence(**r_params)
 
-      close_issue(@issue1) if r_params[:anchor_mode].to_s.include?("_after_close")
+      close_issue!(@issue1) if r_params[:anchor_mode].to_s.include?("_after_close")
       travel_to(Date.new(2019,3,2))
       r1s = if r.reopen?
               renew_all(0)
@@ -2347,7 +2347,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       end
 
       travel_to(Date.new(2019,8,20))
-      close_issue(@issue1)
+      close_issue!(@issue1)
 
       travel_to(Date.new(2019,9,1))
       irs = renew_all(4)
@@ -2368,7 +2368,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       end
 
       travel_to(Date.new(2019,8,27))
-      close_issue(@issue1)
+      close_issue!(@issue1)
       renew_all(0)
       @issue1.reload
       # 1: [], 2: [], 3: [2019,9,6], 4: []
@@ -2634,7 +2634,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
       assert_equal (ir1.last_issue || @issue1).start_date, @issue2.start_date
       travel_to(@issue2.start_date)
-      close_issue(@issue2)
+      close_issue!(@issue2)
       count = config[:journalized].length
       assert_difference 'Journal.count', count do renew_all(1) end
       [ir1, @issue1, @issue2].map(&:reload)
@@ -2825,7 +2825,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
                       mode: :daily_wday, multiplier: 10)
 
     travel_to(Date.new(2019,7,18))
-    close_issue(@issue1)
+    close_issue!(@issue1)
     renew_all(0)
     assert !@issue1.reload.closed?
     assert_equal Date.new(2019,7,22), @issue1.start_date
@@ -2834,7 +2834,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     # only dates changed, same timespan
     @issue1.update!(start_date: Date.new(2019,6,19), due_date: Date.new(2019,6,21))
     travel_to(Date.new(2019,8,5))
-    close_issue(@issue1)
+    close_issue!(@issue1)
     renew_all(0)
     assert !@issue1.reload.closed?
     assert_equal Date.new(2019,8,19), @issue1.start_date
@@ -2843,7 +2843,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     # changed both dates and timespan
     @issue1.update!(start_date: Date.new(2019,7,1), due_date: Date.new(2019,7,10))
     travel_to(Date.new(2019,9,1))
-    close_issue(@issue1)
+    close_issue!(@issue1)
     renew_all(0)
     assert !@issue1.reload.closed?
     assert_equal Date.new(2019,9,2), @issue1.start_date
@@ -2884,7 +2884,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
     dates.each_slice(2) do |close_date, r_dates|
       travel_to(close_date)
-      close_issue(@issue1)
+      close_issue!(@issue1)
       renew_all(0)
       @issue1.reload
       assert_equal r_dates[:start], @issue1.start_date
@@ -2977,7 +2977,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     )
 
     travel_to(Date.new(2018,9,15))
-    close_issue(@issue1)
+    close_issue!(@issue1)
     renew_all(0)
     [@issue1, @issue2].map(&:reload)
     assert_equal Date.new(2018,9,22), @issue1.start_date
@@ -2991,8 +2991,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal Date.new(2018,9,29), @issue1.start_date
 
     travel_to(Date.new(2018,12,2))
-    close_issue(@issue2)
-    close_issue(@issue1)
+    close_issue!(@issue2)
+    close_issue!(@issue1)
     assert_difference 'Journal.count', 1 do
       renew_all(0)
     end
@@ -3023,7 +3023,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     update_recurrence(ir, include_subtasks: true)
     travel_to(Date.new(2019,1,10))
     assert @issue2.closed?
-    close_issue(@issue1)
+    close_issue!(@issue1)
     renew_all(0)
     [@issue1, @issue2].map(&:reload)
     assert_equal Date.new(2018,11,7), @issue1.start_date
