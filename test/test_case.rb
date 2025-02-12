@@ -96,9 +96,10 @@ module IssueRecurringTestCase
 
   # Create _valid_ random recurrence for `issue`, optionally setting parameters
   # from `defaults` in following way:
-  #  * if default parameter is set to non-nil, for mandatory attributes use it
-  #    directly, without randomization of that parameter; for optional attributes
-  #    use it directly only if attribute is set
+  #  * if default parameter is set to non-nil:
+  #    * for mandatory attributes use it by sampling from that parameter;
+  #    (currently only :creation_mode and :anchor_mode Array arguments are supported)
+  #    * for optional attributes use it only if attribute is meant to be set
   #  * if default parameter is set to nil, don't set it at all (applies only to
   #    optional attributes)
   #  `defaults` are not validated.
@@ -109,14 +110,15 @@ module IssueRecurringTestCase
   def random_recurrence(issue, **defaults)
     optional = defaults.extract!(:anchor_date, :delay_multiplier, :delay_mode,
                                  :date_limit, :count_limit)
-    optional.default = false
     conditions = {
       start_date: issue.start_date,
       due_date: issue.due_date,
       dates_derived: issue.dates_derived?
     }.merge(defaults)
 
-    conditions[:creation_mode] ||= IssueRecurrence.creation_modes.keys.sample.to_sym
+    creation_modes = conditions.fetch(:creation_mode,
+                                      IssueRecurrence.creation_modes.keys)
+    conditions[:creation_mode] = Array(creation_modes).sample.to_sym
 
     conditions[:include_subtasks] =
       case conditions
@@ -126,7 +128,7 @@ module IssueRecurringTestCase
         [true, false].sample
       end unless conditions.has_key?(:include_subtasks)
 
-    conditions[:multiplier] ||= rand([1..4, 5..100, 101..1000].sample)
+    conditions[:multiplier] ||= rand([1..3, 4..10, 11..100, 101..1000].sample)
     conditions[:mode] ||= IssueRecurrence.modes.keys.sample.to_sym
 
     conditions[:anchor_to_start] =
@@ -144,13 +146,15 @@ module IssueRecurringTestCase
       in start_date: nil, due_date: nil
         [:last_issue_flexible, :last_issue_flexible_on_delay, :date_fixed_after_close]
       in creation_mode: :copy_first | :copy_last
-        IssueRecurrence.anchor_modes.keys
+        IssueRecurrence.anchor_modes.symbolize_keys.keys
       in creation_mode: :reopen
         [:last_issue_flexible, :last_issue_flexible_on_delay,
          :last_issue_fixed_after_close, :date_fixed_after_close]
       end
-    anchor_modes.delete(:date_fixed_after_close) if optional[:anchor_date].nil?
-    conditions[:anchor_mode] ||= anchor_modes.sample.to_sym
+    anchor_modes.delete(:date_fixed_after_close) unless
+      optional.fetch(:anchor_date, true)
+    anchor_modes &= Array(conditions[:anchor_mode]) if conditions.has_key?(:anchor_mode)
+    conditions[:anchor_mode] = anchor_modes.sample
 
     if conditions[:anchor_mode] == :date_fixed_after_close
       conditions[:anchor_date] = optional.fetch(:anchor_date, random_date)

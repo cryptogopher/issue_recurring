@@ -21,18 +21,16 @@ module IssueRecurring
 
       has_many :issue_recurrences, dependent: :destroy
 
-      belongs_to :recurrence_of, class_name: 'Issue', validate: true
-      has_many :recurrence_copies, class_name: 'Issue', foreign_key: 'recurrence_of_id',
-        dependent: :nullify
-
-      after_destroy :substitute_if_last_issue
-    end
-
-    def substitute_if_last_issue
-      return if self.recurrence_of.blank?
-      r = self.recurrence_of.recurrences.find_by(last_issue: self)
-      return if r.nil?
-      r.update!(last_issue: r.issue.recurrence_copies.last)
+      # Do not set :recurrence_of for:
+      # * descendants of recurred Issue. Otherwise it will be impossible to
+      #   determine last recurrence in the chain (IssueRecurrence#last_issue)
+      #   after the current last is deleted. Recurred descendants tracking is
+      #   not needed at this point.
+      # * owner of IssueRecurrence. It would not work with multiple recurrence
+      #   schemes.
+      # * both of the above apply to :reopen recurrences as well.
+      # Value of :recurrence_of is independent of 'recurs_in' IssueRelation.
+      belongs_to :recurrence_of, class_name: 'IssueRecurrence', validate: true
     end
 
     def default_reassign

@@ -2379,30 +2379,6 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
   end
 
-  def test_renew_sets_recurrence_of_for_new_recurrence_and_subtask
-    @issue2.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
-    set_parent_issue(@issue1, @issue2)
-    # Need to reload. Parent dates are computed from children by default.
-    @issue1.reload
-
-    create_recurrence(include_subtasks: true)
-    travel_to(@issue1.start_date)
-    r1, r2 = renew_all(2)
-    assert_equal @issue1, r1.recurrence_of
-    assert_equal @issue1, r2.recurrence_of
-  end
-
-  def test_copying_issue_resets_recurrence_of
-    @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
-    ir = create_recurrence
-    travel_to(@issue1.start_date)
-    r1 = renew_all(1)
-    assert_equal @issue1, r1.recurrence_of
-
-    r1_copy = copy_issue(r1, r1.project)
-    assert_nil r1_copy.recurrence_of
-  end
-
   def test_copying_issue_with_changes_that_invalidate_recurrence_should_fail
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
     ir = create_recurrence(anchor_to_start: false)
@@ -2673,7 +2649,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   def test_copying_issue_applies_copy_recurrences_configuration_setting
     # NOTE: to be removed when system tests are working with all supported Redmine versions.
     # * corresponding system test: test_settings_copy_recurrences
-    malleable_attrs = [:id, :created_at, :updated_at, :issue_id, :last_issue_id, :count]
+    malleable_attrs = [:id, :created_at, :updated_at, :issue_id, :count]
     fixed_attrs = ->(ir) { ir.attributes.with_indifferent_access.except(*malleable_attrs) }
 
 
@@ -3056,6 +3032,18 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_not @issue2.closed?
   end
 
+  def test_copying_issue_resets_recurrence_of
+    @issue1.update!(random_dates)
+    recurrence = create_random_recurrence(@issue1, date_limit: nil,
+                                          creation_mode: [:copy_first, :copy_last])
+    renew_once!(recurrence)
+    assert_not_nil recurrence.last_issue
+    assert_no_changes ->{ recurrence.reload.last_issue },
+                      ->{ recurrence.issues.reload.count } do
+      copy_issue(recurrence.last_issue, @issue1.project)
+    end
+  end
+
   def test_delete_issue_with_recurrence_after_renewal
     renew_and_delete = lambda do |issue|
       recurrence = create_random_recurrence(issue, date_limit: nil)
@@ -3079,69 +3067,49 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     renew_and_delete.call(@issue1)
   end
 
-  def test_deleting_first_issue_destroys_recurrence_and_nullifies_recurrence_of
-    [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
-      @issue1 = Issue.first
-      @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+  def test_deleting_issue_from_copy_recurrence_yields_proper_last_issue
+    @issue3.update!(random_dates)
+    set_parent_issue(@issue2, @issue3)
+    set_parent_issue(@issue1, @issue2)
+    # Need to reload. Parent dates are computed from children by default.
+    @issue1.reload
+    recurrence = create_random_recurrence(@issue1, count_limit: nil, date_limit: nil,
+                                          creation_mode: [:copy_first, :copy_last])
 
-      recurrence = create_recurrence(@issue1, anchor_mode: anchor_mode)
-      travel_to(Date.new(2018,9,22))
-      r1, r2 = renew_all(2)
+    @issue4.update!(random_dates)
+    noise = create_random_recurrence(@issue4, count_limit: nil, date_limit: nil)
 
-      assert_difference 'IssueRecurrence.count', -1 do
-        destroy_issue(@issue1)
+    last_issues = []
+    rand(2..4).times do
+      # Checks that subtasks don't have :recurrence_of set
+      assert_difference ->{ recurrence.issues.reload.count }, 1 do
+        renew_once!(recurrence)
       end
-      assert_raises(ActiveRecord::RecordNotFound) { recurrence.reload }
+      last = Issue.last(recurrence.include_subtasks? ? 3 : 1).first
+      assert_equal recurrence.last_issue, last
+      last_issues << last
 
-      [r1, r2].map(&:reload)
-      assert_nil r1.recurrence_of
-      assert_nil r2.recurrence_of
+      # Maybe create noise recurrences with higher IDs, but make sure
+      # `recurrence` will not be renewed.
+      safe_date = Date.current
+      renew_once(noise.reload) do
+        # Don't stay at `safe_date`, as this may create a lot of `noise` recurrences
+        travel_to([safe_date, Date.current].min)
+      end if [true, false].sample
     end
-  end
 
-  def test_deleting_last_issue_sets_previous_or_nullifies_last_issue
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
-
-    [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
-      recurrence = create_recurrence(anchor_mode: anchor_mode)
-      travel_to(Date.new(2018,9,22))
-      r1, r2 = renew_all(2)
-      recurrence.reload
-      assert_equal r2, recurrence.last_issue
-
-      # Create extra recurrences with higher ids
-      @issue2.update!(start_date: Date.new(2018,8,15), due_date: Date.new(2018,8,20))
-      create_recurrence(@issue2, anchor_mode: anchor_mode)
-      renew_all(6)
-
-      assert_no_difference 'IssueRecurrence.count' do
-        destroy_issue(r2)
+    unless last_issues.empty?
+      assert_no_difference ->{ IssueRecurrence.count } do
+        issue_to_delete = [last_issues.sample, last_issues.last].sample
+        destroy_issue(last_issues.delete(issue_to_delete))
       end
-      [recurrence, r1].map(&:reload)
-      assert_equal r1, recurrence.last_issue
 
-      assert_no_difference 'IssueRecurrence.count' do
-        destroy_issue(r1)
+      # Don't check :recurrence_of directly, as #last_issue depends on it
+      if last_issues.last
+        assert_equal last_issues.last, recurrence.reload.last_issue
+      else
+        assert_nil recurrence.reload.last_issue
       end
-      recurrence.reload
-      assert_nil recurrence.last_issue
-    end
-  end
-
-  def test_deleting_not_first_nor_last_issue_keeps_recurrence_and_reference_of_unchanged
-    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
-
-    [:first_issue_fixed, :last_issue_fixed].each do |anchor_mode|
-      recurrence = create_recurrence(anchor_mode: anchor_mode)
-      travel_to(Date.new(2018,9,22))
-      r1, r2 = renew_all(2)
-
-      assert_no_difference 'IssueRecurrence.count' do
-        destroy_issue(r1)
-      end
-      [recurrence, r2].map(&:reload)
-      assert_equal recurrence.last_issue, r2
-      assert_equal recurrence.issue, r2.recurrence_of
     end
   end
 end

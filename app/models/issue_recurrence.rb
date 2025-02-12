@@ -2,7 +2,9 @@ class IssueRecurrence < ActiveRecord::Base
   include Redmine::Utils::DateCalculation
 
   belongs_to :issue, validate: true
-  belongs_to :last_issue, class_name: 'Issue', validate: true
+  has_many :issues, foreign_key: 'recurrence_of_id', dependent: :nullify
+  has_one :last_issue, -> { order(id: :desc).readonly }, class_name: 'Issue',
+    foreign_key: 'recurrence_of_id'
 
   enum creation_mode: {
     copy_first: 0,
@@ -213,7 +215,6 @@ class IssueRecurrence < ActiveRecord::Base
   end
 
   def initialize_dup(other)
-    self.last_issue = nil
     self.count = 0
     super
   end
@@ -405,7 +406,7 @@ class IssueRecurrence < ActiveRecord::Base
       new_issue.parent = ref_issue.parent
       new_issue.done_ratio = 0
       new_issue.status = new_issue.tracker.default_status
-      new_issue.recurrence_of = self.issue
+      new_issue.recurrence_of = self unless self.reopen?
       assignee = new_issue.assigned_to
       is_assignee_valid = assignee.blank? || new_issue.assignable_users.include?(assignee)
       keep_assignee = Setting.plugin_issue_recurring[:keep_assignee]
@@ -431,7 +432,7 @@ class IssueRecurrence < ActiveRecord::Base
           child.due_date = child_dates[:due]
           child.done_ratio = 0
           child.status = child.tracker.default_status
-          child.recurrence_of = self.issue
+          # Do not set child.recurrence_of, see Issue.recurrence_of comment for details
           assignee = child.assigned_to
           is_assignee_valid = assignee.blank? || child.assignable_users.include?(assignee)
           unless keep_assignee && is_assignee_valid
@@ -448,7 +449,6 @@ class IssueRecurrence < ActiveRecord::Base
 
       # Renewal should happen irrespective of author's (= User.current) privileges.
       # No user-assignable attribues are/should be changed.
-      self.last_issue = new_issue
       self.count += 1
       self.save!(context: :renew)
     end
