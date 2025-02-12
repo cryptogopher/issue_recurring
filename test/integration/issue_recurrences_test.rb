@@ -2075,9 +2075,10 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       ],
 
       {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
-      {anchor_mode: :first_issue_fixed, count_limit: 0},
+      {anchor_mode: :first_issue_fixed, count_limit: 1},
       [
-        nil, Date.new(2019,11,28), []
+        nil, Date.new(2019,11,28),
+        [{start: Date.new(2019,9,22), due: Date.new(2019,9,27)}],
       ],
 
       {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
@@ -2097,9 +2098,10 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       ],
 
       {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
-      {anchor_mode: :last_issue_fixed, count_limit: 0},
+      {anchor_mode: :last_issue_fixed, count_limit: 1},
       [
-        nil, Date.new(2019,11,28), []
+        nil, Date.new(2019,11,28),
+        [{start: Date.new(2019,9,22), due: Date.new(2019,9,27)}],
       ],
 
       {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
@@ -2117,9 +2119,10 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       ],
 
       {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
-      {anchor_mode: :last_issue_flexible, count_limit: 0},
+      {anchor_mode: :last_issue_flexible, count_limit: 1},
       [
-        Date.new(2019,11,28), Date.new(2019,11,28), []
+        Date.new(2019,11,28), Date.new(2019,11,28),
+        [{start: Date.new(2019,11,30), due: Date.new(2019,12,5)}]
       ],
 
       {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
@@ -2137,9 +2140,10 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       ],
 
       {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
-      {anchor_mode: :last_issue_flexible_on_delay, count_limit: 0},
+      {anchor_mode: :last_issue_flexible_on_delay, count_limit: 1},
       [
-        Date.new(2019,11,28), Date.new(2019,11,28), []
+        Date.new(2019,11,28), Date.new(2019,11,28),
+        [{start: Date.new(2019,11,30), due: Date.new(2019,12,5)}]
       ],
 
       {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
@@ -2157,9 +2161,10 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       ],
 
       {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
-      {anchor_mode: :last_issue_fixed_after_close, count_limit: 0},
+      {anchor_mode: :last_issue_fixed_after_close, count_limit: 1},
       [
-        Date.new(2019,11,28), Date.new(2019,11,28), []
+        Date.new(2019,11,28), Date.new(2019,11,28),
+        [{start: Date.new(2019,12,1), due: Date.new(2019,12,6)}]
       ],
     ]
 
@@ -2181,9 +2186,10 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
       {start_date: Date.new(2019,9,15), due_date: Date.new(2019,9,20)},
       {anchor_mode: :date_fixed_after_close, anchor_date: Date.new(2019,9,15),
-       count_limit: 0},
+       count_limit: 1},
       [
-        Date.new(2019,11,28), Date.new(2019,11,28), []
+        Date.new(2019,11,28), Date.new(2019,11,28),
+        [{start: Date.new(2019,12,3), due: Date.new(2019,12,8)}]
       ],
     ]
 

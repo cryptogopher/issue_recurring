@@ -118,7 +118,7 @@ class IssueRecurrence < ActiveRecord::Base
     errors.add(:date_limit, :not_in_future) unless Date.current < date_limit
   end
   validates :count_limit, absence: {if: -> { date_limit.present? } },
-    numericality: {allow_nil: true, only_integer: true}
+    numericality: {allow_nil: true, greater_than: 0, only_integer: true}
 
   after_initialize do
     if new_record?

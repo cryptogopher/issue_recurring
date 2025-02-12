@@ -172,7 +172,7 @@ module IssueRecurringTestCase
       conditions[:date_limit] = optional.fetch(:date_limit,
         (conditions[:anchor_date] || Date.current) + rand([1..31, 32..3650].sample).days)
     when 2
-      conditions[:count_limit] = optional.fetch(:count_limit, rand([0..12, 13..1000].sample))
+      conditions[:count_limit] = optional.fetch(:count_limit, rand([1..3, 4..1000].sample))
     else
       # 50% times do not set the limit
     end
