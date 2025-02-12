@@ -29,3 +29,19 @@ issue_03:
   root_id: <%= ActiveRecord::FixtureSet.identify(:issue_03) %>
   <<: *DEFAULTS
 
+issue_04:
+  subject: 4th issue
+  assigned_to: gopher
+  author: gopher
+  status: new
+  root_id: <%= ActiveRecord::FixtureSet.identify(:issue_04) %>
+  <<: *DEFAULTS
+
+issue_05:
+  subject: 5th issue
+  assigned_to: alice
+  author: admin
+  status: new
+  root_id: <%= ActiveRecord::FixtureSet.identify(:issue_05) %>
+  <<: *DEFAULTS
+

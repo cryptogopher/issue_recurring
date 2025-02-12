@@ -5,6 +5,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     super
 
     Setting.non_working_week_days = [6, 7]
+    # TODO: randomize, or check both 'derived' and 'independent'?
     Setting.parent_issue_dates = 'derived'
     Setting.parent_issue_priority = 'derived'
     Setting.parent_issue_done_ratio = 'derived'
@@ -23,6 +24,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     @issue1 = issues(:issue_01)
     @issue2 = issues(:issue_02)
     @issue3 = issues(:issue_03)
+    @issue4 = issues(:issue_04)
+    @issue5 = issues(:issue_05)
 
     log_user 'alice', 'foo'
   end
@@ -1019,7 +1022,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
   end
 
-  def test_renew_parent_of_new_recurrence_and_its_children_should_be_set_properly
+  # TODO: all 'recurrence_and_its_children' - convert to descendants/add grandchildren
+  def test_renew_parent_of_recurrence_and_its_descendants_should_be_set_properly
     # Single issue
     tree = {@issue3 => nil}
     process_issue_tree(tree, @issue3) do |stage, issues|
@@ -1060,18 +1064,19 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
     Setting.parent_issue_dates = 'derived'
 
-    # Issue with child and parent
-    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    # Issue with grandchild and parent
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => @issue4, @issue4 => nil}
     process_issue_tree(tree, @issue2) do |stage, issues|
       case stage
       when :pre_renew
-        child, parent, grandparent = issues
+        grandchild, child, parent, grandparent = issues
         assert_nil grandparent.parent
         assert_equal [parent], grandparent.children
         assert_equal [child], parent.children
-        assert_equal [], child.children
+        assert_equal [grandchild], child.children
+        assert_equal [], grandchild.children
       when :post_renew
-        child, parent, grandparent = issues + [@issue1.reload]
+        grandchild, child, parent, grandparent = issues + [@issue1.reload]
         assert_nil grandparent.parent
         if @issue2.reload.issue_recurrences.first.reopen?
           assert_equal [parent], grandparent.children
@@ -1079,17 +1084,18 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
           assert_equal [@issue2.reload, parent], grandparent.children
         end
         assert_equal [child], parent.children
-        assert_equal [], child.children
+        assert_equal [grandchild], child.children
+        assert_equal [], grandchild.children
       end
     end
   end
 
-  def test_renew_priority_of_new_recurrence_and_its_children_should_be_set_properly
+  def test_renew_priority_of_recurrence_and_its_descendants_should_be_set_properly
     default = IssuePriority.default
     non_default = IssuePriority.where(is_default: false).first
     assert_not_nil default
     assert_not_nil non_default
-    [@issue1, @issue2, @issue3].each { |i| set_priority(i, non_default) }
+    [@issue1, @issue2, @issue3, @issue4].each { |i| set_priority(i, non_default) }
 
     # Single issue
     tree = {@issue3 => nil}
@@ -1104,7 +1110,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       when :pre_renew
         child, parent = issues
         # When parent_issue_priority == 'derived', parent is assigned default priority
-        # when all children are closed
+        # when all descendants are closed
         assert_equal default, parent.priority
         assert_equal non_default, child.priority
       when :post_renew
@@ -1128,33 +1134,36 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
     Setting.parent_issue_dates = 'derived'
 
-    # Issue with child and parent
-    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    # Issue with grandchild and parent
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => @issue4, @issue4 => nil}
     process_issue_tree(tree, @issue2) do |stage, issues|
       case stage
       when :pre_renew
-        child, parent, grandparent = issues
+        grandchild, child, parent, grandparent = issues
         assert_equal default, grandparent.priority
         assert_equal default, parent.priority
-        assert_equal non_default, child.priority
+        assert_equal default, child.priority
+        assert_equal non_default, grandchild.priority
       when :post_renew
         issues << @issue1.reload
         issues.each { |i| assert_equal non_default, i.priority }
       end
     end
 
-    # Issue with child and parent, priority independent
+    # Issue with grandchild and parent, priority independent
     Setting.parent_issue_priority = 'independent'
-    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => @issue4, @issue4 => nil}
     process_issue_tree(tree, @issue2) do |stage, issues|
       issues.each { |i| assert_equal non_default, i.priority }
     end
     Setting.parent_issue_priority = 'derived'
   end
 
-  def test_renew_custom_fields_of_new_recurrence_and_its_children_should_be_set_properly
+  def test_renew_custom_fields_of_recurrence_and_its_decendants_should_be_set_properly
     field = custom_fields(:custom_field_01)
-    [@issue1, @issue2, @issue3].each { |i| set_custom_field(i, field, i.subject.reverse) }
+    [@issue1, @issue2, @issue3, @issue4].each do |i|
+      set_custom_field(i, field, i.subject.reverse)
+    end
 
     # Single issue
     tree = {@issue3 => nil}
@@ -1177,17 +1186,19 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
     Setting.parent_issue_dates = 'derived'
 
-    # Issue with child and parent
-    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    # Issue with grandchild and parent
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => @issue4, @issue4 => nil}
     process_issue_tree(tree, @issue2) do |stage, issues|
       issues << @issue1.reload if stage == :post_renew
       issues.each { |i| assert_equal i.subject.reverse, i.custom_field_value(field) }
     end
   end
 
-  def test_renew_status_of_new_recurrence_and_its_children_should_be_reset
+  def test_renew_status_of_recurrence_and_its_descendants_should_be_reset
     exp_status = {}
-    [@issue1, @issue2, @issue3].each { |i| exp_status[i] = i.tracker.default_status}
+    [@issue1, @issue2, @issue3, @issue4].each do |i|
+      exp_status[i] = i.tracker.default_status
+    end
 
     # Single issue
     tree = {@issue3 => nil}
@@ -1228,25 +1239,27 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
     Setting.parent_issue_dates = 'derived'
 
-    # Issue with child and parent
+    # Issue with grandchild and parent
     status1 = (IssueStatus.where(is_closed: false) - [exp_status[@issue1]]).first
     @issue1.update!(status: status1)
-    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => @issue4, @issue4 => nil}
     process_issue_tree(tree, @issue2) do |stage, issues|
       case stage
       when :pre_renew
         issues.each { |i| assert_not_equal exp_status[i], i.status }
       when :post_renew
-        child, parent = issues
+        grandchild, child, parent = issues
         assert_equal parent, child.parent
+        assert_equal child, grandchild.parent
         assert_equal status1, @issue1.reload.status
         assert_equal exp_status[@issue2], parent.status
         assert_equal exp_status[@issue3], child.status
+        assert_equal exp_status[@issue4], grandchild.status
       end
     end
   end
 
-  def test_renew_done_ratio_of_new_recurrence_and_its_children_should_be_reset
+  def test_renew_done_ratio_of_recurrence_and_its_descendants_should_be_reset
     assert Issue.use_field_for_done_ratio?
 
     # Single issue
@@ -1288,9 +1301,9 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
     Setting.parent_issue_dates = 'derived'
 
-    # Issue with child and parent
-    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
-    [@issue3, @issue2, @issue1].each { |i| set_done_ratio(i, 60) }
+    # Issue with grandchild and parent
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => @issue4, @issue4 => nil}
+    [@issue4, @issue3, @issue2, @issue1].each { |i| set_done_ratio(i, 60) }
     process_issue_tree(tree, @issue2) do |stage, issues|
       case stage
       when :pre_renew
@@ -1306,10 +1319,10 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
       end
     end
 
-    # Issue with child and parent, done ratio independent
+    # Issue with grandchild and parent, done ratio independent
     Setting.parent_issue_done_ratio = 'independent'
-    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
-    [@issue1, @issue2, @issue3].each { |i| set_done_ratio(i, 60) }
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => @issue4, @issue4 => nil}
+    [@issue1, @issue2, @issue3, @issue4].each { |i| set_done_ratio(i, 60) }
     process_issue_tree(tree, @issue2) do |stage, issues|
       case stage
       when :pre_renew
@@ -1322,8 +1335,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     Setting.parent_issue_done_ratio = 'derived'
   end
 
-  def test_renew_time_entries_of_new_recurrence_and_its_children_should_be_reset
-    [@issue1, @issue2, @issue3].each_with_index do |i, index|
+  def test_renew_time_entries_of_recurrence_and_its_descendants_should_be_reset
+    [@issue1, @issue2, @issue3, @issue4].each_with_index do |i, index|
       set_time_entry(i, (index + 1)*1.5)
     end
 
@@ -1361,8 +1374,8 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     end
     Setting.parent_issue_dates = 'derived'
 
-    # Issue with child and parent
-    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => nil}
+    # Issue with grandchild and parent
+    tree = {@issue1 => @issue2, @issue2 => @issue3, @issue3 => @issue4, @issue4 => nil}
     process_issue_tree(tree, @issue2) do |stage, issues|
       if stage == :pre_renew || @issue2.issue_recurrences.first.reopen?
         issues.each { |i| assert_operator 0.0, :<, i.spent_hours }
@@ -2395,55 +2408,93 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert errors.added?(:issue_recurrences, :invalid)
   end
 
-  def test_renew_subtasks
+  def test_renew_with_descendants
+    # TODO: extend with descendant date(s) set to nil/migrate to #renew_once
     configs = [
       {start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5)},
       {start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30)},
+      {start_date: Date.new(2018,9,22), due_date: Date.new(2018,10,2)},
       {mode: :weekly},
-      {start: Date.new(2018,9,27), due: Date.new(2018,10,12)},
+      {start: Date.new(2018,9,19), due: Date.new(2018,10,9)},
       {start: Date.new(2018,10,2), due: Date.new(2018,10,12)},
       {start: Date.new(2018,9,27), due: Date.new(2018,10,7)},
+      {start: Date.new(2018,9,29), due: Date.new(2018,10,9)},
 
       {start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5)},
       {start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30)},
+      {start_date: Date.new(2018,9,22), due_date: Date.new(2018,10,2)},
       {mode: :monthly_dow_from_first, anchor_to_start: true},
-      {start: Date.new(2018,10,18), due: Date.new(2018,11,2)},
+      {start: Date.new(2018,10,10), due: Date.new(2018,10,30)},
       {start: Date.new(2018,10,23), due: Date.new(2018,11,2)},
       {start: Date.new(2018,10,18), due: Date.new(2018,10,28)},
+      {start: Date.new(2018,10,20), due: Date.new(2018,10,30)},
 
+      # For selected :mode, recurrence dates do not differ between 'derived' and
+      # 'independent' only in specific scenarios when anchor month (in this case
+      # @issue1.due_date month) before and after renewal have the same number of
+      # days (e.g. 2018-10/11 and 2019-3/4).
       {start_date: Date.new(2018,9,25), due_date: Date.new(2018,10,5)},
       {start_date: Date.new(2018,9,20), due_date: Date.new(2018,9,30)},
+      {start_date: Date.new(2018,9,22), due_date: Date.new(2018,10,2)},
       {mode: :monthly_wday_to_last, anchor_to_start: false},
-      {start: Date.new(2018,10,22), due: Date.new(2018,11,6)},
+      {start: Date.new(2018,10,12), due: Date.new(2018,11,1)},
       {start: Date.new(2018,10,25), due: Date.new(2018,11,6)},
       {start: Date.new(2018,10,22), due: Date.new(2018,10,31)},
+      {start: Date.new(2018,10,24), due: Date.new(2018,11,1)},
     ]
 
     set_parent_issue(@issue1, @issue2)
-    set_parent_issue(@issue1, @issue3)
+    set_parent_issue(@issue2, @issue3)
+    set_parent_issue(@issue1, @issue4)
 
-    configs.each_slice(6) do |issue2_dates, issue3_dates, r_params,
-                              r1_dates, r2_dates, r3_dates|
-      @issue2.update!(issue2_dates)
-      @issue3.update!(issue3_dates)
-      @issue1.reload
+    ['derived', 'independent']
+       .each do |date_mode|
+      configs.each_slice(8) do |issue2_dates, issue3_dates, issue4_dates, r_params,
+                                r1_indep_dates, r2_indep_dates, r3_dates, r4_dates|
+        Setting.parent_issue_dates = date_mode
+        @issue4.reload.update!(issue4_dates)
+        @issue3.reload.update!(issue3_dates)
+        @issue2.reload.update!(issue2_dates)
+        @issue1.reload.update!(start_date: Date.new(2018,9,12),
+                               due_date: Date.new(2018,10,2))
 
-      create_recurrence(**r_params.update(include_subtasks: true))
-      travel_to(@issue1.start_date-1)
-      renew_all(0)
+        create_recurrence(**r_params.update(include_subtasks: true))
+        travel_to(@issue1.start_date-1)
+        renew_all(0)
 
-      travel_to(@issue1.start_date)
-      r1, * = renew_all(3)
-      assert_equal r1_dates[:start], r1.start_date
-      assert_equal r1_dates[:due], r1.due_date
+        travel_to(@issue1.start_date)
+        r1, * = renew_all(4)
 
-      r2 = IssueRelation.where(issue_from: @issue2, relation_type: 'copied_to').last.issue_to
-      assert_equal r2_dates[:start], r2.start_date
-      assert_equal r2_dates[:due], r2.due_date
+        r3 = IssueRelation.where(issue_from: @issue3, relation_type: 'copied_to')
+          .last.issue_to
+        assert_equal r3_dates[:start], r3.start_date
+        assert_equal r3_dates[:due], r3.due_date
 
-      r3 = IssueRelation.where(issue_from: @issue3, relation_type: 'copied_to').last.issue_to
-      assert_equal r3_dates[:start], r3.start_date
-      assert_equal r3_dates[:due], r3.due_date
+        r4 = IssueRelation.where(issue_from: @issue4, relation_type: 'copied_to')
+          .last.issue_to
+        assert_equal r4_dates[:start], r4.start_date
+        assert_equal r4_dates[:due], r4.due_date
+
+        r2 = IssueRelation.where(issue_from: @issue2, relation_type: 'copied_to')
+          .last.issue_to
+        if date_mode == 'independent'
+          assert_equal r2_indep_dates[:start], r2.start_date
+          assert_equal r2_indep_dates[:due], r2.due_date
+        else
+          assert_equal r3.start_date, r2.start_date
+          assert_equal r3.due_date, r2.due_date
+        end
+
+        if date_mode == 'independent'
+          assert_equal r1_indep_dates[:start], r1.start_date
+          assert_equal r1_indep_dates[:due], r1.due_date
+        else
+          assert_equal [r2, r3, r4].map(&:start_date).min, r1.start_date
+          assert_equal [r2, r3, r4].map(&:due_date).max, r1.due_date
+        end
+
+        # In case of problems, possibly #destroy_recurrence
+      end
     end
   end
 
