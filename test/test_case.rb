@@ -13,12 +13,58 @@ module IssueRecurringTestCase
     end
   end
 
-  # TODO: make changes to Issue, so it will renew on next renew_all
-  # def make_renewable(issue)
-  # end
+  def prepare_renew_once(recurrence, &block)
+    issue = recurrence.last_issue || recurrence.issue
+    if [:first_issue_fixed, :last_issue_fixed].include?(recurrence.anchor_mode.to_sym)
+      travel_to(issue.start_date || issue.due_date)
+    else
+      close_issue_tree(issue)
+    end
 
-  # TODO: treat count as all created + reopened issues to simplify testing
-  # also: return all reopened and created issues
+    yield if block_given?
+
+    return issue
+  end
+  private :prepare_renew_once
+
+  def renew_once(recurrence, &block)
+    prepare_renew_once(recurrence, &block)
+    IssueRecurrence.renew_all(true)
+    recurrence.reload
+  end
+
+  def renew_once!(recurrence, count: nil, &block)
+    issue = prepare_renew_once(recurrence, &block)
+    open_issues = Issue.open.pluck(:id)
+
+    if count
+      # TODO: add new: parameter to assert difference on Issue.count (e.g. to
+      # check that there are only reopens by setting new: 0)
+      assert_difference ->{ Issue.open.count }, count do
+        IssueRecurrence.renew_all(true)
+      end
+    else
+      if recurrence.reopen?
+        assert_changes ->{ issue.reload.closed? }, from: true, to: false do
+          IssueRecurrence.renew_all(true)
+        end
+      else
+        assert_changes ->{ Issue.count } do
+          IssueRecurrence.renew_all(true)
+        end
+      end
+    end
+
+    recurrence.reload
+
+    issues = Issue.open.where.not(id: open_issues).to_a
+    assert_equal count, issues.length if count
+    issues
+  end
+
+  # NOTE: update #renew_all to use Issue.open.count like #renew_once!
+  # This will make #close_issue! replaceable with #close_issue, as change of
+  # Issue#closed? will be checked here instead of in #close_issue!.
   def renew_all(count=0)
     assert_difference 'Issue.count', count do
       IssueRecurrence.renew_all(true)

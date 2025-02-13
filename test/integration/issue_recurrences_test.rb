@@ -267,22 +267,15 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
   end
 
   def test_renew_even_when_issue_author_has_no_permission_granted
-    dates = random_dates
-    @issue1.update!(dates)
-    ir = create_random_recurrence(@issue1, date_limit: nil)
+    @issue1.update!(random_dates)
+    recurrence = create_random_recurrence(@issue1, date_limit: nil)
 
-    close_issue(@issue1)
-    travel_to([dates[:due_date] || dates[:start_date], Date.current].max) unless ir.reopen?
-
-    plugin_perms = Redmine::AccessControl.permissions
-      .select{ |p| p.project_module == :issue_recurring }.map(&:name)
-    roles = @issue1.author.members.find_by(project: @issue1.project_id).roles
-    roles.each { |role| role.remove_permission! *plugin_perms }
-    refute roles.any? { |role| plugin_perms.any? { |p| role.has_permission? p } }
-
-    # Make sure at least one renewal took place
-    assert_changes -> { ir.reopen? ? @issue1.reload.closed? : Issue.count } do
-      IssueRecurrence.renew_all(true)
+    renew_once!(recurrence) do
+      plugin_perms = Redmine::AccessControl.permissions
+        .select{ |p| p.project_module == :issue_recurring }.map(&:name)
+      roles = @issue1.author.members.find_by(project: @issue1.project_id).roles
+      roles.each { |role| role.remove_permission! *plugin_perms }
+      refute roles.any? { |role| plugin_perms.any? { |p| role.has_permission? p } }
     end
   end
 
@@ -3061,6 +3054,29 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal Date.new(2018,11,7), @issue2.start_date
     assert_not @issue1.closed?
     assert_not @issue2.closed?
+  end
+
+  def test_delete_issue_with_recurrence_after_renewal
+    renew_and_delete = lambda do |issue|
+      recurrence = create_random_recurrence(issue, date_limit: nil)
+      renew_once!(recurrence)
+
+      assert_difference ->{ IssueRecurrence.count }, -1 do
+        destroy_issue(issue)
+      end
+      assert_equal 0, recurrence.issues.count
+      assert_raises(ActiveRecord::RecordNotFound) { recurrence.reload }
+    end
+
+    # Single issue
+    @issue3.update!(random_dates)
+    renew_and_delete.call(@issue3)
+
+    # Issue with subtasks
+    @issue2.update!(random_dates)
+    set_parent_issue(@issue1, @issue2)
+    @issue1.reload
+    renew_and_delete.call(@issue1)
   end
 
   def test_deleting_first_issue_destroys_recurrence_and_nullifies_recurrence_of
