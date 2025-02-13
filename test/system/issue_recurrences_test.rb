@@ -105,7 +105,8 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
 
   def test_settings_author_login
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
-    create_recurrence(creation_mode: :copy_first)
+    create_recurrence(creation_mode: :copy_first, anchor_mode: :first_issue_fixed,
+                      count_limit: nil, date_limit: nil)
     logout_user
 
     log_user 'admin', 'foo'
@@ -139,7 +140,8 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
   def test_settings_keep_assignee
     assert_not_equal @issue1.assigned_to, @issue1.project.default_assigned_to
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
-    create_recurrence(creation_mode: :copy_first)
+    create_recurrence(creation_mode: :copy_first, anchor_mode: :first_issue_fixed,
+                      count_limit: nil, date_limit: nil)
     logout_user
 
     log_user 'admin', 'foo'
@@ -175,10 +177,14 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
 
     ir1 = create_recurrence(issue: @issue1,
                             creation_mode: :copy_first, anchor_to_start: true,
-                            anchor_mode: :last_issue_fixed)
+                            anchor_mode: :last_issue_fixed,
+                            mode: :weekly, multiplier: 1,
+                            count_limit: nil, date_limit: nil)
     ir2 = create_recurrence(issue: @issue2,
                             creation_mode: :reopen, anchor_to_start: true,
-                            anchor_mode: :last_issue_flexible)
+                            anchor_mode: :last_issue_flexible,
+                            mode: :weekly, multiplier: 1,
+                            count_limit: nil, date_limit: nil)
     logout_user
     log_user 'admin', 'foo'
 
@@ -250,7 +256,9 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     }
 
     [:first_issue_fixed, :last_issue_fixed].each do |am|
-      ir = create_recurrence(creation_mode: :copy_first, mode: :weekly, anchor_mode: am)
+      ir = create_recurrence(creation_mode: :copy_first, anchor_mode: am,
+                             mode: :weekly, multiplier: 1, delay_multiplier: 0,
+                             count_limit: nil, date_limit: nil)
 
       set_renew_ahead.(6, :days)
       travel_to(@issue1.start_date - 1.week)

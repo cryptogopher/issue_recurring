@@ -90,31 +90,22 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     end
   end
 
-  # Create recurrence by filling out the form with:
-  # * attributes, filled with missing required keys if necessary,
+  # Create recurrence by filling out the form with either:
+  # * defaults, completed with randomly generated attributes or
   # * block,
-  # or randomly generated attributes when no attributes or block given.
-  def create_recurrence(issue: issues(:issue_01), **attributes)
-    t_base = 'issues.recurrences.form'
-    recurrence = nil
+  # but not both.
+  # Future logic changes should be reflected in #update_recurrence as well.
+  def create_recurrence(issue: issues(:issue_01), **defaults)
+    raise ArgumentError, 'Block and defaults given' if !defaults.empty? && block_given?
 
-    # TODO: replace `attributes` argument with `defaults` and always generate random
-    if attributes.empty?
-      attributes = random_recurrence(issue) unless block_given?
-    else
-      attributes[:anchor_mode] ||= :first_issue_fixed
-      attributes[:mode] ||= :weekly
-      attributes[:multiplier] ||= 1
-    end
+    attributes = random_recurrence(issue, **defaults) unless block_given?
+    recurrence = nil
 
     visit issue_path(issue)
     within_issue_recurrences_panel do
       assert_difference ['all("tr").length', 'IssueRecurrence.count'], 1 do
         click_link t(:button_add)
-
-        fill_in_form attributes
-        yield if block_given?
-
+        block_given? ? yield : fill_in_form(attributes)
         click_button t(:button_submit)
       end
 
@@ -124,31 +115,31 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
       assert_selector :xpath,
         "//tr[td[contains(string(), '#{strip_tags(recurrence.to_s)}')]]"
       assert_no_selector '#new-recurrence *', visible: :all
+    end
+
+    unless block_given?
       attributes = attributes.map { |k,v| [k.to_s, v.is_a?(Symbol) ? v.to_s : v] }.to_h
       assert_equal attributes, recurrence.attributes.extract!(*attributes.keys)
     end
-    assert_selector 'div#flash_notice', exact_text: t('issue_recurrences.create.success')
+    assert_selector 'div#flash_notice',
+      exact_text: t('issue_recurrences.create.success')
 
     recurrence
   end
 
-  def update_recurrence(recurrence, **attributes)
-    t_base = 'issues.recurrences.form'
+  def update_recurrence(recurrence, **defaults)
+    raise ArgumentError, 'Block and defaults given' if !defaults.empty? && block_given?
 
-    if attributes.empty? && !block_given?
-      attributes = random_recurrence(recurrence.issue)
-    end
+    attributes = random_recurrence(recurrence.issue, **defaults) unless block_given?
 
     visit issue_path(recurrence.issue)
     within_issue_recurrences_panel do
       assert_no_difference ['all("tr").length', 'IssueRecurrence.count'] do
-        within :xpath, "//tr[td[contains(string(), '#{strip_tags(recurrence.to_s)}')]]" do
+        within :xpath,
+               "//tr[td[contains(string(), '#{strip_tags(recurrence.to_s)}')]]" do
           click_link t(:button_edit)
         end
-
-        fill_in_form attributes
-        yield if block_given?
-
+        block_given? ? yield : fill_in_form(attributes)
         click_button t(:button_submit)
       end
 
@@ -158,10 +149,14 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
       assert_selector :xpath,
         "//tr[td[contains(string(), '#{strip_tags(recurrence.to_s)}')]]"
       assert_no_selector '#new-recurrence *', visible: :all
+    end
+
+    unless block_given?
       attributes = attributes.map { |k,v| [k.to_s, v.is_a?(Symbol) ? v.to_s : v] }.to_h
       assert_equal attributes, recurrence.attributes.extract!(*attributes.keys)
     end
-    assert_selector 'div#flash_notice', exact_text: t('issue_recurrences.update.success')
+    assert_selector 'div#flash_notice',
+      exact_text: t('issue_recurrences.update.success')
 
     recurrence
   end
