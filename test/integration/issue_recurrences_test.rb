@@ -1484,6 +1484,10 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
             assert_equal [dates[:due]], [r.due_date]
           end
         end
+
+        # Recurrence not destroyed on purpose, to test renewal when validation
+        # does not pass (due to anchor_to_start and Issue dates mismatch).
+        # NOTE: can be addressed in separate test in future.
       end
     end
   end
@@ -2405,7 +2409,7 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
 
   def test_copying_issue_with_changes_that_invalidate_recurrence_should_fail
     @issue1.update!(start_date: 10.days.ago, due_date: 5.days.ago)
-    ir = create_recurrence(anchor_to_start: false)
+    create_recurrence(anchor_to_start: false)
 
     issue1_copy = copy_issue(@issue1, @project1)
     refute_empty issue1_copy.issue_recurrences

@@ -162,7 +162,7 @@ class IssueRecurrence < ActiveRecord::Base
     elsif MONTHLY_MODES.include?(self.mode)
       label = self.anchor_to_start ? :start : :due
       date = ref_dates[label]
-      unless date.nil?
+      if date
         days_to_eom = (date.end_of_month.mday - date.mday + 1).to_i
         values = {
           days_from_bom: date.mday.ordinalize,
@@ -335,7 +335,7 @@ class IssueRecurrence < ActiveRecord::Base
       dates.values.any?
 
     dates.each do |label, date|
-      next if (label == target_label) || date.nil?
+      next if (label == target_label) || !date
       if WDAY_MODES.include?(self.mode)
         if date >= dates[target_label]
           timespan = working_days(dates[target_label], date)
@@ -659,7 +659,7 @@ class IssueRecurrence < ActiveRecord::Base
         if r.reopen?
           current_date = dates[:start] || dates[:due]
           earliest_date = reopen[:dates][:start] || reopen[:dates][:due] if reopen
-          reopen = {r: r, dates: dates} if reopen.nil? || (current_date < earliest_date)
+          reopen = {r: r, dates: dates} unless reopen && (current_date >= earliest_date)
         else
           result[r] << dates
         end
@@ -693,9 +693,7 @@ class IssueRecurrence < ActiveRecord::Base
         prev_user = User.current
         author_login = Setting.plugin_issue_recurring[:author_login]
         User.current = User.find_by(login: author_login) || r.issue.author
-        journal = r.issue.init_journal(User.current)
-        journal.notes << journal_notes
-        journal.save
+        r.issue.init_journal(User.current, journal_notes).save
         User.current = prev_user
       end
     end
