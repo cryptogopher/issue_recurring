@@ -111,6 +111,20 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     end
   end
 
+  def test_show_issue_recurrences_test_vectors
+    # issue dates, recurrence attributes
+    configs = [
+      # Recurrence :first_issue_fixed with :date_limit before Issue dates
+      {start_date: nil, due_date: Date.new(2025,3,9)},
+      {date_limit: Date.new(2025,2,24), anchor_mode: :first_issue_fixed}
+    ]
+
+    configs.each_slice(2) do |issue_dates, recurrence_attrs|
+      @issue1.update!(**issue_dates)
+      create_recurrence { fill_in_form(recurrence_attrs) }
+    end
+  end
+
   def test_show_issue_shows_recurrence_form_only_when_manage_permission_granted
     logout_user
     log_user 'bob', 'foo'
