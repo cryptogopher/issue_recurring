@@ -155,8 +155,8 @@ class IssueRecurrence < ActiveRecord::Base
 
     *, ref_dates = self.reference_dates(assume_closed_at = Date.current)
     ref_description = ''
-    if ref_dates.nil? || FLEXIBLE_ANCHORS.include?(self.anchor_mode)
-      ref_description = " #{l("#{s}.mode_descriptions.#{self.mode}")}"
+    if !ref_dates || FLEXIBLE_ANCHORS.include?(self.anchor_mode)
+      ref_description = l("#{s}.mode_descriptions.#{self.mode}")
     elsif MONTHLY_MODES.include?(self.mode)
       label = self.anchor_to_start ? :start : :due
       date = ref_dates[label]
@@ -171,7 +171,7 @@ class IssueRecurrence < ActiveRecord::Base
           wdays_from_bom: (working_days(date.beginning_of_month, date) + 1).ordinalize,
           wdays_to_eom: (working_days(date, date.end_of_month) + 1).ordinalize
         }
-        ref_description = " #{l("#{s}.mode_modifiers.#{self.mode}", values)}"
+        ref_description = l("#{s}.mode_modifiers.#{self.mode}", values)
       end
     end
 
@@ -180,25 +180,24 @@ class IssueRecurrence < ActiveRecord::Base
       " #{l("#{s}.delay_intervals.#{self.delay_mode}").pluralize(self.delay_multiplier)}" \
       "</b>" : ''
 
-    count_limit_info = self.count_limit.present? ? " #{"<b>#{self.count_limit}" \
-        " #{l("#{s}.recurrence").pluralize(self.count_limit)}</b>."}" : ''
+    count_limit_info = self.count_limit ? " <b>#{self.count_limit}" \
+        " #{l("#{s}.recurrence").pluralize(self.count_limit)}</b>" : ''
 
     "#{l("#{s}.creation_modes.#{self.creation_mode}")}" \
       " #{l("#{s}.issue")}" \
-      " <b>#{l("#{s}.include_subtasks.true") if self.include_subtasks}</b>" \
+      "#{" <b>#{l("#{s}.include_subtasks.true")}</b>" if self.include_subtasks}" \
       " #{l("#{s}.every")}" \
       " <b>#{self.multiplier}" \
       " #{l("#{s}.mode_intervals.#{self.mode}").pluralize(self.multiplier)}</b>," \
-      "#{ref_description}" \
+      "#{" #{ref_description}" unless ref_description.empty?}" \
       " #{l("#{s}.based_on")}" \
       " #{l("#{s}.anchor_to_start.#{self.anchor_to_start}")}" \
       " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
-      "#{" <b>#{self.anchor_date}</b>" if self.anchor_date.present?}" \
+      "#{" <b>#{self.anchor_date}</b>" if self.anchor_date}" \
       "#{delay_info}" \
-      "#{"." if self.date_limit.nil? && self.count_limit.nil?}" \
-      " #{l("#{s}.until") if self.date_limit.present? || self.count_limit.present?}" \
-      " #{"<b>#{self.date_limit}</b>." if self.date_limit.present?}" \
-      "#{count_limit_info}".html_safe
+      "#{" #{l("#{s}.until")}" if self.date_limit || self.count_limit}" \
+      "#{" <b>#{self.date_limit}</b>" if self.date_limit}" \
+      "#{count_limit_info}.".html_safe
   end
 
   def limit_mode

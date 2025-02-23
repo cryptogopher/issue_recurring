@@ -180,10 +180,8 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
     assert_selector 'div#flash_notice', exact_text: t('issue_recurrences.destroy.success')
   end
 
-  def close_issue!(issue)
-    assert !issue.closed?
-    closed_on = issue.closed_on
-    status = IssueStatus.all.where(is_closed: true).first
+  def close_issue(issue)
+    status = IssueStatus.all.where(is_closed: true).sample
 
     visit edit_issue_path(issue)
     within 'form#issue-form' do
@@ -194,7 +192,6 @@ class IssueRecurringSystemTestCase < ApplicationSystemTestCase
 
     assert_equal status.id, issue.status_id
     assert_not_nil issue.closed_on
-    assert_not_equal closed_on, issue.closed_on
     assert issue.closed?
   end
 end

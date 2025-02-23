@@ -78,6 +78,39 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     end
   end
 
+  def test_show_issue_recurrence_with_limit_reached
+    predicted_label = t('issues.recurrences.index.predicted_recurrence')
+    @issue1.update!(random_dates)
+
+    case [:count, :date].sample
+    when :count
+      recurrence = create_recurrence(issue: @issue1) do
+        attrs = random_recurrence(@issue1, date_limit: nil)
+        attrs[:count_limit] = 1
+        fill_in_form(attrs)
+      end
+      renew_once!(recurrence)
+    when :date
+      recurrence = create_recurrence(issue: @issue1, count_limit: nil, date_limit: nil)
+      visit issue_path(@issue1)
+      first_predicted = find('td', text: /#{predicted_label}/)
+        .text[/[0-9]{4}-[0-9]{2}-[0-9]{2}/].to_date
+      update_recurrence(recurrence) { fill_in_form(date_limit: first_predicted) }
+      renew_once!(recurrence)
+
+      # Account for flexible schemes, which can open multiple times on same date
+      is_flexible = IssueRecurrence::FLEXIBLE_ANCHORS.include?(recurrence.anchor_mode)
+      travel_to(Date.current + 1.day) if is_flexible
+    end
+
+    visit issue_path(@issue1)
+    within_issue_recurrences_panel do
+      within find('tr', text: strip_tags(recurrence.to_s)) do
+        assert_text "#{predicted_label} -"
+      end
+    end
+  end
+
   def test_show_issue_shows_recurrence_form_only_when_manage_permission_granted
     logout_user
     log_user 'bob', 'foo'

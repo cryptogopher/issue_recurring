@@ -137,20 +137,13 @@ class IssueRecurringIntegrationTestCase < Redmine::IntegrationTest
 
   def close_issue(issue)
     status = IssueStatus.all.where(is_closed: true).sample
+
     put "/issues/#{issue.id}", params: {issue: {status_id: status.id}}
     issue.reload
+
     assert_equal status.id, issue.status_id
     assert_not_nil issue.closed_on
     assert issue.closed?
-  end
-
-  def close_issue!(issue)
-    assert !issue.closed?, 'Expected issue to be open'
-    close_issue(issue)
-  end
-
-  def close_issue_tree(root)
-    root.self_and_descendants.reverse_each { |issue| close_issue(issue) }
   end
 
   def destroy_issue(issue)

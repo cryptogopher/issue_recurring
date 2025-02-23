@@ -13,6 +13,15 @@ module IssueRecurringTestCase
     end
   end
 
+  def close_issue!(issue)
+    assert !issue.closed?, 'Expected issue to be open'
+    close_issue(issue)
+  end
+
+  def close_issue_tree(root)
+    root.self_and_descendants.reverse_each { |issue| close_issue(issue) }
+  end
+
   def prepare_renew_once(recurrence, &block)
     issue = recurrence.last_issue || recurrence.issue
     if [:first_issue_fixed, :last_issue_fixed].include?(recurrence.anchor_mode.to_sym)
@@ -100,6 +109,7 @@ module IssueRecurringTestCase
   #    * for mandatory attributes use it by sampling from that parameter;
   #    (currently only :creation_mode and :anchor_mode Array arguments are supported)
   #    * for optional attributes use it only if attribute is meant to be set
+  #    (to force optional attribute, set it after call to #random_recurrence)
   #  * if default parameter is set to nil, don't set it at all (applies only to
   #    optional attributes)
   #  `defaults` are not validated.
