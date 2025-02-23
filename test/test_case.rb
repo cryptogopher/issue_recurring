@@ -180,7 +180,7 @@ module IssueRecurringTestCase
     case rand(1..4)
     when 1
       conditions[:date_limit] = optional.fetch(:date_limit,
-        (conditions[:anchor_date] || Date.current) + rand([1..31, 32..3650].sample).days)
+        [conditions[:anchor_date], Date.current].compact.max + random_datespan)
     when 2
       conditions[:count_limit] = optional.fetch(:count_limit, rand([1..3, 4..1000].sample))
     else

@@ -34,9 +34,10 @@ es:
               due_mode_requires_date: 'recurrencias basadas en fecha de fin no pueden ser
                 creadas para peticiones sin fecha de fin'
             date_limit:
-              not_in_future: 'el límite de fecha para una recurrencia proporcionada por el
-                usuario debe ser futuro'
-              not_after_anchor_date: 'user provided limit date has to be later than the
+              #not_in_future: 'el límite de fecha para una recurrencia proporcionada por el
+              #  usuario debe ser futuro'
+              in_the_past: 'user provided recurrence limit date cannot be in the past'
+              before_anchor_date: 'user provided limit date cannot be earlier than the
                 fixed date the recurrence is based on'
   issue_recurrences_menu_caption: 'Recurrencias'
   # TODO: update translation, previous version saved for reference

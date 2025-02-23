@@ -34,7 +34,7 @@
     <%= f.select :limit_mode, limit_mode_options -%>
     <%= f.hidden_field :date_limit, value: '', id: nil -%>
     <%= f.date_field :date_limit, disabled: true,
-      min: (f.object.anchor_date || Date.current) + 1.day,
+      min: f.object.anchor_date || Date.current,
       value: f.object.date_limit || Date.current.next_month -%>
     <%= f.hidden_field :count_limit, value: '', id: nil -%>
     <%= f.number_field :count_limit, disabled: true, size: 3, min: 1, step: 1,

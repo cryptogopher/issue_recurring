@@ -40,8 +40,9 @@ bg:
               due_mode_requires_date: 'цикличност, базирана на крайна дата не може да бъде
                 създадена за задача без крайна дата'
             date_limit:
-              not_in_future: 'Крайната дата на цикличност трябва да бъде в бъдещето'
-              not_after_anchor_date: 'user provided limit date has to be later than the
+              #not_in_future: 'Крайната дата на цикличност трябва да бъде в бъдещето'
+              in_the_past: 'user provided recurrence limit date cannot be in the past'
+              before_anchor_date: 'user provided limit date cannot be earlier than the
                 fixed date the recurrence is based on'
   issue_recurrences_menu_caption: 'Цикличност'
   warning_renew: "*Warning!* Can't renew recurrence referring to issue #%{id}: %{errors}."
