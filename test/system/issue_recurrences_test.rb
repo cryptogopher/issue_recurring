@@ -84,11 +84,7 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
 
     case [:count, :date].sample
     when :count
-      recurrence = create_recurrence(issue: @issue1) do
-        attrs = random_recurrence(@issue1, date_limit: nil)
-        attrs[:count_limit] = 1
-        fill_in_form(attrs)
-      end
+      recurrence = create_recurrence(issue: @issue1, count_limit: 1)
       renew_once!(recurrence)
     when :date
       recurrence = create_recurrence(issue: @issue1, count_limit: nil, date_limit: nil)
@@ -121,7 +117,7 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
 
     configs.each_slice(2) do |issue_dates, recurrence_attrs|
       @issue1.update!(**issue_dates)
-      create_recurrence { fill_in_form(recurrence_attrs) }
+      create_recurrence(**recurrence_attrs)
     end
   end
 
@@ -304,7 +300,7 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
 
     [:first_issue_fixed, :last_issue_fixed].each do |am|
       ir = create_recurrence(creation_mode: :copy_first, anchor_mode: am,
-                             mode: :weekly, multiplier: 1, delay_multiplier: 0,
+                             mode: :weekly, multiplier: 1, delay_multiplier: nil,
                              count_limit: nil, date_limit: nil)
 
       set_renew_ahead.(6, :days)

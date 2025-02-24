@@ -106,29 +106,39 @@ module IssueRecurringTestCase
   # Create _valid_ random recurrence for `issue`, optionally setting parameters
   # from `defaults` in following way:
   #  * if default parameter is set to non-nil:
-  #    * for mandatory attributes use it by sampling from that parameter;
+  #    * for mandatory attributes: use it, eventually sampling from that parameter;
   #    (currently only :creation_mode and :anchor_mode Array arguments are supported)
-  #    * for optional attributes use it only if attribute is meant to be set
-  #    (to force optional attribute, set it after call to #random_recurrence)
-  #  * if default parameter is set to nil, don't set it at all (applies only to
-  #    optional attributes)
+  #    * for optional attributes: force mandatory attributes necessary to set
+  #    optionals and use them
+  #  * if default parameter is set to nil:
+  #    * for mandatory attributes: don't set, leaving it at model/UI default,
+  #    * for optional attributes: don't set if default exists and is neutral
+  #    (e.g. delay == 0), otherwise force mandatory attributes to hide optionals
+  #    force mandatory attributes to 
   #  `defaults` are not validated.
   #
-  # TODO: return auxiliary information regarding what conditions can be changed and
-  # in what way to obtain invalid recurrence - then test if UI disallows such
-  # settings
+  # TODO: return `invalid` value ranges per attribute which, when single
+  # attribute set to a value from that range, will result in invalid recurrence -
+  # then test if controller + UI disallow such settings (or does not accept/save
+  # optional attributes)
   def random_recurrence(issue, **defaults)
-    optional = defaults.extract!(:anchor_date, :delay_multiplier, :delay_mode,
-                                 :date_limit, :count_limit)
     conditions = {
       start_date: issue.start_date,
       due_date: issue.due_date,
       dates_derived: issue.dates_derived?
     }.merge(defaults)
 
-    creation_modes = conditions.fetch(:creation_mode,
-                                      IssueRecurrence.creation_modes.keys)
-    conditions[:creation_mode] = Array(creation_modes).sample.to_sym
+    creation_modes =
+      case conditions
+      in anchor_mode: :first_issue_fixed | :last_issue_fixed |
+          {include_subtasks: false, dates_derived: true}
+        IssueRecurrence.creation_modes.symbolize_keys.keys - [:reopen]
+      else
+        IssueRecurrence.creation_modes.symbolize_keys.keys
+      end
+    creation_modes &= Array(conditions[:creation_mode]) if conditions
+      .has_key?(:creation_mode)
+    conditions[:creation_mode] = creation_modes.sample || fail(':creation_mode blank')
 
     conditions[:include_subtasks] =
       case conditions
@@ -153,39 +163,49 @@ module IssueRecurringTestCase
 
     anchor_modes =
       case conditions
-      in start_date: nil, due_date: nil
-        [:last_issue_flexible, :last_issue_flexible_on_delay, :date_fixed_after_close]
-      in creation_mode: :copy_first | :copy_last
-        IssueRecurrence.anchor_modes.symbolize_keys.keys
       in creation_mode: :reopen
         [:last_issue_flexible, :last_issue_flexible_on_delay,
          :last_issue_fixed_after_close, :date_fixed_after_close]
+      else
+        IssueRecurrence.anchor_modes.symbolize_keys.keys
       end
-    anchor_modes.delete(:date_fixed_after_close) unless
-      optional.fetch(:anchor_date, true)
+    anchor_modes &= [
+      :last_issue_flexible, :last_issue_flexible_on_delay, :date_fixed_after_close
+    ] if conditions in start_date: nil, due_date: nil
+    anchor_modes -= [
+      :last_issue_flexible, :last_issue_flexible_on_delay
+    ] if conditions in {delay_multiplier: Integer} | {delay_mode: Symbol|String}
+    case conditions
+    in anchor_date: ::Date
+      anchor_modes &= [:date_fixed_after_close]
+    in anchor_date: nil
+      anchor_modes.delete(:date_fixed_after_close)
+    else
+    end
     anchor_modes &= Array(conditions[:anchor_mode]) if conditions.has_key?(:anchor_mode)
-    conditions[:anchor_mode] = anchor_modes.sample
+    conditions[:anchor_mode] = anchor_modes.sample || fail(':anchor_mode blank')
 
     if conditions[:anchor_mode] == :date_fixed_after_close
-      conditions[:anchor_date] = optional.fetch(:anchor_date, random_date)
+      conditions[:anchor_date] = conditions.fetch(:anchor_date, random_date)
     end
 
-    if [:last_issue_flexible, :last_issue_flexible_on_delay].exclude? conditions[:anchor_mode]
-      conditions[:delay_multiplier] = optional.fetch(:delay_multiplier,
-                                                     rand([0..0, 1..366].sample))
-      conditions[:delay_mode] = optional.fetch(:delay_mode,
-                                               IssueRecurrence.delay_modes.keys.sample.to_sym)
+    unless conditions in anchor_mode: :last_issue_flexible|:last_issue_flexible_on_delay
+      conditions[:delay_multiplier] = conditions
+        .fetch(:delay_multiplier, rand([0..0, 1..366].sample))
+      conditions[:delay_mode] = conditions
+        .fetch(:delay_mode, IssueRecurrence.delay_modes.keys.sample.to_sym)
     end
 
     case rand(1..4)
     when 1
-      conditions[:date_limit] = optional.fetch(:date_limit,
+      conditions[:date_limit] = conditions.fetch(:date_limit,
         [conditions[:anchor_date], Date.current].compact.max + random_datespan)
     when 2
-      conditions[:count_limit] = optional.fetch(:count_limit, rand([1..3, 4..1000].sample))
+      conditions[:count_limit] = conditions
+        .fetch(:count_limit, rand([1..3, 4..1000].sample))
     else
       # 50% times do not set the limit
-    end
+    end unless conditions in {date_limit: ::Date} | {count_limit: Integer}
 
     # Remove non-attributes and attributes with `nil` defaults
     conditions.except(:start_date, :due_date, :dates_derived).compact
