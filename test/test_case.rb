@@ -211,6 +211,73 @@ module IssueRecurringTestCase
     conditions.except(:start_date, :due_date, :dates_derived).compact
   end
 
+  def random_new(issue, **defaults)
+    # TODO: merge defaults into sets
+    sets = {
+      creation_mode: IssueRecurrence.creation_modes.symbolize_keys.keys,
+      include_subtasks: [false, true],
+      multiplier: 1..,
+      mode: IssueRecurrence.modes.symbolize_keys.keys,
+      anchor_to_start: [false, true],
+      anchor_mode: IssueRecurrence.anchor_modes.symbolize_keys.keys,
+      anchor_date: [nil, Date.new(0)..]
+      delay_multiplier: [nil, 0..],
+      delay_mode: IssueRecurrence.delay_modes.symbolize_keys.keys,
+      date_limit: [nil, Date.new(0)..],
+      count_limit: [nil, 1..]
+    }
+
+    result = {
+      start_date: issue.start_date,
+      due_date: issue.due_date,
+      dates_derived: issue.dates_derived?
+    }
+
+    rules = {
+      {start_date: ::Date, due_date: nil} => {anchor_to_start: [true]},
+      {start_date: nil, due_date: ::Date} => {anchor_to_start: [false]},
+      {start_date: nil, due_date: nil} => {
+        anchor_mode: [:last_issue_flexible, :last_issue_flexible_on_delay,
+                      :date_fixed_after_close]
+      },
+      {dates_derived: true, include_subtasks: false} => {
+        creation_mode: sets[:creation_mode] - [:reopen]
+      }
+
+      {dates_derived: true, creation_mode: :reopen} => {include_subtasks: [true]}
+      # TODO: add missing rules
+    }
+
+    unless rules.empty? do
+      candidates = []
+      rules.each do |condition, effect|
+        case
+        when rules in condition
+          # Apply and delete matching rule
+          effect.each { |attr, subset| sets[attr] &= subset if sets[attr] }
+          rules.delete(condition)
+        when (condition.keys - result.keys).empty?
+          # Delete non-matching rule dependent on already known values
+          rules.delete(condition)
+        when !(condition.keys & result.keys).empty?
+          # Save partially missing attributes for rule as next candidate
+          candidates << condition.keys - result.keys
+        end
+      end
+
+      # Sample additional attributes to satisfy at least one rule
+      new_attrs = candidates.sample || rules.keys.sample.keys
+      # Everything outside of `sets[attr]` should yield model/UI error
+      # Lack of items to choose from signifies too stringent defaults
+      new_attrs.each { |attr| result[attr] = sets.delete(attr).sample }
+    end
+
+    # Fill attributes for which no rules exist
+    sets.each { |attr| result[attr] = sets[attr].sample }
+    # Remove non-attributes and attributes with `nil` defaults
+    result.except(:start_date, :due_date, :dates_derived).compact
+  end
+
   class Date < ::Date
     def self.today
       # Due to its nature, Date.today may sometimes be equal to Date.yesterday/tomorrow.
