@@ -212,7 +212,16 @@ module IssueRecurringTestCase
   end
 
   def random_new(issue, **defaults)
-    # TODO: merge defaults into sets
+    # TODO:
+    # * make sure sets are intersectable
+    # * include defaults (merge into sets below rules definitions?; setting in
+    # result won't allow to detect mutually exclusive defaults)
+    # * randomize dates (date_limit, anchor_date) with random_date/random_datespan
+    # * set limits on randomized dates
+    # * randomize integers (multiplier/delay_multiplier/count_limit)
+    # * allow multiple nils in date/count_limit to set probability of non-nil
+    # * try to work on ranges to be able to provide invalid values later; also
+    # work on a sets copy
     sets = {
       creation_mode: IssueRecurrence.creation_modes.symbolize_keys.keys,
       include_subtasks: [false, true],
@@ -222,8 +231,8 @@ module IssueRecurringTestCase
       anchor_mode: IssueRecurrence.anchor_modes.symbolize_keys.keys,
       anchor_date: [nil, Date.new(0)..]
       delay_multiplier: [nil, 0..],
-      delay_mode: IssueRecurrence.delay_modes.symbolize_keys.keys,
-      date_limit: [nil, Date.new(0)..],
+      delay_mode: [nil, **IssueRecurrence.delay_modes.symbolize_keys.keys],
+      date_limit: [nil, Date.current..],
       count_limit: [nil, 1..]
     }
 
@@ -234,18 +243,95 @@ module IssueRecurringTestCase
     }
 
     rules = {
-      {start_date: ::Date, due_date: nil} => {anchor_to_start: [true]},
-      {start_date: nil, due_date: ::Date} => {anchor_to_start: [false]},
-      {start_date: nil, due_date: nil} => {
-        anchor_mode: [:last_issue_flexible, :last_issue_flexible_on_delay,
-                      :date_fixed_after_close]
+      {start_date: ::Date, due_date: nil} => {
+        only: {anchor_to_start: [true]}
       },
-      {dates_derived: true, include_subtasks: false} => {
-        creation_mode: sets[:creation_mode] - [:reopen]
-      }
+      {start_date: nil, due_date: ::Date} => {
+        only: {anchor_to_start: [false]}
+      },
+      {start_date: nil, due_date: nil} => {
+        only: {anchor_mode: [:last_issue_flexible, :last_issue_flexible_on_delay,
+                             :date_fixed_after_close]}
+      },
 
-      {dates_derived: true, creation_mode: :reopen} => {include_subtasks: [true]}
-      # TODO: add missing rules
+      {dates_derived: true, include_subtasks: false} => {
+        except: {creation_mode: [:reopen]}
+      },
+      {dates_derived: true, creation_mode: :reopen} => {
+        only: {include_subtasks: [true]}
+      },
+
+      {creation_mode: :reopen} => {
+        except: {anchor_mode: [:first_issue_fixed, :last_issue_fixed]}
+      },
+
+      {anchor_mode: :first_issue_fixed} => {
+        except: {
+          creation_mode: [:reopen],
+          delay_multiplier: [nil],
+          delay_mode: [nil]
+        },
+        only: {anchor_date: [nil]}
+      },
+      {anchor_mode: :last_issue_fixed} => {
+        except: {
+          creation_mode: [:reopen],
+          delay_multiplier: [nil],
+          delay_mode: [nil]
+        },
+        only: {anchor_date: [nil]}
+      },
+      {anchor_mode: :last_issue_flexible} => {
+        only: {
+          delay_multiplier: [nil],
+          delay_mode: [nil],
+          anchor_date: [nil]
+        }
+      },
+      {anchor_mode: :last_issue_flexible_on_delay} => {
+        only: {
+          delay_multiplier: [nil],
+          delay_mode: [nil],
+          anchor_date: [nil]
+        }
+      },
+      {anchor_mode: :last_issue_fixed_after_close} => {
+        except: {
+          delay_multiplier: [nil],
+          delay_mode: [nil]
+        },
+        only: {anchor_date: [nil]}
+      },
+      {anchor_mode: :date_fixed_after_close} => {
+        except: {
+          delay_multiplier: [nil],
+          delay_mode: [nil],
+          anchor_date: [nil]
+        }
+      },
+
+      {anchor_date: ::Date} => {
+        only: {anchor_mode: [:date_fixed_after_close]},
+        # FIXME: Replacing could add non-nil when only nil allowed
+        replace: {date_limit: [nil, ->{ result[:anchor_date].. }]}
+      },
+      {anchor_date: nil} => {
+        except: {anchor_mode: [:date_fixed_after_close]}
+      },
+
+      {delay_multiplier: Integer} => {
+        except: {anchor_mode: [:last_issue_flexible, :last_issue_flexible_on_delay]}
+      },
+      {delay_mode: Symbol} => {
+        except: {anchor_mode: [:last_issue_flexible :last_issue_flexible_on_delay]}
+      },
+
+      {date_limit: ::Date} => {
+        only: {count_limit: [nil]}
+      },
+      {count_limit: Integer} => {
+        only: {date_limit: [nil]}
+      },
     }
 
     unless rules.empty? do
@@ -254,26 +340,30 @@ module IssueRecurringTestCase
         case
         when rules in condition
           # Apply and delete matching rule
+          # NOTE: change to subtract?; or divide subsets into
+          # :only (intersect)/:except (subtract)/:replace
           effect.each { |attr, subset| sets[attr] &= subset if sets[attr] }
           rules.delete(condition)
         when (condition.keys - result.keys).empty?
           # Delete non-matching rule dependent on already known values
           rules.delete(condition)
         when !(condition.keys & result.keys).empty?
+          # NOTE: should work regardless of order
           # Save partially missing attributes for rule as next candidate
-          candidates << condition.keys - result.keys
+          #candidates << condition.keys - result.keys
         end
       end
 
       # Sample additional attributes to satisfy at least one rule
-      new_attrs = candidates.sample || rules.keys.sample.keys
+      #new_attrs = candidates.sample || rules.keys.sample.keys
+      new_attrs = rules.keys.sample.keys
       # Everything outside of `sets[attr]` should yield model/UI error
       # Lack of items to choose from signifies too stringent defaults
       new_attrs.each { |attr| result[attr] = sets.delete(attr).sample }
     end
 
     # Fill attributes for which no rules exist
-    sets.each { |attr| result[attr] = sets[attr].sample }
+    sets.each { |attr| result[attr] = sets[attr].empty? ? fail : sets[attr].sample }
     # Remove non-attributes and attributes with `nil` defaults
     result.except(:start_date, :due_date, :dates_derived).compact
   end
