@@ -213,19 +213,54 @@ module IssueRecurringTestCase
 
   def random_new(issue, **defaults)
     # TODO:
-    # * make sure sets are intersectable
-    # * include defaults (merge into sets below rules definitions?; setting in
+    # * include defaults (Array() merge into sets below rules definitions?; setting in
     # result won't allow to detect mutually exclusive defaults)
     # * randomize dates (date_limit, anchor_date) with random_date/random_datespan
-    # * set limits on randomized dates
     # * randomize integers (multiplier/delay_multiplier/count_limit)
     # * allow multiple nils in date/count_limit to set probability of non-nil
     # * try to work on ranges to be able to provide invalid values later; also
     # work on a sets copy
+    #intersect = ->(pair) {
+    #  case pair
+    #  in nil, nil
+    #    [nil]
+    #  in [nil, *] | [*, nil]
+    #    []
+    #  in Range => a, Range => b
+    #    if a.overlap?(b)
+    #      [Range.new([a.begin, b.begin].compact.min, [e.end, b.end].compact.max)]
+    #    else
+    #      []
+    #    end
+    #  in Range => a, b
+    #    a.cover?(b) ? [b] : []
+    #  in a, Range => b
+    #    b.cover?(a) ? [a] : []
+    #  in a, b
+    #    a == b ? [a] : []
+    #  end
+    #}
+    intersect = ->(pair) {
+      case pair
+      in nil, nil
+        [nil]
+      in Range => a, Range => b if a.overlap?(b)
+        [Range.new([a.begin, b.begin].compact.min, [a.end, b.end].compact.max)]
+      in Range => a, b if a.cover?(b)
+        [b]
+      in a, Range => b if b.cover?(a)
+        [a]
+      in a, b if a == b
+        [a]
+      else
+        []
+      end
+    }
+
     sets = {
       creation_mode: IssueRecurrence.creation_modes.symbolize_keys.keys,
       include_subtasks: [false, true],
-      multiplier: 1..,
+      multiplier: [1..],
       mode: IssueRecurrence.modes.symbolize_keys.keys,
       anchor_to_start: [false, true],
       anchor_mode: IssueRecurrence.anchor_modes.symbolize_keys.keys,
@@ -311,9 +346,10 @@ module IssueRecurringTestCase
       },
 
       {anchor_date: ::Date} => {
-        only: {anchor_mode: [:date_fixed_after_close]},
-        # FIXME: Replacing could add non-nil when only nil allowed
-        replace: {date_limit: [nil, ->{ result[:anchor_date].. }]}
+        only: {
+          anchor_mode: [:date_fixed_after_close],
+          date_limit: [nil, ->{ result[:anchor_date].. }]
+        }
       },
       {anchor_date: nil} => {
         except: {anchor_mode: [:date_fixed_after_close]}
@@ -336,18 +372,25 @@ module IssueRecurringTestCase
 
     unless rules.empty? do
       candidates = []
-      rules.each do |condition, effect|
+      rules.each do |condition, actions|
         case
         when rules in condition
           # Apply and delete matching rule
-          # NOTE: change to subtract?; or divide subsets into
-          # :only (intersect)/:except (subtract)/:replace
-          effect.each { |attr, subset| sets[attr] &= subset if sets[attr] }
+          actions.each do |action, effect|
+            effect.each do |attr, subset|
+              if action == :only
+                sets[attr] = sets[attr].product(subset)
+                  .reduce([]) { |sum, pair| sum + intersect(pair) }
+              else
+                sets[attr] -= subset
+              end
+            end
+          end
           rules.delete(condition)
         when (condition.keys - result.keys).empty?
           # Delete non-matching rule dependent on already known values
           rules.delete(condition)
-        when !(condition.keys & result.keys).empty?
+        #when !(condition.keys & result.keys).empty?
           # NOTE: should work regardless of order
           # Save partially missing attributes for rule as next candidate
           #candidates << condition.keys - result.keys
