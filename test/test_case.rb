@@ -271,6 +271,30 @@ module IssueRecurringTestCase
       count_limit: [nil, 1..]
     }
 
+    range_offsets = {
+      multiplier: rand([0..2, 3..9, 10..99, 100..999].sample),
+      anchor_date: random_datespan,
+      delay_multiplier: rand([0..0, 1..366].sample),
+      date_limit: random_datespan,
+      count_limit: rand([0..2, 3..999].sample)
+    }
+
+    sample = ->(attr) {
+      fail if sets[attr].empty?
+      case value = sets[attr].sample
+      in Range if value.begin && value.end
+        rand(value)
+      in Range if value.begin&.equal? Date.new(0)
+        Date.current + range_offsets[attr] * [-1, 1].sample
+      in Range if value.begin
+        value + range_offset[attr]
+      in Range if value.end
+        value - range_offset[attr]
+      else
+        value
+      end
+    }
+
     result = {
       start_date: issue.start_date,
       due_date: issue.due_date,
@@ -402,11 +426,15 @@ module IssueRecurringTestCase
       new_attrs = rules.keys.sample.keys
       # Everything outside of `sets[attr]` should yield model/UI error
       # Lack of items to choose from signifies too stringent defaults
-      new_attrs.each { |attr| result[attr] = sets.delete(attr).sample }
+      new_attrs.each do |attr|
+        continue unless sets.has_key?(attr)
+        result[attr] = sample(attr)
+        sets.delete(attr)
+      end
     end
 
     # Fill attributes for which no rules exist
-    sets.each { |attr| result[attr] = sets[attr].empty? ? fail : sets[attr].sample }
+    sets.each { |attr| result[attr] = sample(attr) }
     # Remove non-attributes and attributes with `nil` defaults
     result.except(:start_date, :due_date, :dates_derived).compact
   end
