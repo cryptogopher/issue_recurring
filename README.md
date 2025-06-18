@@ -55,8 +55,8 @@ The most notable features of this plugin include:
 
    |Redmine |Compatible plugin versions|Tested with                                                                                                        |
    |--------|--------------------------|-------------------------------------------------------------------------------------------------------------------|
-   |5.0     |1.7 -                     |Redmine 5.0.2, Ruby 2.7.6p219, Rails 6.1.6                                                                         |
-   |4.2     |1.7 -                     |Redmine 4.2.7, Ruby 2.7.6p219, Rails 5.2.8                                                                         |
+   |5.0     |1.7.1 -                   |Redmine 5.0.2, Ruby 2.7.6p219, Rails 6.1.6                                                                         |
+   |4.2     |1.7.1 -                   |Redmine 4.2.7, Ruby 2.7.6p219, Rails 5.2.8                                                                         |
    |4.0     |1.2 - 1.6                 |Redmine 4.0.4, Ruby 2.4.6p354, Rails 5.2.3                                                                         |
    |3.4     |1.0 - 1.6                 |1.5 - 1.6: Redmine 3.4.5, Ruby 2.4.7p357, Rails 4.2.11.1<br/>1.0 - 1.4: Redmine 3.4.5, Ruby 2.3.8p459, Rails 4.2.11|
 
@@ -157,7 +157,7 @@ Upgrade steps should work for downgrade also, given that you do them in reverse 
 
 Database downgrade (```VERSION``` number ```<NNN>``` is a number taken from migration file name in _issue_recurring/db/migrate_):
    ```
-   ca /var/lib/redmine
+   cd /var/lib/redmine
    RAILS_ENV=production bundle exec rake redmine:plugins:migrate VERSION=<NNN> NAME=issue_recurring
    ```
 Keep in mind though, that downgrading database might cause some information to be lost irreversibly. This is because some downgrades may require deletion of tables/columns that were introduced in higher version. Also structure of the data may not be compatible between versions, so the automatic conversion can be lossy.
