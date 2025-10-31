@@ -51,6 +51,8 @@ bg:
   warning_author: "*Warning!* Nonexistent user %{login} can't be set as the author of newly
     recurred issue #%{id}. Keeping author from reference issue. Please select existing user in
     plugin settings for future recurrences."
+  warning_copy_relation: "*Warning!* Couldn't copy relation %{relation} to issue #%{id}:
+    %{errors}."
   settings:
     issue_recurrences:
       author: 'Авторът на новата задача да бъде'
@@ -68,6 +70,9 @@ bg:
       copy_recurrences: 'Копиране на цикличностите при копиране на задачата'
       copy_recurrences_hint: 'прилага се независимо дали задачите се копират директно или
         като резултат от копиране на проект'
+      copy_relation_types: 'Копиране на връзките при създаване на повторения'
+      copy_relation_types_hint: 'изберете типовете връзки, които да се копират от отправната
+        задача към всяко повторение'
       renew_ahead: 'Renew fixed recurrences ahead for'
       renew_ahead_hint: 'ensures that the last created recurrence is at least that far
         into the future (recurrences based on close date are not affected)'

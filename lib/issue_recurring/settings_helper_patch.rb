@@ -18,6 +18,24 @@ module IssueRecurring
         modes.map { |am| [t("issues.recurrences.form.delay_modes.#{am}"), am] }, default
       )
     end
+
+    def relation_copy_options(selected)
+      selected = Array(selected).map(&:to_s)
+      types = IssueRelation::TYPES.keys
+      types = types.sort_by { |type| l(IssueRelation::TYPES[type][:name]) }
+      types.map do |type|
+        label = l(IssueRelation::TYPES[type][:name])
+        content_tag(:label, class: 'block') do
+          safe_join([
+            check_box_tag('settings[copy_relation_types][]', type,
+                          selected.include?(type),
+                          id: "settings_copy_relation_types_#{type}"),
+            ' ',
+            h(label)
+          ])
+        end
+      end.join.html_safe
+    end
   end
 end
 

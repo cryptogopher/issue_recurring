@@ -25,6 +25,10 @@ module IssueRecurring
       settings[:copy_recurrences] =
         params[:settings][:copy_recurrences] == 'true' ? true : false
 
+      relation_types = Array(params[:settings][:copy_relation_types]).map(&:to_s)
+      settings[:copy_relation_types] =
+        relation_types & IssueRelation::TYPES.keys
+
       settings[:ahead_multiplier] = params[:settings][:ahead_multiplier].to_i.abs
       ahead_mode = params[:settings][:ahead_mode].to_sym
       settings[:ahead_mode] = IssueRecurrence::AHEAD_MODES.include?(ahead_mode) ?

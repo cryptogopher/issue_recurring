@@ -18,6 +18,11 @@
 <em class="info"><%= t('.copy_recurrences_hint') %></em>
 </p>
 <p>
+<%= label_tag :settings_copy_relation_types, t('.copy_relation_types') %>
+<%= relation_copy_options(@settings[:copy_relation_types]) %>
+<em class="info"><%= t('.copy_relation_types_hint') %></em>
+</p>
+<p>
 <%= label_tag :settings_renew_ahead, t('.renew_ahead') %>
 <%= number_field_tag 'settings[ahead_multiplier]', @settings[:ahead_multiplier], min: 0,
   step: 1, size: 3 %>
