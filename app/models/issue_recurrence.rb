@@ -422,6 +422,9 @@ class IssueRecurrence < ActiveRecord::Base
         log(:warning_author, id: new_issue.id, login: author_login)
       end
 
+      relation_types = Array(Setting.plugin_issue_recurring[:copy_relation_types])
+      copy_issue_relations(ref_issue, new_issue, relation_types)
+
       if self.include_subtasks
         target_label = self.anchor_to_start ? :start : :due
         new_issue.children.each do |child|
@@ -670,8 +673,72 @@ class IssueRecurrence < ActiveRecord::Base
 
   private
 
+  def copy_issue_relations(ref_issue, new_issue, relation_types)
+    relation_types = Array(relation_types).map(&:to_s)
+
+    (new_issue.relations_from.to_a + new_issue.relations_to.to_a).uniq.each do |relation|
+      type_for_issue = relation_type_for_issue(relation, new_issue)
+      next if relation_types.include?(type_for_issue)
+
+      relation.destroy
+    end
+
+    return if relation_types.blank?
+
+    ref_issue.relations.each do |relation|
+      type_for_issue = relation_type_for_issue(relation, ref_issue)
+      next unless relation_types.include?(type_for_issue)
+
+      issue_from = relation.issue_from == ref_issue ? new_issue : relation.issue_from
+      issue_to = relation.issue_to == ref_issue ? new_issue : relation.issue_to
+
+      next if issue_from == issue_to
+
+      existing = IssueRelation
+                  .where(relation_type: relation.relation_type)
+                  .where(
+                    "(issue_from_id = :from_id AND issue_to_id = :to_id) OR " \
+                    "(issue_from_id = :to_id AND issue_to_id = :from_id)",
+                    from_id: issue_from.id,
+                    to_id: issue_to.id
+                  )
+                  .exists?
+      next if existing
+
+      new_relation = IssueRelation.new(relation_type: relation.relation_type,
+                                       delay: relation.delay)
+      new_relation.issue_from = issue_from
+      new_relation.issue_to = issue_to
+
+      next if new_relation.save
+
+      log(:warning_copy_relation,
+          id: new_issue.id,
+          relation: relation.relation_type,
+          errors: new_relation.errors.full_messages.to_sentence)
+    end
+  end
+
   def log(label, **args)
     @journal_notes << "#{l(label, args)}\r\n"
+  end
+
+  INVERSE_RELATION_TYPES = {
+    'relates' => 'relates',
+    'duplicates' => 'duplicated',
+    'duplicated' => 'duplicates',
+    'blocks' => 'blocked',
+    'blocked' => 'blocks',
+    'precedes' => 'follows',
+    'follows' => 'precedes',
+    'copied_to' => 'copied_from',
+    'copied_from' => 'copied_to'
+  }.freeze
+
+  def relation_type_for_issue(relation, issue)
+    return relation.relation_type if relation.issue_from_id == issue.id
+
+    INVERSE_RELATION_TYPES.fetch(relation.relation_type, relation.relation_type)
   end
 
   class Date < ::Date

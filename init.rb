@@ -46,7 +46,7 @@ Redmine::Plugin.register :issue_recurring do
   name 'Issue recurring plugin'
   author 'cryptogopher'
   description 'Schedule Redmine issue recurrence based on multiple conditions'
-  version '1.7'
+  version '1.7.2'
   url 'https://github.com/cryptogopher/issue_recurring'
   author_url 'https://github.com/cryptogopher'
 
@@ -68,6 +68,7 @@ Redmine::Plugin.register :issue_recurring do
     keep_assignee: false,
     journal_mode: :never,
     copy_recurrences: false,
+    copy_relation_types: [],
     ahead_multiplier: 0,
     ahead_mode: :days
   }, partial: 'settings/issue_recurrences'

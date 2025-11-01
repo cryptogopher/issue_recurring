@@ -1,5 +1,6 @@
 group :development do
-  gem 'web-console'
+  # web-console is not required for plugin tests
+  # gem 'web-console', '~> 4.1.0'
 end
 
 group :development, :test do

@@ -14,6 +14,13 @@ Improvements:
 Fixes:
 * email notifications not delivered after recurrence renewal by cron task ([#42](https://it.michalczyk.pro/issues/42))
 * handling of recurrences based on fixed date when limit is set could generate errors ([#48](https://it.michalczyk.pro/issues/48))
+* removed obsolete `base.js.erb` layout that interfered with Redmine admin pages
+
+## 1.7.2 [2025-10-31]
+
+Improvements:
+* added plugin setting to copy selected issue relations when creating recurrences
+* prevented relation copying from creating self-referential "copied to" links
 
 ## 1.7 [2022-10-21]
 

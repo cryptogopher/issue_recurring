@@ -2506,6 +2506,115 @@ class IssueRecurrencesTest < IssueRecurringIntegrationTestCase
     assert_equal rel2.issue_to, r2
   end
 
+  def test_renew_copies_selected_relations
+    logout_user
+    log_user 'admin', 'foo'
+    update_plugin_settings(copy_relation_types: ['relates'])
+    logout_user
+    log_user 'alice', 'foo'
+
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    IssueRelation.create!(issue_from: @issue1, issue_to: @issue2, relation_type: 'relates')
+
+    create_recurrence
+    travel_to(@issue1.start_date)
+    new_issue = renew_all(1)
+
+    relation = IssueRelation.find_by(issue_from: new_issue, issue_to: @issue2,
+                                     relation_type: 'relates')
+    relation ||= IssueRelation.find_by(issue_from: @issue2, issue_to: new_issue,
+                                       relation_type: 'relates')
+    assert relation
+  ensure
+    logout_user
+    log_user 'admin', 'foo'
+    update_plugin_settings(copy_relation_types: [])
+    logout_user
+    log_user 'alice', 'foo'
+  end
+
+  def test_renew_copies_only_selected_blocked_relations
+    logout_user
+    log_user 'admin', 'foo'
+    update_plugin_settings(copy_relation_types: ['blocked'])
+    logout_user
+    log_user 'alice', 'foo'
+
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    IssueRelation.create!(issue_from: @issue3, issue_to: @issue1, relation_type: 'blocks')
+
+    create_recurrence
+    travel_to(@issue1.start_date)
+    new_issue = renew_all(1)
+
+    relation = IssueRelation.find_by(issue_from: @issue3, issue_to: new_issue,
+                                     relation_type: 'blocks')
+    assert relation
+
+    refute IssueRelation.exists?(issue_from: new_issue, relation_type: 'blocks')
+  ensure
+    logout_user
+    log_user 'admin', 'foo'
+    update_plugin_settings(copy_relation_types: [])
+    logout_user
+    log_user 'alice', 'foo'
+  end
+
+  def test_renew_copies_only_selected_blocks_relations
+    logout_user
+    log_user 'admin', 'foo'
+    update_plugin_settings(copy_relation_types: ['blocks'])
+    logout_user
+    log_user 'alice', 'foo'
+
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    IssueRelation.create!(issue_from: @issue1, issue_to: @issue3, relation_type: 'blocks')
+
+    create_recurrence
+    travel_to(@issue1.start_date)
+    new_issue = renew_all(1)
+
+    relation = IssueRelation.find_by(issue_from: new_issue, issue_to: @issue3,
+                                     relation_type: 'blocks')
+    assert relation
+
+    refute IssueRelation.exists?(issue_to: new_issue, relation_type: 'blocks')
+  ensure
+    logout_user
+    log_user 'admin', 'foo'
+    update_plugin_settings(copy_relation_types: [])
+    logout_user
+    log_user 'alice', 'foo'
+  end
+
+  def test_renew_copied_to_relations_skip_self_reference
+    logout_user
+    log_user 'admin', 'foo'
+    update_plugin_settings(copy_relation_types: ['copied_to'])
+    logout_user
+    log_user 'alice', 'foo'
+
+    @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
+    IssueRelation.create!(issue_from: @issue1, issue_to: @issue3, relation_type: 'copied_to')
+
+    create_recurrence
+    travel_to(@issue1.start_date)
+    new_issue = renew_all(1)
+
+    assert_nil IssueRelation.find_by(issue_from: new_issue, issue_to: new_issue,
+                                     relation_type: 'copied_to')
+
+    relation = IssueRelation.find_by(issue_from: new_issue, issue_to: @issue3,
+                                     relation_type: 'copied_to')
+    assert relation
+  ensure
+    logout_user
+    log_user 'admin', 'foo'
+    update_plugin_settings(copy_relation_types: [])
+    logout_user
+    log_user 'alice', 'foo'
+  end
+
   def test_renew_creation_mode_reopen
     @issue1.update!(start_date: Date.new(2018,9,15), due_date: Date.new(2018,9,20))
 

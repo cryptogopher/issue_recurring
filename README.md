@@ -40,6 +40,7 @@ The most notable features of this plugin include:
 * handling recurrence attributes, including keeping _parent_, _custom fields_, _priority_ and resetting _done ratio_, _time entries_ and _status_,
 * ability to recur with or without subtasks,
 * ability to have recurrence schemes copied regardless of whether individual issues or whole projects are copied,
+* ability to copy selected issue relations to new recurrences,
 * ability to limit recurrence schedule by final date or recurrence count,
 * ability to create recurrences ahead in the future,
 * showing last recurrence and dates of next/predicted recurrences,
@@ -53,12 +54,12 @@ The most notable features of this plugin include:
 
 1. Check prerequisites. To use this plugin you need to have [Redmine](https://www.redmine.org) installed. Check that your Redmine version is compatible with plugin. Only [stable Readmine releases](https://redmine.org/projects/redmine/wiki/Download#Stable-releases) are supported by new releases. Currently supported are following versions:
 
-   |Redmine |Compatible plugin versions|Tested with                                                                                                        |
-   |--------|--------------------------|-------------------------------------------------------------------------------------------------------------------|
-   |5.0     |1.7 -                     |Redmine 5.0.2, Ruby 2.7.6p219, Rails 6.1.6                                                                         |
-   |4.2     |1.7 -                     |Redmine 4.2.7, Ruby 2.7.6p219, Rails 5.2.8                                                                         |
-   |4.0     |1.2 - 1.6                 |Redmine 4.0.4, Ruby 2.4.6p354, Rails 5.2.3                                                                         |
-   |3.4     |1.0 - 1.6                 |1.5 - 1.6: Redmine 3.4.5, Ruby 2.4.7p357, Rails 4.2.11.1<br/>1.0 - 1.4: Redmine 3.4.5, Ruby 2.3.8p459, Rails 4.2.11|
+   |Redmine | Compatible plugin versions |Tested with                                                                                                        |
+   |--------|----------------------------|-------------------------------------------------------------------------------------------------------------------|
+   |5.0     | 1.7 -                      |Redmine 5.0.2, Ruby 2.7.6p219, Rails 6.1.6                                                                         |
+   |4.2     | 1.7 -                      |Redmine 4.2.7, Ruby 2.7.6p219, Rails 5.2.8                                                                         |
+   |4.0     | 1.2 - 1.6                  |Redmine 4.0.4, Ruby 2.4.6p354, Rails 5.2.3                                                                         |
+   |3.4     | 1.0 - 1.6                  |1.5 - 1.6: Redmine 3.4.5, Ruby 2.4.7p357, Rails 4.2.11.1<br/>1.0 - 1.4: Redmine 3.4.5, Ruby 2.3.8p459, Rails 4.2.11|
 
    You may try and find this plugin working on other versions too. The best is to
    run test suite and if it passes without errors, everything will most
@@ -157,7 +158,7 @@ Upgrade steps should work for downgrade also, given that you do them in reverse 
 
 Database downgrade (```VERSION``` number ```<NNN>``` is a number taken from migration file name in _issue_recurring/db/migrate_):
    ```
-   ca /var/lib/redmine
+   cd /var/lib/redmine
    RAILS_ENV=production bundle exec rake redmine:plugins:migrate VERSION=<NNN> NAME=issue_recurring
    ```
 Keep in mind though, that downgrading database might cause some information to be lost irreversibly. This is because some downgrades may require deletion of tables/columns that were introduced in higher version. Also structure of the data may not be compatible between versions, so the automatic conversion can be lossy.
