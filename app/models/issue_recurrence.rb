@@ -4,13 +4,13 @@ class IssueRecurrence < ActiveRecord::Base
   belongs_to :issue, validate: true
   belongs_to :last_issue, class_name: 'Issue', validate: true
 
-  enum creation_mode: {
+  enum :creation_mode, {
     copy_first: 0,
     copy_last: 1,
     reopen: 2
   }
 
-  enum anchor_mode: {
+  enum :anchor_mode, {
     first_issue_fixed: 0,
     last_issue_fixed: 1,
     last_issue_flexible: 2,
@@ -20,7 +20,7 @@ class IssueRecurrence < ActiveRecord::Base
   }
   FLEXIBLE_ANCHORS = anchor_modes.keys.select { |m| m.include?('_flexible') }
 
-  enum mode: {
+  enum :mode, {
     daily: 0,
     daily_wday: 1,
     weekly: 100,
@@ -35,7 +35,7 @@ class IssueRecurrence < ActiveRecord::Base
   WDAY_MODES = modes.keys.select { |m| m.include?('_wday') }
   MONTHLY_MODES = modes.keys.select { |m| m.include?('monthly_') }
 
-  enum delay_mode: {
+  enum :delay_mode, {
     days: 0,
     weeks: 1,
     months: 2
@@ -156,7 +156,7 @@ class IssueRecurrence < ActiveRecord::Base
     *, ref_dates = self.reference_dates(assume_closed_at = Date.current)
     ref_description = ''
     if ref_dates.nil? || FLEXIBLE_ANCHORS.include?(self.anchor_mode)
-      ref_description = " #{l("#{s}.mode_descriptions.#{self.mode}")}"
+      ref_description = " #{I18n.t("#{s}.mode_descriptions.#{self.mode}")}"
     elsif MONTHLY_MODES.include?(self.mode)
       label = self.anchor_to_start ? :start : :due
       date = ref_dates[label]
@@ -171,32 +171,32 @@ class IssueRecurrence < ActiveRecord::Base
           wdays_from_bom: (working_days(date.beginning_of_month, date) + 1).ordinalize,
           wdays_to_eom: (working_days(date, date.end_of_month) + 1).ordinalize
         }
-        ref_description = " #{l("#{s}.mode_modifiers.#{self.mode}", values)}"
+        ref_description = " #{I18n.t("#{s}.mode_modifiers.#{self.mode}", **values)}"
       end
     end
 
     delay_info = self.delay_multiplier > 0 ?
-      "#{l("#{s}.delayed_by")} <b>#{self.delay_multiplier}" \
-      " #{l("#{s}.delay_intervals.#{self.delay_mode}").pluralize(self.delay_multiplier)}" \
+      "#{I18n.t("#{s}.delayed_by")} <b>#{self.delay_multiplier}" \
+      " #{I18n.t("#{s}.delay_intervals.#{self.delay_mode}").pluralize(self.delay_multiplier)}" \
       "</b>" : ''
 
     count_limit_info = self.count_limit.present? ? " #{"<b>#{self.count_limit}" \
-        " #{l("#{s}.recurrence").pluralize(self.count_limit)}</b>."}" : ''
+        " #{I18n.t("#{s}.recurrence").pluralize(self.count_limit)}</b>."}" : ''
 
-    "#{l("#{s}.creation_modes.#{self.creation_mode}")}" \
-      " #{l("#{s}.issue")}" \
-      " <b>#{l("#{s}.include_subtasks.true") if self.include_subtasks}</b>" \
-      " #{l("#{s}.every")}" \
+    "#{I18n.t("#{s}.creation_modes.#{self.creation_mode}")}" \
+      " #{I18n.t("#{s}.issue")}" \
+      " <b>#{I18n.t("#{s}.include_subtasks.true") if self.include_subtasks}</b>" \
+      " #{I18n.t("#{s}.every")}" \
       " <b>#{self.multiplier}" \
-      " #{l("#{s}.mode_intervals.#{self.mode}").pluralize(self.multiplier)}</b>," \
+      " #{I18n.t("#{s}.mode_intervals.#{self.mode}").pluralize(self.multiplier)}</b>," \
       "#{ref_description}" \
-      " #{l("#{s}.based_on")}" \
-      " #{l("#{s}.anchor_to_start.#{self.anchor_to_start}")}" \
-      " #{l("#{s}.anchor_modes.#{self.anchor_mode}", ref_dates)}" \
+      " #{I18n.t("#{s}.based_on")}" \
+      " #{I18n.t("#{s}.anchor_to_start.#{self.anchor_to_start}")}" \
+      " #{I18n.t("#{s}.anchor_modes.#{self.anchor_mode}", **(ref_dates || {}))}" \
       "#{" <b>#{self.anchor_date}</b>" if self.anchor_date.present?}" \
       "#{delay_info}" \
       "#{"." if self.date_limit.nil? && self.count_limit.nil?}" \
-      " #{l("#{s}.until") if self.date_limit.present? || self.count_limit.present?}" \
+      " #{I18n.t("#{s}.until") if self.date_limit.present? || self.count_limit.present?}" \
       " #{"<b>#{self.date_limit}</b>." if self.date_limit.present?}" \
       "#{count_limit_info}".html_safe
   end
@@ -671,7 +671,7 @@ class IssueRecurrence < ActiveRecord::Base
   private
 
   def log(label, **args)
-    @journal_notes << "#{l(label, args)}\r\n"
+    @journal_notes << "#{I18n.t(label, **args)}\r\n"
   end
 
   class Date < ::Date
