@@ -220,17 +220,19 @@ class IssueRecurrence < ActiveRecord::Base
 
   # TODO: make methods private as appropriate
 
-  # Advance 'dates' according to recurrence mode and adjustment (+/- # of periods).
-  # Return advanced 'dates' or nil if recurrence limit reached.
+  # Return:
+  #  * nil if recurrence limit reached,
+  #  * `dates` advanced by (non-negative) `adj` # of recurrence periods.
   # TODO: change internals so that adj == -1 is never used and [adj -1 -> adj 0].
   # Current choice is not intuitive.
   def advance(adj=0, **dates)
-    adj_count = self.count + adj
-    adj_count = [self.count, adj_count].min if self.date_fixed_after_close?
-    return nil if self.count_limit.present? && adj_count >= self.count_limit
+    effective_count = self.count + adj
+    effective_count = [self.count, effective_count].min if self.date_fixed_after_close?
+    return nil if self.count_limit && effective_count >= self.count_limit
 
     shift = if self.first_issue_fixed? || self.date_fixed_after_close?
               self.multiplier*(self.count + 1 + adj)
+              # FIXME: for shift == 0 should return original dates
             else
               self.multiplier
             end
@@ -319,12 +321,13 @@ class IssueRecurrence < ActiveRecord::Base
 
     case self.anchor_mode.to_sym
     when :first_issue_fixed, :date_fixed_after_close
+      # TODO: remove if condition, as when it is true code returns above
       dates = self.delay(dates) if self.count + 1 + adj > 0
     when :last_issue_fixed, :last_issue_fixed_after_close
       dates = self.delay(dates) if self.count + adj == 0
     end
 
-    return nil if self.date_limit.present? && (dates[:start] || dates[:due]) > self.date_limit
+    return nil if self.date_limit && (dates[:start] || dates[:due]) > self.date_limit
 
     dates
   end
@@ -609,6 +612,7 @@ class IssueRecurrence < ActiveRecord::Base
 
       new_dates = self.first_issue_fixed? ? self.advance(-1, **ref_dates) : ref_dates
       adj = 0
+      # FIXME: new_dates can be nil here due to limits
       while (new_dates[:start] || new_dates[:due]) < renew_ahead_to
         new_dates = self.advance(adj, **ref_dates)
         break if new_dates.nil?

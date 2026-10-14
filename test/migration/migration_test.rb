@@ -12,6 +12,7 @@ class MigrationsTest < IssueRecurringIntegrationTestCase
 
   def migrate(version)
     # Force refresh of schema_migration state
+    # TODO: remove for Redmine >= 6.1.5, https://www.redmine.org/issues/37686
     Redmine::Plugin::Migrator.instance_variable_get(:@all_versions)
       &.delete('issue_recurring')
 

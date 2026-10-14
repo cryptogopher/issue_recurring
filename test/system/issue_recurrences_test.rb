@@ -78,7 +78,12 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
     end
   end
 
-  def test_show_issue_recurrence_with_limit_reached
+  def test_show_issue_recurrences_after_issue_dates_change
+    # TODO: set issue dates, add random recurrence, reset issue dates, display
+    # issue
+  end
+
+  def test_show_issue_recurrences_with_limit_reached
     predicted_label = t('issues.recurrences.index.predicted_recurrence')
     @issue1.update!(random_dates)
 
@@ -325,5 +330,11 @@ class IssueRecurrencesSystemTest < IssueRecurringSystemTestCase
 
       destroy_recurrence(ir)
     end
+  end
+
+  def test_dupa
+    @issue1.update!(start_date: nil, due_date: Date.new(2025,3,9))
+    create_recurrence(issue: @issue1, date_limit: Date.new(2025,2,24),
+                      anchor_mode: :first_issue_fixed)
   end
 end
